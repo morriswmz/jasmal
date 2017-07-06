@@ -1,0 +1,16 @@
+{
+  "name": "jasmal",
+  "version": "0.1.1",
+  "author": {
+    "name": "Mianzhi Wang",
+    "url": "http://research.wmz.ninja"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "jasmine": "^2.6.0"
+  },
+  "dependencies": {
+    "@types/jasmine": "^2.5.52"
+  }
+}

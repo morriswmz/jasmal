@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "lib": ["es5"],
+        "module": "system",
+        "target": "es5",
+        "declaration": false,
+        "sourceMap": true,
+        "rootDir": ".",
+        "outFile": "out/client/jasmal.js",
+        "strictNullChecks": true,
+        "removeComments": true,
+        "moduleResolution": "node"
+    },
+    "include": [
+        "index.ts",
+        "lib/**/*"
+    ]
+}

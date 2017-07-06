@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es5",
+        "declaration": true,
+        "sourceMap": true,
+        "rootDir": ".",
+        "outDir": "out",
+        "strictNullChecks": true
+    },
+    "include": [
+        "index.ts",
+        "lib/**/*",
+        "spec/**/*",
+        "benchmark/**/*"
+    ]
+}
