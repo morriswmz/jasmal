@@ -1,16 +1,32 @@
 {
   "name": "jasmal",
   "version": "0.1.1",
+  "description": "Just another JavaScript matrix/tensor library (with full complex number support).",
   "author": {
     "name": "Mianzhi Wang",
     "url": "http://research.wmz.ninja"
   },
   "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
+  ],
   "devDependencies": {
     "benchmark": "^2.1.4",
-    "jasmine": "^2.6.0"
+    "jasmine": "^2.6.0",
+    "typescript": "^2.4.1",
+    "tslint": "^5.5.0"
   },
   "dependencies": {
-    "@types/jasmine": "^2.5.52"
+    "@types/benchmark": "^1.0.30",
+    "@types/jasmine": "^2.5.53"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "npm run build && node runTests.js",
+    "buildclient": "tsc -p tsconfig.client.json",
+    "prepublish": "npm run build"    
   }
 }

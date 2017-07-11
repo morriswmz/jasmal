@@ -4,14 +4,8 @@
         "target": "es5",
         "declaration": true,
         "sourceMap": true,
-        "rootDir": ".",
-        "outDir": "out",
+        "rootDir": "./src",
+        "outDir": "./dist",
         "strictNullChecks": true
-    },
-    "include": [
-        "index.ts",
-        "lib/**/*",
-        "spec/**/*",
-        "benchmark/**/*"
-    ]
+    }
 }
