@@ -182,16 +182,16 @@ export class TensorElementWiseOpCompiler {
                        opConfig?: UnaryEWOpConfig): GenericUnaryOp {
         let funcBody = this.generateUnaryOpFuncBody(opTemplate, opConfig);
         let deps = this._getUnaryOpDependencies(opConfig);
-        let fn = new Function('x', 'inPlace', '__dep__', funcBody);
-        return (x: OpInput, inPlace?: boolean) => <OpOutput>fn(x, inPlace, deps);
+        let fn = (new Function('__dep__', funcBody))(deps);
+        return fn;
     }
 
     public makeOneParamUnaryOp(opTemplate: UnaryEWOpTemplate,
                                opConfig?: UnaryEWOpConfig): OneParamUnaryOp {
         let funcBody = this.generateUnaryOpFuncBody(opTemplate, opConfig, true);
         let deps = this._getUnaryOpDependencies(opConfig);
-        let fn = new Function('x', 'param', 'inPlace', '__dep__', funcBody);
-        return (x: OpInput, p: number, inPlace?: boolean) => <OpOutput>fn(x, p, inPlace, deps);
+        let fn = (new Function( '__dep__', funcBody))(deps);
+        return fn;
     }
 
     private _getUnaryOpDependencies(opConfig?: UnaryEWOpConfig): UnaryOpDependencies {
@@ -214,7 +214,8 @@ export class TensorElementWiseOpCompiler {
         let realInputOnly = opTemplate.opC == undefined;
         let templateConfig = {
             NO_COMPLEX_INPUT: realInputOnly,
-            NO_IN_PLACE: opConfig ? !!opConfig.noInPlaceOperation : false
+            NO_IN_PLACE: opConfig ? !!opConfig.noInPlaceOperation : false,
+            HAS_PARAM: hasParam || false
         };
         const opRSymbolSet = hasParam
             ? ['$reX', '$reY', '$imY', '$tmp1', '$tmp2', '$tmp3', '$tmp4', '$param']
@@ -254,26 +255,21 @@ export class TensorElementWiseOpCompiler {
             '$param': 'param'
         };
         const blockMapTensor = {
-            '$RBlock': this._indent(
-                this._engine.generate(opTemplate.opR, symbolMapTensor, templateConfig),
-                realInputOnly ? 4 : 8,
-                false),
+            '$RBlock': this._engine.generate(opTemplate.opR, symbolMapTensor, templateConfig),
             '$CBlock': realInputOnly
                 ? undefined
-                : this._indent(this._engine.generate(<string>opTemplate.opC, symbolMapTensor, templateConfig), 8, false)
+                : this._engine.generate(<string>opTemplate.opC, symbolMapTensor, templateConfig)
         }
         const blockMapScalar = {
-            '$RBlock': this._indent(
-                this._engine.generate(opTemplate.opR, symbolMapScalar, templateConfig),
-                realInputOnly ? 0 : 4,
-                false),
+            '$RBlock': this._engine.generate(opTemplate.opR, symbolMapScalar, templateConfig),
             '$CBlock': realInputOnly
                 ? undefined
-                : this._indent(this._engine.generate(<string>opTemplate.opC, symbolMapScalar, templateConfig), 4, false)
+                : this._engine.generate(<string>opTemplate.opC, symbolMapScalar, templateConfig)
         }
         const blockMap = {
-            '$TBlock': this._indent(this._engine.generate(T_BLOCK_TEMPLATE, blockMapTensor, templateConfig), 4, false),
-            '$SBlock': this._indent(this._engine.generate(S_BLOCK_TEMPLATE, blockMapScalar, templateConfig), 4, false)
+            '$InlineFunctions': this._flattenInlineFunctions(opConfig && opConfig.inlineFunctions ? opConfig.inlineFunctions : {}),
+            '$TBlock': this._engine.generate(T_BLOCK_TEMPLATE, blockMapTensor, templateConfig),
+            '$SBlock': this._engine.generate(S_BLOCK_TEMPLATE, blockMapScalar, templateConfig)
         }
         return this._engine.generate(UNARY_OP_TEMPLATE, blockMap, templateConfig);
     }
@@ -294,8 +290,8 @@ export class TensorElementWiseOpCompiler {
             isWiderType: DTypeHelper.isWiderType,
             dTypeToString: DTypeHelper.dTypeToString
         };
-        let fn = new Function('x', 'y', 'inPlace', '__dep__', funcBody);
-        return (x: OpInput, y: OpInput, inPlace?: boolean) => <OpOutput>fn(x, y, inPlace, deps);
+        let fn = (new Function('__dep__', funcBody))(deps);
+        return fn;
     }
 
     public generateBinaryOpFuncBody(opTemplate: BinaryEWOpTemplate, opConfig?: BinaryEWOpConfig): string {
@@ -329,6 +325,7 @@ export class TensorElementWiseOpCompiler {
             }
         }
         const blockMap = {
+            '$InlineFunctions': this._flattenInlineFunctions(opConfig && opConfig.inlineFunctions ? opConfig.inlineFunctions : {}),
             '$SSBlock': this._compileSSBlock(opTemplate, templateConfig),
             '$STBlock': this._compileSTBlock(opTemplate, templateConfig),
             '$TSBlock': this._compileTSBlock(opTemplate, templateConfig),
@@ -351,18 +348,18 @@ export class TensorElementWiseOpCompiler {
             '$tmp4': 'tmp4'
         };
         const blockMap = {
-            '$RRBlock': this._indent(this._engine.generate(opTemplate.opRR, symbolMap, templateConfig), 8, false),
+            '$RRBlock': this._engine.generate(opTemplate.opRR, symbolMap, templateConfig),
             '$RCBlock': opTemplate.opRC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opRC, symbolMap, templateConfig), 8, false)
+                ? this._engine.generate(opTemplate.opRC, symbolMap, templateConfig)
                 : undefined,
             '$CRBlock': opTemplate.opCR != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCR, symbolMap, templateConfig), 8, false)
+                ? this._engine.generate(opTemplate.opCR, symbolMap, templateConfig)
                 : undefined,
             '$CCBlock': opTemplate.opCC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCC, symbolMap, templateConfig), 8, false)
+                ? this._engine.generate(opTemplate.opCC, symbolMap, templateConfig)
                 : undefined
         };
-        return this._indent(this._engine.generate(SS_BLOCK_TEMPLATE, blockMap, templateConfig), 8, false);
+        return this._engine.generate(SS_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
     private _compileSTBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
@@ -379,18 +376,18 @@ export class TensorElementWiseOpCompiler {
             '$tmp4': 'tmp4'
         };
         const blockMap = {
-            '$RRBlock': this._indent(this._engine.generate(opTemplate.opRR, symbolMap, templateConfig), 12, false),
+            '$RRBlock': this._engine.generate(opTemplate.opRR, symbolMap, templateConfig),
             '$RCBlock': opTemplate.opRC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opRC, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opRC, symbolMap, templateConfig)
                 : undefined,
             '$CRBlock': opTemplate.opCR != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCR, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opCR, symbolMap, templateConfig)
                 : undefined,
             '$CCBlock': opTemplate.opCC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCC, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opCC, symbolMap, templateConfig)
                 : undefined
         };
-        return this._indent(this._engine.generate(ST_BLOCK_TEMPLATE, blockMap, templateConfig), 8, false);
+        return this._engine.generate(ST_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
     private _compileTSBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
@@ -407,18 +404,18 @@ export class TensorElementWiseOpCompiler {
             '$tmp4': 'tmp4'
         };
         const blockMap = {
-            '$RRBlock': this._indent(this._engine.generate(opTemplate.opRR, symbolMap, templateConfig), 12, false),
+            '$RRBlock': this._engine.generate(opTemplate.opRR, symbolMap, templateConfig),
             '$RCBlock': opTemplate.opRC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opRC, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opRC, symbolMap, templateConfig)
                 : undefined,
             '$CRBlock': opTemplate.opCR != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCR, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opCR, symbolMap, templateConfig)
                 : undefined,
             '$CCBlock': opTemplate.opCC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCC, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opCC, symbolMap, templateConfig)
                 : undefined
         };
-        return this._indent(this._engine.generate(TS_BLOCK_TEMPLATE, blockMap, templateConfig), 8, false);
+        return this._engine.generate(TS_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
     private _compileTTBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
@@ -426,7 +423,7 @@ export class TensorElementWiseOpCompiler {
             '$TTNormalBlock': this._compileTTNormalBlock(opTemplate, templateConfig),
             '$TTBroadcastBlock': this._compileTTBroadcastBlock(opTemplate, templateConfig)
         }
-        return this._indent(this._engine.generate(TT_BLOCK_TEMPLATE, blockMap, templateConfig), 8, false);
+        return this._engine.generate(TT_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
     private _compileTTNormalBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
@@ -443,18 +440,18 @@ export class TensorElementWiseOpCompiler {
             '$tmp4': 'tmp4'
         };
         const blockMap = {
-            '$RRBlock': this._indent(this._engine.generate(opTemplate.opRR, symbolMap, templateConfig), 12, false),
+            '$RRBlock': this._engine.generate(opTemplate.opRR, symbolMap, templateConfig),
             '$RCBlock': opTemplate.opRC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opRC, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opRC, symbolMap, templateConfig)
                 : undefined,
             '$CRBlock': opTemplate.opCR != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCR, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opCR, symbolMap, templateConfig)
                 : undefined,
             '$CCBlock': opTemplate.opCC != undefined
-                ? this._indent(this._engine.generate(opTemplate.opCC, symbolMap, templateConfig), 12, false)
+                ? this._engine.generate(opTemplate.opCC, symbolMap, templateConfig)
                 : undefined
         }
-        return this._indent(this._engine.generate(TT_NORMAL_BLOCK_TEMPLATE, blockMap, templateConfig), 4, false);
+        return this._engine.generate(TT_NORMAL_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
     private _compileTTBroadcastBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
@@ -501,21 +498,13 @@ export class TensorElementWiseOpCompiler {
                 return;
             }
             let subBlockMap = {
-                '$OpFixX': this._indent(this._engine.generate(opTemplate[opTemplateName], symbolMapFixX, templateConfig), 16, false),
-                '$OpFixY': this._indent(this._engine.generate(opTemplate[opTemplateName], symbolMapFixY, templateConfig), 16, false),
-                '$OpNormal': this._indent(this._engine.generate(opTemplate[opTemplateName], symbolMapNormal, templateConfig), 16, false)
+                '$OpFixX': this._engine.generate(opTemplate[opTemplateName], symbolMapFixX, templateConfig),
+                '$OpFixY': this._engine.generate(opTemplate[opTemplateName], symbolMapFixY, templateConfig),
+                '$OpNormal': this._engine.generate(opTemplate[opTemplateName], symbolMapNormal, templateConfig)
             };
-            blockMap['$' + s + 'Block'] = this._indent(
-                this._engine.generate(TT_BROADCAST_SUB_BLOCK_TEMPLATE, subBlockMap, templateConfig), 8, false);
+            blockMap['$' + s + 'Block'] = this._engine.generate(TT_BROADCAST_SUB_BLOCK_TEMPLATE, subBlockMap, templateConfig);
         });
-        return this._indent(this._engine.generate(TT_BROADCAST_BLOCK_TEMPLATE, blockMap, templateConfig), 4, false);
-    }
-
-    private _indent(str: string, indentSize: number, indentFirstLine: boolean = true): string {
-        // a little bit lazy here
-        let spaces = (new Array<Number>(indentSize + 1)).join(' ');
-        let result = str.replace(/(\r?\n)/g, '$1' + spaces);
-        return indentFirstLine ? spaces + result : result;
+        return this._engine.generate(TT_BROADCAST_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
     /**
@@ -538,6 +527,27 @@ export class TensorElementWiseOpCompiler {
         for (let prop in used) {
             if (used.hasOwnProperty(prop)) {
                 result.push(prop);
+            }
+        }
+        return result;
+    }
+
+    private _flattenInlineFunctions(fs: {[key: string]: Function}): string {
+        let result = '';
+        for (let key in fs) {
+            if (fs.hasOwnProperty(key)) {
+                let fStr = fs[key].toString();
+                if (fStr.indexOf('[native code]') > 0) {
+                    throw new Error('Cannot inline native functions.');
+                }
+                // replace function name
+                let idxFirstP = fStr.indexOf('(');
+                if (idxFirstP < 0) {
+                    throw new Error('Cannot find the first pair of parenthesis.');
+                }
+                // note that the specified function name is NOT checked
+                fStr = 'function ' + key + fStr.substr(idxFirstP);
+                result += fStr + '\n';
             }
         }
         return result;

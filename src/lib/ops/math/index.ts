@@ -3,18 +3,7 @@ import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { Tensor } from '../../tensor';
 import { OpInput, OpOutput, OpInputType } from '../../commonTypes';
-
-const PROG_ABS_C =
-`$tmp1 = Math.abs($reX); $tmp2 = Math.abs($imX);
-if ($tmp1 > $tmp2) {
-    $tmp3 = $tmp2 / $tmp1; $reY = $tmp1 * Math.sqrt(1 + $tmp3 * $tmp3);
-} else {
-    if ($tmp2 === 0) {
-        $reY = 0;
-    } else {
-        $tmp3 = $tmp1 / $tmp2; $reY = $tmp2 * Math.sqrt(1 + $tmp3 * $tmp3);
-    }
-}`;
+import { MathHelper } from '../../helper/mathHelper';
 
 export class MathOpProviderFactory {
     public static create(): IMathOpProvider {
@@ -27,10 +16,13 @@ export class MathOpProviderFactory {
 
         const opAbs = compiler.makeUnaryOp({
             opR: '$reY = Math.abs($reX);',
-            opC: PROG_ABS_C
+            opC: '$reY = length2($reX, $imX);',
         }, {
             // custom rule here, only convert to float when the input is complex
-            outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t
+            outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t,
+            inlineFunctions: {
+                'length2': MathHelper.length2
+            }
         });
 
         const opSign = compiler.makeUnaryOp({

@@ -120,7 +120,49 @@ export class TemplateEngine {
     }
 
     private static _interpolate(template: string, replacementMap: {[key: string]: string | undefined}): string {
-        return template.replace(/\$\w+/g, m => replacementMap[m] == undefined ? m : <string>replacementMap[m]);
+        return template.replace(/\$\w+/g, (m, offset: number) => {
+            // Check if we need to insert indentations.
+            // Only checks for white spaces here and tabs are not allowed.
+            let standalone = true;
+            let pos = offset - 1;
+            let indent = 0;
+            while (pos >= 0) {
+                if (template[pos] === '\n') {
+                    break;
+                }
+                if (template[pos] !== ' ') {
+                    standalone = false;
+                    break;
+                }
+                indent++;
+                pos--;
+            }
+            if (standalone) {
+                pos = offset + m.length;
+                while (pos < template.length) {
+                    if (template[pos] === '\n') {
+                        break;
+                    }
+                    if (template[pos] !== ' ') {
+                        standalone = false;
+                    }
+                    pos++;
+                }
+            }
+            let replacement = replacementMap[m];
+            if (replacement != undefined) {
+                return standalone ? TemplateEngine._indent(replacement, indent, false) : replacement;
+            } else {
+                return m;
+            }         
+        });
+    }
+
+     private static _indent(str: string, indentSize: number, indentFirstLine: boolean = true): string {
+        // a little bit lazy here
+        let spaces = (new Array<Number>(indentSize + 1)).join(' ');
+        let result = str.replace(/(\r?\n)/g, '$1' + spaces);
+        return indentFirstLine ? spaces + result : result;
     }
 
 }

@@ -7,52 +7,58 @@ import { OpInputType } from '../../commonTypes';
  */
 export const UNARY_OP_TEMPLATE =
 `'use strict';
-inPlace = inPlace || false;
-// we accept OpInputInfo as an input 
-var infoX = x['originalType'] != undefined ? x : __dep__.Tensor.analyzeOpInput(x);
-if (infoX.originalType === ${OpInputType.Unknown}) {
-    throw new Error('Unsupported input type.');
-}
-#if NO_IN_PLACE
-if (inPlace) {
-    throw new Error('In-place operation is not supported.');
-}
+$InlineFunctions
+#if HAS_PARAM
+return function(x, param, inPlace) {
 #else
-if (inPlace && infoX.originalType !== ${OpInputType.Tensor}) {
-    throw new Error('Cannot perform in-place operations when the operand is not a tensor.');
-}
+return function(x, inPlace) {
 #endif
-#if NO_COMPLEX_INPUT
-if (infoX.isComplex) {
-    throw new Error('Complex input is not supported.');
-}
-#endif
-var dtypeX = infoX.originalDType, dtypeY;
-var reX = infoX.reArr, imX = infoX.imArr, reY, imY, tmp1, tmp2, tmp3, tmp4, y;
-var i = 0;
-dtypeY = __dep__.determineOutputType(dtypeX, infoX.isComplex);
-if (dtypeY == undefined) {
-    throw new Error('The operation on ' + __dep__.dTypeToString(dtypeX) + ' is not available.');
-}
-if (infoX.isInputScalar) {
-    var reXScalar = infoX.re, imXScalar = infoX.im;
-    var reYScalar = 0, imYScalar = 0;
-    $SBlock
-    return imYScalar === 0 ? reYScalar : new __dep__.ComplexNumber(reYScalar, imYScalar);
-} else {
-    if (inPlace) {
-        if (__dep__.isWiderType(dtypeX, dtypeY)) {
-            throw new Error('Cannot perform in-place operations for data type ' + __dep__.dTypeToString(dtypeX) + '.');
-        }
-        y = x;
-        y.ensureUnsharedLocalStorage();
-    } else {
-        y = __dep__.Tensor.zeros(infoX.originalShape, dtypeY);
+    inPlace = inPlace || false;
+    // we accept OpInputInfo as an input 
+    var infoX = x['originalType'] != undefined ? x : __dep__.Tensor.analyzeOpInput(x);
+    if (infoX.originalType === ${OpInputType.Unknown}) {
+        throw new Error('Unsupported input type.');
     }
-    $TBlock
-    return y;
-}
-`;
+    #if NO_IN_PLACE
+    if (inPlace) {
+        throw new Error('In-place operation is not supported.');
+    }
+    #else
+    if (inPlace && infoX.originalType !== ${OpInputType.Tensor}) {
+        throw new Error('Cannot perform in-place operations when the operand is not a tensor.');
+    }
+    #endif
+    #if NO_COMPLEX_INPUT
+    if (infoX.isComplex) {
+        throw new Error('Complex input is not supported.');
+    }
+    #endif
+    var dtypeX = infoX.originalDType, dtypeY;
+    var reX = infoX.reArr, imX = infoX.imArr, reY, imY, tmp1, tmp2, tmp3, tmp4, y;
+    var i = 0;
+    dtypeY = __dep__.determineOutputType(dtypeX, infoX.isComplex);
+    if (dtypeY == undefined) {
+        throw new Error('The operation on ' + __dep__.dTypeToString(dtypeX) + ' is not available.');
+    }
+    if (infoX.isInputScalar) {
+        var reXScalar = infoX.re, imXScalar = infoX.im;
+        var reYScalar = 0, imYScalar = 0;
+        $SBlock
+        return imYScalar === 0 ? reYScalar : new __dep__.ComplexNumber(reYScalar, imYScalar);
+    } else {
+        if (inPlace) {
+            if (__dep__.isWiderType(dtypeX, dtypeY)) {
+                throw new Error('Cannot perform in-place operations for data type ' + __dep__.dTypeToString(dtypeX) + '.');
+            }
+            y = x;
+            y.ensureUnsharedLocalStorage();
+        } else {
+            y = __dep__.Tensor.zeros(infoX.originalShape, dtypeY);
+        }
+        $TBlock
+        return y;
+    }
+}`;
 
 export const S_BLOCK_TEMPLATE =
 `#if NO_COMPLEX_INPUT
@@ -134,65 +140,69 @@ if (infoX.isComplex) {
  */
 export const BIN_EL_OP_TEMPLATE =
 `'use strict';
-// process inputs
-inPlace = inPlace || false;
-// init common variables
-var infoX = x['originalType'] != undefined ? x : __dep__.Tensor.analyzeOpInput(x);
-var infoY = y['originalType'] != undefined ? y : __dep__.Tensor.analyzeOpInput(y);
-if (infoX.originalType === ${OpInputType.Unknown} || infoY.originalType === ${OpInputType.Unknown}) {
-    throw new Error('Unsupported input type.');
-}
-#if NO_IN_PLACE
-if (inPlace) {
-    throw new Error('In-place operation is not supported.');
-}
-#else
-if (inPlace && infoX.originalType !== ${OpInputType.Tensor}) {
-    throw new Error('In-place operation is not allowed when the first operand is not a tensor.');
-}
-#endif
-#if NO_COMPLEX_INPUT
-if (infoX.isComplex) {
-    throw new Error('Complex input is not allowed.');
-}
-if (infoY.isComplex) {
-    throw new Error('Complex input is not allowed.');
-}
-#endif
-var isXScalar = infoX.isInputScalar;
-var isYScalar = infoY.isInputScalar;
-var shouldOutputTensor = !isXScalar || !isYScalar;
-var dtypeX = infoX.originalDType, dtypeY = infoY.originalDType, dtypeZ;
-var reXScalar = infoX.re, imXScalar = infoX.im, reYScalar = infoY.re, imYScalar = infoY.im;
-var reZScalar = 0, imZScalar = 0;
-var reX = infoX.reArr, imX = infoX.imArr, reY = infoY.reArr, imY = infoY.imArr;
-var reZ, imZ, tmp1, tmp2, tmp3, tmp4, z, s;
-var i = 0;
-// check dtype
-dtypeZ = __dep__.determineOutputType(dtypeX, infoX.isComplex, dtypeY, infoY.isComplex);
-if (dtypeZ == undefined) {
-    throw new Error('Operation between ' + __dep__.dTypeToString(dtypeX) + ' and ' + __dep__.dTypeToString(dtypeY) + ' is not available.');
-}
-// main procedure
-if (isXScalar) {
-    if (isYScalar) {
-        
-        $SSBlock
+$InlineFunctions
+return function (x, y, inPlace) {
+    // process inputs
+    inPlace = inPlace || false;
+    // init common variables
+    var infoX = x['originalType'] != undefined ? x : __dep__.Tensor.analyzeOpInput(x);
+    var infoY = y['originalType'] != undefined ? y : __dep__.Tensor.analyzeOpInput(y);
+    if (infoX.originalType === ${OpInputType.Unknown} || infoY.originalType === ${OpInputType.Unknown}) {
+        throw new Error('Unsupported input type.');
+    }
+    #if NO_IN_PLACE
+    if (inPlace) {
+        throw new Error('In-place operation is not supported.');
+    }
+    #else
+    if (inPlace && infoX.originalType !== ${OpInputType.Tensor}) {
+        throw new Error('In-place operation is not allowed when the first operand is not a tensor.');
+    }
+    #endif
+    #if NO_COMPLEX_INPUT
+    if (infoX.isComplex) {
+        throw new Error('Complex input is not allowed.');
+    }
+    if (infoY.isComplex) {
+        throw new Error('Complex input is not allowed.');
+    }
+    #endif
+    var isXScalar = infoX.isInputScalar;
+    var isYScalar = infoY.isInputScalar;
+    var shouldOutputTensor = !isXScalar || !isYScalar;
+    var dtypeX = infoX.originalDType, dtypeY = infoY.originalDType, dtypeZ;
+    var reXScalar = infoX.re, imXScalar = infoX.im, reYScalar = infoY.re, imYScalar = infoY.im;
+    var reZScalar = 0, imZScalar = 0;
+    var reX = infoX.reArr, imX = infoX.imArr, reY = infoY.reArr, imY = infoY.imArr;
+    var reZ, imZ, tmp1, tmp2, tmp3, tmp4, z, s;
+    var i = 0;
+    // check dtype
+    dtypeZ = __dep__.determineOutputType(dtypeX, infoX.isComplex, dtypeY, infoY.isComplex);
+    if (dtypeZ == undefined) {
+        throw new Error('Operation between ' + __dep__.dTypeToString(dtypeX) + ' and ' 
+            + __dep__.dTypeToString(dtypeY) + ' is not available.');
+    }
+    // main procedure
+    if (isXScalar) {
+        if (isYScalar) {
+            
+            $SSBlock
+        } else {
+            $STBlock
+        }
     } else {
-        $STBlock
+        if (inPlace && __dep__.isWiderType(dtypeX, dtypeZ)) {
+            throw new Error('Cannot downcast from ' + __dep__.dTypeToString(dtypeY) + ' to ' +
+                __dep__.dTypeToString(dtypeX) + ' when performing in-place operation.');
+        }
+        if (isYScalar) {
+            $TSBlock
+        } else {
+            $TTBlock
+        }
     }
-} else {
-    if (inPlace && __dep__.isWiderType(dtypeX, dtypeZ)) {
-        throw new Error('Cannot downcast from ' + __dep__.dTypeToString(dtypeY) + ' to ' +
-            __dep__.dTypeToString(dtypeX) + ' when performing in-place operation.');
-    }
-    if (isYScalar) {
-        $TSBlock
-    } else {
-        $TTBlock
-    }
-}
-return z;`;
+    return z;
+}`;
 
 /**
  * Template for the block of codes that handles op(Scalar, Scalar). This
