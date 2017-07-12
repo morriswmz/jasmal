@@ -54,6 +54,15 @@ export class DataHelper {
         return true;
     }
 
+    public static anyNegative(x: ArrayLike<number>): boolean {
+        for (let i = 0;i < x.length;i++) {
+            if (x[i] < 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static findReal(re: ArrayLike<number>): number[] {
         let indices: number[] = [];
         for (let i = 0;i < re.length;i++) {

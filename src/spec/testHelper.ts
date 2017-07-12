@@ -50,7 +50,17 @@ export function checkTensor(actual: any, expected: Tensor, tolerance: number = 0
     let reActual = actual.realData;
     let reExpected = expected.realData;
     for (let i = 0;i < reActual.length;i++) {
-        if (Math.abs(reActual[i] - reExpected[i]) > tolerance) {
+        if (isNaN(reExpected[i])) {
+            if (!isNaN(reActual[i])) {
+                fail(`At index ${i}, expecting the real part to be NaN, got ${reActual[i]}.`);
+                return;
+            }
+        } else if (!isFinite(reExpected[i])) {
+            if (reExpected[i] !== reActual[i]) {
+                fail(`At index ${i}, expecting the real part to be ${reExpected[i]}, got ${reActual[i]}.`);
+                return;                
+            }
+        } else if (Math.abs(reActual[i] - reExpected[i]) > tolerance) {
             fail(`At index ${i}, expecting the real part to be ${reExpected[i]} ± ${tolerance}, got ${reActual[i]}.`);
             return;
         }

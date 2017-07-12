@@ -65,12 +65,12 @@ export interface OpInputInfo {
     im: number;
     /**
      * An array like object storing the flattened real part. Will be empty if
-     * isOriginalTypeScalar is false.
+     * isOriginalTypeScalar is true.
      */
     reArr: ArrayLike<number>;
     /**
      * An array like object storing the flattened imaginary part. Will be empty
-     * if isOriginalTypeScalar or isComplex is false.
+     * if isOriginalTypeScalar is true or isComplex is false.
      */
     imArr: ArrayLike<number>;
     /**

@@ -4,6 +4,7 @@ import { DType, OutputDTypeResolver } from '../../dtype';
 import { Tensor } from '../../tensor';
 import { OpInput, OpOutput, OpInputType } from '../../commonTypes';
 import { MathHelper } from '../../helper/mathHelper';
+import { DataHelper } from "../../helper/dataHelper";
 
 export class MathOpProviderFactory {
     public static create(): IMathOpProvider {
@@ -135,30 +136,55 @@ export class MathOpProviderFactory {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        // TODO: Infinity and NaN handling
         const opSqrtA = compiler.makeUnaryOp({
             opR: 'if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $reY = 0; $imY = Math.sqrt(-$reX); }',
             // sqrt(z) => [sqrt(0.5*(Re(z) + |z|)), 0.5*Im(z) / sqrt(0.5*(Re(z) + |z|))]
-            opC: 'if ($imX === 0) {\n' +
-                 '    if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $reY = 0; $imY = Math.sqrt(-$reX); }\n' +
-                 '} else {\n' +
-                 '    if (Math.abs($reX) < Math.abs($imX)) {\n' +
-                 '        $tmp1 = $reX / $imX;\n' +
-                 '        $tmp2 = Math.sqrt(0.5 * ($reX + $imX * Math.sqrt(1 + $tmp1 * $tmp1)));\n' +
-                 '        $reY = $tmp2; $imY = 0.5 * $imX / $tmp2;\n' +
-                 '    } else {\n' +
-                 '        if ($reX === 0) {\n' +
-                 '            $reY = 0; $imY = 0;\n' +
-                 '        } else {\n' +
-                 '            $tmp1 = $imX / $reX;\n' +
-                 '            $tmp2 = Math.sqrt(0.5 * $reX * (1 + Math.sqrt(1 + $tmp1 * $tmp1)));\n' +
-                 '            $reY = $tmp2; $imY = 0.5 * $imX / $tmp2;\n' +
-                 '        }\n' +
-                 '    }\n' +
-                 '}\n'
+            opC: '$tmp1 = sqrtc($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            inlineFunctions: {
+                'sqrtc': (re: number, im: number): [number, number] => {
+                    if (isNaN(re) || isNaN(im)) {
+                        return [NaN, NaN];
+                    }
+                    if (im === 0) {
+                        if (re >= 0) {
+                            return [Math.sqrt(re), 0];
+                        } else {
+                            return [0, -Math.sqrt(re)];
+                        }
+                    } else {
+                        if (!isFinite(im)) {
+                            return [Infinity, im > 0 ? Infinity : -Infinity];
+                        } else if (!isFinite(re)) {
+                            return re > 0 ? [Infinity, 0] : [0, im >= 0 ? Infinity : -Infinity];
+                        } else {
+                            let r: number, t: number;
+                            if (Math.abs(re) < Math.abs(im)) {
+                                r = re / im;
+                                t = Math.sqrt(0.5 * (re + im * Math.sqrt(1 + r * r)));
+                            } else {
+                                if (re === 0) {
+                                    return [0, 0];
+                                }
+                                r = im / re;
+                                t = Math.sqrt(0.5 * re * (1 + Math.sqrt(1 + r * r)));
+                            }
+                            return [t, 0.5 * im / t];
+                        }
+                    }
+                }
+            }
         });
+
+        const opSqrt = (x: OpInput, inPlace: boolean = false): OpOutput => {
+            let infoX = Tensor.analyzeOpInput(x);
+            if (infoX.isComplex || infoX.re < 0 || DataHelper.anyNegative(infoX.reArr)) {
+                return opSqrtA(<any>infoX, inPlace);
+            } else {
+                return opSqrtP(<any>infoX, inPlace);
+            }
+        };
 
         const opFloor = compiler.makeUnaryOp({
             opR: '$reY = Math.floor($reX);',
@@ -210,7 +236,7 @@ export class MathOpProviderFactory {
             asin: opAsin,
             acos: opAcos,
             atan: opAtan,
-            sqrt: opSqrtA,
+            sqrt: opSqrt,
             exp: opExp,
             pow2: notImplemented,
             log: notImplemented,
