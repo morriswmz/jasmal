@@ -48,6 +48,18 @@ export interface ICoreOpProvider {
 
     tile(x: OpInput, repeats: number[]): Tensor;
 
+    /**
+     * Permutes a tensor according to the specified order such that
+     *  shapeOut[i] = shapeIn[order[i]]
+     *  Y(i_order[0], ..., i_order[n-1]) = X(i_0, ..., i_{n-1})
+     * @example
+     *  // shape is [1, 2, 3]
+     *  x = T.ones([1, 2, 3]); 
+     *  // shape is [3, 1, 2]
+     *  y = T.permuteAxis(x, [2, 0, 1]);
+     */
+    permuteAxis(x: OpInput, order: number[]): Tensor;
+
     prependAxis(x: OpInput): Tensor;
 
     appendAxis(x: OpInput): Tensor;
@@ -56,6 +68,7 @@ export interface ICoreOpProvider {
 
     imag(x: OpInput): Tensor;
 
+    // TODO: is* should return a scalar if the input is a scalar
     /**
      * Checks if every element of x is real.
      */

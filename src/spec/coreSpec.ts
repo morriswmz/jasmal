@@ -87,3 +87,46 @@ describe('concat()', () => {
         checkTensor(actual, expected);
     });
 });
+
+describe('permuteAxis()', () => {
+    it('should do nothing for 1D arrays', () => {
+        let actual = T.permuteAxis([1, 2, 3], [0]);
+        let expected = T.fromArray([1, 2, 3]);
+        checkTensor(actual, expected);
+    });
+    it('should transpose a matrix', () => {
+        let M = T.fromArray(
+            [[1, 2, 3],
+             [4, 5, 6]],
+            [[-1, -2, -3],
+             [-4, -5, -6]]
+        );
+        let MCopy = M.copy(true);
+        let actual = T.permuteAxis(M, [1, 0]);
+        let expected = T.fromArray(
+            [[1, 4],
+             [2, 5],
+             [3, 6]],
+            [[-1, -4],
+             [-2, -5],
+             [-3, -6]],
+        );
+        checkTensor(actual, expected);
+        // should not change M
+        checkTensor(M, MCopy);
+    });
+    it('should permute axis of a tensor', () => {
+        let M = T.fromArray(
+            [[[1, 2], [3, 4], [5, 6]],
+             [[7, 8], [9, 10], [11, 12]]]
+        );
+        let actual = T.permuteAxis(M, [2, 0, 1]);
+        let expected = T.fromArray(
+            [[[1, 3, 5],
+              [7, 9, 11]],
+             [[2, 4, 6],
+              [8, 10, 12]]]
+        );
+        checkTensor(actual, expected);
+    });
+});

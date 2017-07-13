@@ -130,6 +130,34 @@ export class MathOpProviderFactory {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
+        const opSinh = compiler.makeUnaryOp({
+            opR: '$reY = 0.5*(Math.exp($reX) - Math.exp(-$reX));',
+            opC: '$tmp1 = csinh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+        }, {
+            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            inlineFunctions: {
+                'csinh': (re: number, im: number): [number, number] => {
+                    let s = Math.sin(im), c = Math.cos(im);
+                    let rp = Math.exp(re), rn = Math.exp(-re);
+                    return [0.5 * (rp - rn) * c, 0.5 * (rp + rn) * s];
+                }
+            }
+        });
+
+        const opCosh = compiler.makeUnaryOp({
+            opR: '$reY = 0.5*(Math.exp($reX) + Math.exp(-$reX));',
+            opC: '$tmp1 = ccosh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+        }, {
+            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            inlineFunctions: {
+                'ccosh': (re: number, im: number): [number, number] => {
+                    let s = Math.sin(im), c = Math.cos(im);
+                    let rp = Math.exp(re), rn = Math.exp(-re);
+                    return [0.5 * (rp + rn) * c, 0.5 * (rp - rn) * s];
+                }
+            }
+        });
+
         const opSqrtP = compiler.makeUnaryOp({
             opR: '$reY = Math.sqrt($reX);'
         }, {
@@ -138,10 +166,10 @@ export class MathOpProviderFactory {
 
         const opSqrtA = compiler.makeUnaryOp({
             opR: 'if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $reY = 0; $imY = Math.sqrt(-$reX); }',
-            // sqrt(z) => [sqrt(0.5*(Re(z) + |z|)), 0.5*Im(z) / sqrt(0.5*(Re(z) + |z|))]
             opC: '$tmp1 = sqrtc($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            // sqrt(z) => [sqrt(0.5*(Re(z) + |z|)), 0.5*Im(z) / sqrt(0.5*(Re(z) + |z|))]
             inlineFunctions: {
                 'sqrtc': (re: number, im: number): [number, number] => {
                     if (isNaN(re) || isNaN(im)) {
@@ -230,8 +258,8 @@ export class MathOpProviderFactory {
             cos: opCos,
             tan: opTan,
             cot: opCot,
-            sinh: notImplemented,
-            cosh: notImplemented,
+            sinh: opSinh,
+            cosh: opCosh,
             tanh: notImplemented,
             asin: opAsin,
             acos: opAcos,

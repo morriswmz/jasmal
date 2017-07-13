@@ -273,21 +273,78 @@ export class CoreOpProviderFactory {
             doCopy(0, 0, targetStrides[axis] * axisOffset);
         }
 
-        const opReal = (x: OpInput) => {
+        const opPermuteAxis = (x: OpInput, order: number[]): Tensor => {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            // check new ordering
+            let ndim = X.ndim;
+            if (order.length !== ndim) {
+                throw new Error('New ordering must have the same length of the original shape.');
+            }
+            let flags = new Array<boolean>(ndim);
+            for (let i = 0;i < order.length;i++) {
+                if (order[i] < 0 || (order[i] | 0) !== order[i]) {
+                    throw new Error('Ordering must be specified using nonnegative integers.');
+                }
+                if (order[i] >= ndim) {
+                    throw new Error('Elements in order must be smaller than the number of dimensions.');
+                }
+                if (flags[order[i]]) {
+                    throw new Error('Order cannot contain duplicates.');
+                }
+                flags[order[i]] = true;
+            }
+            let shapeX = X.shape;
+            let shapeY = new Array<number>(ndim);
+            for (let i = 0;i < ndim;i++) {
+                shapeY[i] = shapeX[order[i]];
+            }
+            let Y = Tensor.zeros(shapeY, X.dtype);
+            let stridesX = X.strides;
+            let stridesY = Y.strides;
+            permuteAxis(X.realData, Y.realData, shapeX, order, stridesX,
+                stridesY, 0, 0, 0);
+            if (X.hasComplexStorage()) {
+                Y.ensureComplexStorage();
+                permuteAxis(X.imagData, Y.imagData, shapeX, order, stridesX,
+                    stridesY, 0, 0, 0);
+            }
+            return Y;
+        };
+
+        const permuteAxis = (source: ArrayLike<number>, target: DataBlock,
+                             sourceShape: number[], order: number[],
+                             sourceStrides: number[], targetStrides: number[],
+                             level: number, offsetSource: number, offsetTarget: number): void => {
+            if (level === sourceShape.length - 1) {
+                for (let i = 0;i < sourceShape[order[level]];i++) {
+                    target[offsetTarget + i] = source[offsetSource];
+                    offsetSource += sourceStrides[order[level]]
+                }
+            } else {
+                for (let i = 0;i < sourceShape[order[level]];i++) {
+                    permuteAxis(source, target, sourceShape, order, sourceStrides,
+                                targetStrides, level + 1, offsetSource, offsetTarget);
+                    offsetTarget += targetStrides[level];
+                    offsetSource += sourceStrides[order[level]]
+                }
+            }
+        }
+
+        const opReal = (x: OpInput): Tensor => {
             return x instanceof Tensor ? x.real() : Tensor.toTensor(x).real();
         };
 
-        const opImag = (x: OpInput) => {
+        const opImag = (x: OpInput): Tensor => {
             return x instanceof Tensor ? x.imag() : Tensor.toTensor(x).imag();
         };
 
-        const opIsReal = (x: OpInput) => {
+        const opIsReal = (x: OpInput): boolean => {
             let t = x instanceof Tensor ? x : Tensor.toTensor(x);
             if (!t.hasComplexStorage()) return false;
             return DataHelper.isArrayAllZeros(t.imagData);
         };
 
-        const opIsNaN = (x: OpInput) => {
+        const opIsNaN = (x: OpInput): Tensor => {
             let t = x instanceof Tensor ? x : Tensor.toTensor(x);
             let result = Tensor.zeros(t.shape, DType.LOGIC);
             let reX = t.realData;
@@ -305,7 +362,7 @@ export class CoreOpProviderFactory {
             return result;
         };
 
-        const opIsInf = (x: OpInput) => {
+        const opIsInf = (x: OpInput): Tensor => {
             let t = x instanceof Tensor ? x : Tensor.toTensor(x);
             let result = Tensor.zeros(t.shape, DType.LOGIC);
             let reX = t.realData;
@@ -323,7 +380,7 @@ export class CoreOpProviderFactory {
             return result;
         };
 
-        const opFind = (x: OpInput, f?: (re: number, im: number) => boolean) => {
+        const opFind = (x: OpInput, f?: (re: number, im: number) => boolean): number[] => {
             let t = x instanceof Tensor ? x : Tensor.toTensor(x);
             let indices: number[];
             let reX = t.realData;
@@ -344,7 +401,7 @@ export class CoreOpProviderFactory {
             return indices;
         };
 
-        const opLinspace = (x1: number, x2: number, n: number) => {
+        const opLinspace = (x1: number, x2: number, n: number): Tensor => {
             if (n < 1) {
                 throw new Error('Number of samples n must be greater or equal to 1.');
             }
@@ -387,6 +444,7 @@ export class CoreOpProviderFactory {
             squeeze: opSqueeze,
             tile: opTile,
             concat: opConcat,
+            permuteAxis: opPermuteAxis,
             prependAxis: opPrependAxis,
             appendAxis: opAppendAxis,
             linspace: opLinspace,

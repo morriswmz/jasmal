@@ -104,6 +104,7 @@ export class JasmalEngine {
             vec: coreOpProvider.vec,
             concat: coreOpProvider.concat,
             tile: coreOpProvider.tile,
+            permuteAxis: coreOpProvider.permuteAxis,
             prependAxis: coreOpProvider.prependAxis,
             appendAxis: coreOpProvider.appendAxis,
             linspace: coreOpProvider.linspace,
