@@ -12,7 +12,7 @@
         "moduleResolution": "node"
     },
     "include": [
-        "index.ts",
-        "lib/**/*"
+        "src/index.ts",
+        "src/lib/**/*"
     ]
 }
