@@ -130,6 +130,7 @@ export class JasmalEngine {
             lu: matrixOpProvider.lu,
             svd: matrixOpProvider.svd,
             rank: matrixOpProvider.rank,
+            eig: matrixOpProvider.eig,
 
             eq: logicCompOpProvider.eq,
             neq: logicCompOpProvider.neq,

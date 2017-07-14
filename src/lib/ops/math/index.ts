@@ -179,7 +179,7 @@ export class MathOpProviderFactory {
                         if (re >= 0) {
                             return [Math.sqrt(re), 0];
                         } else {
-                            return [0, -Math.sqrt(re)];
+                            return [0, Math.sqrt(-re)];
                         }
                     } else {
                         if (!isFinite(im)) {
@@ -188,15 +188,16 @@ export class MathOpProviderFactory {
                             return re > 0 ? [Infinity, 0] : [0, im >= 0 ? Infinity : -Infinity];
                         } else {
                             let r: number, t: number;
-                            if (Math.abs(re) < Math.abs(im)) {
-                                r = re / im;
-                                t = Math.sqrt(0.5 * (re + im * Math.sqrt(1 + r * r)));
+                            let absRe = Math.abs(re), absIm = Math.abs(im);
+                            if (absRe < absIm) {
+                                r = absRe / absIm;
+                                t = Math.sqrt(0.5 * (re + absIm * Math.sqrt(1 + r * r)));
                             } else {
                                 if (re === 0) {
                                     return [0, 0];
                                 }
-                                r = im / re;
-                                t = Math.sqrt(0.5 * re * (1 + Math.sqrt(1 + r * r)));
+                                r = absIm / absRe;
+                                t = Math.sqrt(0.5 * (re + absRe * Math.sqrt(1 + r * r)));
                             }
                             return [t, 0.5 * im / t];
                         }

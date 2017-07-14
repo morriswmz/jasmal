@@ -1,111 +1,60 @@
 import { JasmalEngine } from '../';
-import { checkTensor, checkComplex } from './testHelper';
+import { checkTensor, maxAbs } from './testHelper';
 import { Tensor } from '../lib/tensor';
 import { ComplexNumber } from '../lib/complexNumber';
 const T = JasmalEngine.createInstance();
 
-function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor) {
+function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor, eps: number = 1e-10): void {
     let [m, n] = A.shape;
     let ns = Math.min(m, n);
-    const tolerance = 1e-9;
     // U^T U = I
     let Ut = T.transpose(U);
     if (Ut.hasComplexStorage()) {
-        checkTensor(<Tensor>T.matmul(Ut, Ut, T.MM_HERMITIAN), T.eye(ns).ensureComplexStorage(), tolerance);
+        checkTensor(<Tensor>T.matmul(Ut, Ut, T.MM_HERMITIAN), T.eye(ns).ensureComplexStorage(), eps);
     } else {
-        checkTensor(<Tensor>T.matmul(Ut, Ut, T.MM_TRANSPOSED), T.eye(ns), tolerance);
+        checkTensor(<Tensor>T.matmul(Ut, Ut, T.MM_TRANSPOSED), T.eye(ns), eps);
     }
     // V^T V = I
     let Vt = T.transpose(V);
     if (Vt.hasComplexStorage()) {
-        checkTensor(<Tensor>T.matmul(Vt, Vt, T.MM_HERMITIAN), T.eye(n).ensureComplexStorage(), tolerance);
+        checkTensor(<Tensor>T.matmul(Vt, Vt, T.MM_HERMITIAN), T.eye(n).ensureComplexStorage(), eps);
     } else {
-        checkTensor(<Tensor>T.matmul(Vt, Vt, T.MM_TRANSPOSED), T.eye(n), tolerance);
+        checkTensor(<Tensor>T.matmul(Vt, Vt, T.MM_TRANSPOSED), T.eye(n), eps);
     }
     // USV^T = A
+    // Since A may contain large elements, we scale the tolerance factor
+    // according to A.
+    let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);
     if (A.hasComplexStorage()) {
-        checkTensor(<Tensor>T.matmul(U, T.matmul(S, V, T.MM_HERMITIAN)), A, tolerance);
+        checkTensor(<Tensor>T.matmul(U, T.matmul(S, V, T.MM_HERMITIAN)), A, tolA);
     } else {
-        checkTensor(<Tensor>T.matmul(U, T.matmul(S, V, T.MM_TRANSPOSED)), A, tolerance);
+        checkTensor(<Tensor>T.matmul(U, T.matmul(S, V, T.MM_TRANSPOSED)), A, tolA);
     }
 }
 
-describe('matmul()', () => {
-
-    let M = T.fromArray([[8, 1, 6], [3, 5, 7], [4, 9, 2]]);
-    let N = T.fromArray([[8, 1, 6], [3, 5, 7], [4, 9, 2]],
-                        [[1, 2, 3], [1, 4, 9], [1, 8, 27]])
-
-    it('should handle real x real', () => {
-        let actual = <Tensor>T.matmul(M, M);
-        let expected = T.fromArray([[91, 67, 67], [67, 91, 67], [67, 67, 91]]);
-        checkTensor(actual, expected);
-    });
-
-    it('should handle real x real with the "transposed" modifier', () => {
-        let actual = <Tensor>T.matmul(M, M, T.MM_TRANSPOSED);
-        let expected = T.fromArray([[101, 71, 53], [71, 83, 71], [53, 71, 101]]);
-        checkTensor(actual, expected);
-    });
-
-    it('should throw when handling real x real with the "hermitian" modifier', () => {
-        expect(() => { T.matmul(M, M, T.MM_HERMITIAN);}).toThrow();
-    });
-
-    it('should handle real x complex', () => {
-        let actual = <Tensor>T.matmul(M, N);
-        let expected = T.fromArray([[91, 67, 67], [67, 91, 67], [67, 67, 91]],
-                                   [[15, 68, 195], [15, 82, 243], [15, 60, 147]]);
-        checkTensor(actual, expected);
-    });
-
-    it('should handle real x complex with the "transposed" modifier', () => {
-        let actual = <Tensor>T.matmul(M, N, T.MM_TRANSPOSED);
-        let expected = T.fromArray([[101, 71, 53], [71, 83, 71], [53, 71, 101]],
-                                   [[28, 66, 178], [34, 86, 232], [28, 58, 130]]);
-        checkTensor(actual, expected);
-    });
-
-    it('should handle real x complex with the "hermitian" modifier', () => {
-        let actual = <Tensor>T.matmul(M, N, T.MM_HERMITIAN);
-        let expected = T.fromArray([[101, 71, 53], [71, 83, 71], [53, 71, 101]],
-                                   [[-28, -66, -178], [-34, -86, -232], [-28, -58, -130]]);
-        checkTensor(actual, expected);
-    });
-
-    let A = T.fromArray([[1, 4, 9], [2, -13, 4], [4, 8, 3]],
-                        [[8, 11, -17], [-2, -9, 8], [-7, 1, 6]]);
-    let B = T.fromArray([[23, 3], [-3, 7], [2, -1]],
-                        [[2, -2], [5, 10], [0, 1]]);
-
-    it('should handle complex x complex multiplications', () => {
-        let actual = <Tensor>T.matmul(A, B);
-        let expected = T.fromArray([[-42, -55], [142, -11], [83, 35]],
-                                   [[139, 165], [-64, -207], [-104, 55]]);
-        checkTensor(actual, expected);
-    });
-
-});
-
-describe('kron()', () => {
-    it('should compute the Kronecker product between two real vectors', () => {
-        let actual = T.kron([1, 2], [2, 7]);
-        let expected = T.fromArray([2, 7, 4, 14]);
-        checkTensor(actual, expected);
-    });
-    it('should compute the Kronecker product between two real matrices', () => {
-        let actual = T.kron([[1, 2], [3, 4]], [[2, 1], [4, 9], [-1, 1]]);
-        let expected = T.fromArray(
-            [[2, 1, 4, 2],
-             [4, 9, 8, 18],
-             [-1, 1, -2, 2],
-             [6, 3, 8, 4],
-             [12, 27, 16, 36],
-             [-3, 3, -4, 4]]
-        );
-        checkTensor(actual, expected);
-    });
-});
+function validateEVD(A: Tensor, E: Tensor, V: Tensor, eps: number = 1e-10): void {
+    let n = A.shape[0];
+    let Q: Tensor;
+    // E should be unitary
+    if (E.hasComplexStorage()) {
+        Q = <Tensor>T.matmul(E, E, T.MM_HERMITIAN);
+        checkTensor(Q, T.eye(n).ensureComplexStorage(), eps);
+    } else {
+        Q = <Tensor>T.matmul(E, E, T.MM_TRANSPOSED);
+        checkTensor(Q, T.eye(n), eps);
+    }
+    // E V E' = A
+    // Since A may contain large elements, we scale the tolerance factor
+    // according to A.
+    let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);
+    if (E.hasComplexStorage()) {
+        Q = <Tensor>T.matmul(T.matmul(E, V), E, T.MM_HERMITIAN);
+        checkTensor(Q, A, tolA);
+    } else {
+        Q = <Tensor>T.matmul(T.matmul(E, V), E, T.MM_TRANSPOSED);
+        checkTensor(Q, A, tolA);
+    }
+}
 
 describe('inv()', () => {
     it('should computes the inverse for real matrices', () => {
@@ -157,7 +106,7 @@ describe('det()', () => {
 describe('svd()', () => {
     let A: Tensor, U: Tensor, S: Tensor, V: Tensor;
     T.seed(192);
-    let shapes = [[10, 15], [20, 30], [40, 30], [50, 50]];
+    let shapes = [[2, 4], [10, 15], [20, 30], [40, 30], [50, 50]];
     it('should perform SVD for a zero matrix', () => {
         [U, S, V] = T.svd(T.zeros([4, 3]));
         checkTensor(U, T.eye(4, 3));
@@ -218,4 +167,46 @@ describe('rank()', () => {
                             [[-1, 2, 5], [-9, 2, 7], [2, 2, 3]]);
         expect(T.rank(C)).toBe(3);
     });
+});
+
+describe('eig()', () => {
+    var shapes = [[5, 5], [10, 10], [15, 15], [20, 20]];
+    T.seed(201);
+    it('should perform eigendecomposition for a real symmetrical matrix', () => {
+        let A = T.fromArray(
+            [[2, 1, 0],
+             [1, 2, 1],
+             [0, 1, 2]]
+        );
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V);
+    });
+    for (let i = 0;i < shapes.length;i++) { 
+        it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} real symmetrical matrix`, () => {
+            let A = T.rand(shapes[i]);
+            T.add(A, T.transpose(A), true);
+            let [E, V] = T.eig(A);
+            validateEVD(A, E, V);
+        });
+    }
+    it('should perform eigendecomposition for a Hermitian matrix', () => {
+        let A = T.fromArray(
+            [[2, 1, 0],
+             [1, 2, 1],
+             [0, 1, 2]],
+            [[0, -1, 0],
+             [1, 0, -1],
+             [0, 1, 0]]
+        );
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V);
+    });
+    for (let i = 0;i < shapes.length;i++) { 
+        it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} complex Hermitian matrix`, () => {
+            let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
+            T.add(A, T.hermitian(A), true);
+            let [E, V] = T.eig(A);
+            validateEVD(A, E, V);
+        });
+    }
 });

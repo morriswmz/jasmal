@@ -10,6 +10,7 @@ import { SVD } from './decomp/svd';
 import { DataHelper } from '../../helper/dataHelper';
 import { EPSILON } from '../../constant';
 import { NormFunction } from './norm';
+import { Eigen } from "./decomp/eigen";
 
 export class MatrixOpProviderFactory {
 
@@ -83,6 +84,53 @@ export class MatrixOpProviderFactory {
                     throw new Error('Matrix or vector expected.')
                 }
                 return Y;
+            }
+        };
+
+        const isSymmetric = (m: number, n: number, x: ArrayLike<number>, skew: boolean): boolean => {
+            if (skew) {
+                for (let i = 0;i < m;i++) {
+                    for (let j = 0;j < n;j++) {
+                        if (x[i * n + j] !== -x[j * n + i]) {
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                for (let i = 0;i < m;i++) {
+                    for (let j = 0;j < n;j++) {
+                        if (x[i * n + j] !== x[j * n + i]) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        };
+
+        const opIsSymmetric = (x: OpInput, skew: boolean = false): boolean => {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            if (X.ndim !== 2) {
+                throw new Error('Matrix expected.');
+            }
+            let [m, n] = X.shape;
+            if (X.hasComplexStorage()) {
+                return isSymmetric(m, n, X.realData, skew) && isSymmetric(m, n, X.imagData, skew);
+            } else {
+                return isSymmetric(m, n, X.realData, skew);
+            }
+        };
+
+        const opIsHermitian = (x: OpInput, skew: boolean = false): boolean => {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            if (X.ndim !== 2) {
+                throw new Error('Matrix expected.');
+            }
+            let [m, n] = X.shape;
+            if (X.hasComplexStorage()) {
+                return isSymmetric(m, n, X.realData, skew) && isSymmetric(m, n, X.imagData, !skew);
+            } else {
+                return isSymmetric(m, n, X.realData, skew);
             }
         };
 
@@ -252,7 +300,6 @@ export class MatrixOpProviderFactory {
             if (X.ndim > 2) {
                 throw new Error('Norm only works for vectors and matrices.');
             }
-            let norm = 0;
             if (X.ndim === 1 || (X.ndim === 2 && X.shape[1] === 1)) {
                 // vector norm
                 if (typeof(p) !== 'number') {
@@ -435,6 +482,38 @@ export class MatrixOpProviderFactory {
             return r;
         }
 
+        const opEig = (x: OpInput): [Tensor, Tensor] => {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            let shapeX = X.shape;
+            if (X.ndim !== 2 || shapeX[0] !== shapeX[1]) {
+                throw new Error('Square matrix expected.');
+            }
+            if (X.hasComplexStorage()) {
+                // Hermitian check
+                if (!opIsHermitian(X)) {    
+                    X = X.copy(true);
+                    let E = Tensor.zeros(shapeX);
+                    let v = new Array(shapeX[0]);
+                    E.ensureComplexStorage();
+                    Eigen.eigHermitian(shapeX[0], X.realData, X.imagData, v,
+                        E.realData, E.imagData);
+                    return [E, opDiag(v)];
+                } else {
+                    throw new Error('Only Hermitian matrices are supported.');
+                }
+            } else {
+                // symmetry check
+                if (opIsSymmetric(X)) {
+                    let E = Tensor.zeros(shapeX);
+                    let v = new Array(shapeX[0]);
+                    Eigen.eigSym(shapeX[0], X.realData, v, E.realData);
+                    return [E, opDiag(v)];
+                } else {
+                    throw new Error('Only symmetric matrices are supported.')
+                }
+            }
+        }
+
         return {
             eye: opEye,
             hilb: opHilb,
@@ -449,7 +528,8 @@ export class MatrixOpProviderFactory {
             norm: opNorm,
             lu: opLu,
             svd: opSvd,
-            rank: opRank
+            rank: opRank,
+            eig: opEig
         }
     }
 }

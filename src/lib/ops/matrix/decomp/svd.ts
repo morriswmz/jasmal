@@ -382,6 +382,12 @@ export class SVD {
         let phaseIm = new Array(n);
         let phase2Re = new Array(n);
         let phase2Im = new Array(n);
+        for (i = 0;i < n;i++) {
+            phaseRe[i] = 1;
+            phaseIm[i] = 0;
+            phase2Re[i] = 1;
+            phase2Im[i] = 0;
+        }
         phase2Re[0] = -1;
         phase2Im[0] = 0;
         // 1. Use Householder reflections to reduce A into bidiagonal form.

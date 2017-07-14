@@ -4,6 +4,17 @@ import { ShapeHelper } from '../lib/helper/shapeHelper';
 import { DTypeHelper } from '../lib/dtype';
 import { DataBlock } from '../lib/storage';
 
+export function maxAbs(x: ArrayLike<number>): number {
+    let max = -Infinity;
+    for (let i = 0;i < x.length;i++) {
+        let abs = Math.abs(x[i]);
+        if (abs > max) {
+            max = abs;
+        }
+    }
+    return max;
+}
+
 export function checkArrayLike<T>(actual: ArrayLike<T>, expected: ArrayLike<T>): void {
     if (actual.length !== expected.length) {
         fail(`Expected an array with length ${expected.length}, but got an array with length ${actual.length}.`);
@@ -60,18 +71,38 @@ export function checkTensor(actual: any, expected: Tensor, tolerance: number = 0
                 fail(`At index ${i}, expecting the real part to be ${reExpected[i]}, got ${reActual[i]}.`);
                 return;                
             }
-        } else if (Math.abs(reActual[i] - reExpected[i]) > tolerance) {
-            fail(`At index ${i}, expecting the real part to be ${reExpected[i]} ± ${tolerance}, got ${reActual[i]}.`);
-            return;
+        } else {
+            if (isNaN(reActual[i])) {
+                fail(`At index ${i}, expecting the real part to be a valid number, got NaN.`);
+                return;
+            } else if (Math.abs(reActual[i] - reExpected[i]) > tolerance) {
+                fail(`At index ${i}, expecting the real part to be ${reExpected[i]} ± ${tolerance}, got ${reActual[i]}.`);
+                return;
+            }
         }
     }
     if (expected.hasComplexStorage()) {
         let imActual = actual.imagData;
         let imExpected = expected.imagData;
         for (let i = 0;i < imActual.length;i++) {
-            if (Math.abs(imActual[i] - imExpected[i]) > tolerance) {
-                fail(`At index ${i}, expecting the imaginary part to be ${imExpected[i]} ± ${tolerance}, got ${imActual[i]}.`);
-                return;
+            if (isNaN(imExpected[i])) {
+                if (!isNaN(imActual[i])) {
+                    fail(`At index ${i}, expecting the imaginary part to be NaN, got ${imActual[i]}.`);
+                    return;
+                }
+            } else if (!isFinite(imExpected[i])) {
+                if (imExpected[i] !== imActual[i]) {
+                    fail(`At index ${i}, expecting the imaginary part to be ${imExpected[i]}, got ${imActual[i]}.`);
+                    return;                
+                }
+            } else {
+                if (isNaN(imActual[i])) {
+                    fail(`At index ${i}, expecting the imaginary part to be a valid number, got NaN.`);
+                    return;
+                } else if (Math.abs(imActual[i] - imExpected[i]) > tolerance) {
+                    fail(`At index ${i}, expecting the imaginary part to be ${imExpected[i]} ± ${tolerance}, got ${imActual[i]}.`);
+                    return;
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 # JASMAL
 
 **JASMAL** stands for **J**ust **A**nother Java**S**cript **MA**trix **L**ibrary,
-or **JA**va**S**cript **MA**trix **L**ibrary. This is a work-in-progress
+or **JA**va**S**cript **MA**trix **L**ibrary. This is a **work-in-progress**
 library I used to create interactive simulations on my
 [blog](research.wmz.ninja/articles/2017/06/bartlett-mvdr-beamformer-in-the-browser.html).
 
@@ -121,6 +121,19 @@ var C1 = T.matmul(T.diag([1, 2, 3]), X);
 var C2 = T.mul(T.tile([[1], [2], [3]], [1, 3]), X);
 ```
 
+## Math functions
+
+JASMAL supports various math functions. Many of them also accepts complex
+inputs.
+``` JavaScript
+// Absolute value
+T.abs([[1, 2], [-3, 4]]);
+// Sine
+T.sin([1, 2, 3]);
+// Square root
+T.sqrt(-1);
+```
+
 ## Random number generation
 
 To support seeding, Jasmal uses the [Mersenne twister](https://en.wikipedia.org/wiki/Mersenne_Twister)
@@ -136,3 +149,41 @@ var N = T.randn([3, 4, 5]);
 // Generate 10 random integers within [0, 10].
 var Z = T.randi(0, 10, [10]);
 ``` 
+
+## Matrix operations
+``` JavaScript
+var A = T.rand([3, 3]), B = T.rand([3, 3]);
+// Construct a complex matrix by combining real and imaginary parts.
+var C = T.complex(A, B);
+// Matrix multiplication
+var AB = T.matmul(A, B);
+// You can specify a modifier for B
+var ABt = T.matmul(A, B, T.MM_TRANSPOSED);
+// Extract diagonal elements.
+var d = T.diag(A);
+// Construct a diagonal matrix.
+var D = diag(d);
+// Matrix transpose/Hermitian.
+var At = T.transpose(A);
+var Ch = T.hermitian(C);
+// Kronecker product.
+var K = T.kron(A, B);
+// Inverse (JASMAL uses LUP decomposition to compute the inverse)
+var Ainv = T.inv(A);
+// Determinant (JASMAL uses LUP decomposition to compute the determinant)
+var detA = T.det(A);
+// SVD
+var [U1, S1, V1] = T.svd(A);
+// SVD also works for complex matrices.
+var [U2, S2, V2] = T.svd(C);
+```
+
+## Data functions
+
+``` JavaScript
+var A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
+// Gets the sum of all the elements.
+var sum = T.sum(A);
+// Sum each row and returns a column vector. We specify keepDims = true here.
+var sums = T.sum(A, 1, true);
+```
