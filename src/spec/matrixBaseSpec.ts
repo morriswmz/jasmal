@@ -4,6 +4,10 @@ import { Tensor } from '../lib/tensor';
 import { ComplexNumber } from '../lib/complexNumber';
 const T = JasmalEngine.createInstance();
 
+describe('isHermitian()', () => {
+
+});
+
 describe('matmul()', () => {
 
     let M = T.fromArray([[8, 1, 6], [3, 5, 7], [4, 9, 2]]);

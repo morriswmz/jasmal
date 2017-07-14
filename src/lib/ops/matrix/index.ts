@@ -91,7 +91,7 @@ export class MatrixOpProviderFactory {
             if (skew) {
                 for (let i = 0;i < m;i++) {
                     for (let j = 0;j < n;j++) {
-                        if (x[i * n + j] !== -x[j * n + i]) {
+                        if (x[i * n + j] !== -x[j * m + i]) {
                             return false;
                         }
                     }
@@ -99,7 +99,7 @@ export class MatrixOpProviderFactory {
             } else {
                 for (let i = 0;i < m;i++) {
                     for (let j = 0;j < n;j++) {
-                        if (x[i * n + j] !== x[j * n + i]) {
+                        if (x[i * n + j] !== x[j * m + i]) {
                             return false;
                         }
                     }
@@ -490,7 +490,7 @@ export class MatrixOpProviderFactory {
             }
             if (X.hasComplexStorage()) {
                 // Hermitian check
-                if (!opIsHermitian(X)) {    
+                if (opIsHermitian(X)) {    
                     X = X.copy(true);
                     let E = Tensor.zeros(shapeX);
                     let v = new Array(shapeX[0]);
