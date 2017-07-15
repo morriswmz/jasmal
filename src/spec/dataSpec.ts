@@ -4,6 +4,8 @@ import { checkTensor, checkComplex } from './testHelper';
 import { ComplexNumber } from '../lib/complexNumber';
 const T = JasmalEngine.createInstance();
 
+// TODO: more complex cases
+
 describe('min()', () => {
     it('should return the minimum in a vector', () => {
         expect(T.min([6, -1, 3, 0.5, -6.18])).toEqual([-6.18, 4]);

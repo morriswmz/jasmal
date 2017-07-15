@@ -94,6 +94,10 @@ export const enum MatrixModifier {
 
 export interface IMatrixOpProvider {
 
+    isSymmetric(x: OpInput, skew?: boolean): boolean;
+
+    isHermitian(x: OpInput, skew?: boolean): boolean;
+
     eye(m: number, n?: number, dtype?: DType): Tensor;
 
     hilb(n: number): Tensor;

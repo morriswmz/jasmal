@@ -116,6 +116,8 @@ export class JasmalEngine {
             isinf: coreOpProvider.isinf,
             find: coreOpProvider.find,
 
+            isSymmetric: matrixOpProvider.isSymmetric,
+            isHermitian: matrixOpProvider.isHermitian,
             eye: matrixOpProvider.eye,
             hilb: matrixOpProvider.hilb,
             diag: matrixOpProvider.diag,

@@ -515,6 +515,8 @@ export class MatrixOpProviderFactory {
         }
 
         return {
+            isSymmetric: opIsSymmetric,
+            isHermitian: opIsHermitian,
             eye: opEye,
             hilb: opHilb,
             diag: opDiag,

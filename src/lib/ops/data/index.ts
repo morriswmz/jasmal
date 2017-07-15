@@ -54,7 +54,7 @@ export class DataOpProviderFactory {
                 if (isOutputComplex) {
                     Y.ensureComplexStorage();
                     reX = X.realData;
-                    reY = Y.realData;
+                    imX = X.imagData;
                     reY = Y.realData;
                     imY = Y.imagData;
                     const doCalc = (level: number, offsetX: number, offsetY): void => {
@@ -75,7 +75,7 @@ export class DataOpProviderFactory {
                     doCalc(0, 0, 0);
                 } else {
                     reX = X.realData;
-                    reY = Y.realData;
+                    imX = X.imagData;
                     reY = Y.realData;
                     const doCalc = (level: number, offsetX: number, offsetY): void => {
                         if (level === maxLevel) {

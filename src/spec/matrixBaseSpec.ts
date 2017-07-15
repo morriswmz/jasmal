@@ -4,6 +4,37 @@ import { Tensor } from '../lib/tensor';
 import { ComplexNumber } from '../lib/complexNumber';
 const T = JasmalEngine.createInstance();
 
+describe('isSymmetric()', () => {
+    it('should return true for a real symmetric matrix', () => {
+        expect(T.isSymmetric([[1, 9], [9, 2]])).toBe(true);
+    });
+    it('should return true for a real skew symmetric matrix when skew = true', () => {
+        expect(T.isSymmetric([[0, 9], [-9, 0]], true)).toBe(true);
+    });
+    it('should return false for a real non-symmetric matrix', () => {
+        expect(T.isSymmetric([[1, 9], [8, 1]])).toBe(false);
+    });
+    it('should return false for a real matrix that is not skew symmetric when skew = true', () => {
+        expect(T.isSymmetric([[1, 9], [9, 2]], true)).toBe(false);
+    });
+    it('should return true for a complex symmetric matrix', () => {
+        let A = T.fromArray([[2, 3], [3, 2]], [[4, -1], [-1, 0]]);
+        expect(T.isSymmetric(A)).toBe(true);
+    });
+    it('should return true for a complex skew symmetric matrix when skew = true', () => {
+        let A = T.fromArray([[0, 3], [-3, 0]], [[0, -1], [1, 0]]);
+        expect(T.isSymmetric(A, true)).toBe(true);
+    });
+    it('should return false for a complex matrix that is not symmetric', () => {
+        let A = T.fromArray([[2, 3], [3, 2]], [[4, -1], [1, 0]]);
+        expect(T.isSymmetric(A)).toBe(false);
+    });
+    it('should return false for a complex matrix that is not skew symmetric when skew = true', () => {
+        let A = T.fromArray([[0, 3], [-3, 0]], [[0, 1], [1, 0]]);
+        expect(T.isSymmetric(A, true)).toBe(false);
+    });
+});
+
 describe('isHermitian()', () => {
 
 });
