@@ -132,3 +132,21 @@ describe('median()', () => {
         checkTensor(actual, expected);
     });
 });
+
+describe('sort()', () => {
+    let A = T.fromArray([[1, 3, NaN, 4], [Infinity, -2, 99, 4]]);
+    it('should sort in ascending order', () => {
+        let [actualX, actualIndices] = T.sort(A, 'asc', true);
+        let expectedX = T.fromArray([-2, 1, 3, 4, 4, 99, Infinity, NaN]);
+        let expectedIndices = [5, 0, 1, 3, 7, 6, 4, 2];
+        checkTensor(actualX, expectedX);
+        expect(actualIndices).toEqual(expectedIndices);
+    });
+    it('should sort in descending order', () => {
+        let [actualX, actualIndices] = T.sort(A, 'desc', true);
+        let expectedX = T.fromArray([NaN, Infinity, 99, 4, 4, 3, 1, -2]);
+        let expectedIndices = [2, 4, 6, 3, 7, 1, 0, 5];
+        checkTensor(actualX, expectedX);
+        expect(actualIndices).toEqual(expectedIndices);
+    });
+});

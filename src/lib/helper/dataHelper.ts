@@ -54,6 +54,15 @@ export class DataHelper {
         return true;
     }
 
+    public static isArrayAllFinite(x: ArrayLike<number>): boolean {
+        for (let i = 0;i < x.length;i++) {
+            if (!isFinite(x[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static anyNegative(x: ArrayLike<number>): boolean {
         for (let i = 0;i < x.length;i++) {
             if (x[i] < 0) {

@@ -7,6 +7,7 @@ import { ComplexNumber } from '../../complexNumber';
 import { ShapeHelper } from '../../helper/shapeHelper';
 import { DataBlock } from '../../storage';
 import { DType, OutputDTypeResolver } from '../../dtype';
+import { DataHelper } from "../../helper/dataHelper";
 
 type RealDataFunction = (reX: ArrayLike<number>, offset: number, stride: number, n: number) => number;
 type ComplexDataFunction1 = (reX: ArrayLike<number>, imX: ArrayLike<number>, offset: number, stride: number, n: number)
@@ -304,6 +305,63 @@ export class DataOpProviderFactory {
             }
         };
 
+        function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
+        function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
+        function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: boolean): Tensor | [Tensor, number[]] {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+                throw new Error('Cannot order complex elements.');
+            }
+            let n = X.size;
+            let Y = Tensor.zeros([n]);
+            let dataX = X.realData, dataY = Y.realData;
+            let indices = new Array<number>(n);
+            for (let i = 0;i < n;i++) {
+                indices[i] = i;
+            }
+            if (dir === 'asc') {
+                indices.sort((ia, ib) => {
+                    let a = dataX[ia], b = dataX[ib];
+                    if (isNaN(a)) {
+                        return isNaN(b) ? (ia > ib ? 1 : -1) : 1;
+                    } else {
+                        if (isNaN(b)) {
+                            return -1;
+                        }
+                        if (a > b) {
+                            return 1;
+                        } else if (a < b) {
+                            return -1;
+                        } else {
+                            return ia > ib ? 1 : -1;
+                        }
+                    }
+                });
+            } else {
+                indices.sort((ia, ib) => {
+                    let a = dataX[ia], b = dataX[ib];
+                    if (isNaN(a)) {
+                        return isNaN(b) ? (ia > ib ? 1 : -1) : -1;
+                    } else {
+                        if (isNaN(b)) {
+                            return 1;
+                        }
+                        if (a > b) {
+                            return -1;
+                        } else if (a < b) {
+                            return 1;
+                        } else {
+                            return ia > ib ? 1 : -1;
+                        }
+                    }
+                });
+            }
+            for (let i = 0;i < n;i++) {
+                dataY[i] = dataX[indices[i]];
+            }
+            return outputIndices ? [Y, indices] : Y;
+        }
+
         return {
             min: opMin,
             max: opMax,
@@ -313,7 +371,8 @@ export class DataOpProviderFactory {
             mean: opMean,
             median: opMedian,
             std: opStd,
-            var: opVar
+            var: opVar,
+            sort: opSort
         };
 
     }

@@ -194,7 +194,8 @@ export class JasmalEngine {
             mean: dataOpProvider.mean,
             median: dataOpProvider.median,
             std: dataOpProvider.std,
-            var: dataOpProvider.var
+            var: dataOpProvider.var,
+            sort: dataOpProvider.sort
         }
         
     }

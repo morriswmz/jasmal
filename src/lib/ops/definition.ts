@@ -229,7 +229,7 @@ export interface IRandomOpProvider {
 
 }
 
-// TODO: add sort, sortRows, unique
+// TODO: add sortRows, unique
 export interface IDataOpProvider {
 
     min(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
@@ -249,5 +249,8 @@ export interface IDataOpProvider {
     var(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
     std(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
+
+    sort(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
+    sort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
 
 }
