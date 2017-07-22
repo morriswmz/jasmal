@@ -1,3 +1,22 @@
+export interface BroadcastingCheckResult {
+    /**
+     * Adjusted (by prepending new axis) shape of the first operand.
+     */
+    shapeX: number[];
+    /**
+     * Adjusted (by prepending new axis) shape of the second operand.
+     */
+    shapeY: number[];
+    /**
+     * Shape of the resulting tensor.
+     */
+    shapeZ: number[];
+    /**
+     * True if the two operands share the exact shape.
+     */
+    exact: boolean;
+}
+
 export class ShapeHelper {
 
     public static validateShape(shape: number[]): void {
@@ -72,6 +91,35 @@ export class ShapeHelper {
 
     public static compareSqueezedShape(shape1: number[], shape2: number[]): boolean {
         return ShapeHelper.compareShape(ShapeHelper.getSqueezedShape(shape1), ShapeHelper.getSqueezedShape(shape2));
+    }
+
+    /**
+    * Checks if the broadcasting is possible between the two shapes.
+    * @param shapeX Shape of tensor X.
+    * @param shapeY Shape of tensor Y.
+    */
+    public static checkBroadcastingCompatibility(shapeX: number[], shapeY: number[]): BroadcastingCheckResult {
+        'use strict';
+        // check shape
+        var shapeZ: number[] = [];
+        while (shapeX.length < shapeY.length) shapeX.unshift(1);
+        while (shapeY.length < shapeX.length) shapeY.unshift(1);
+        var exact = true;
+        for (var i = 0;i < shapeX.length;i++) {
+            if (shapeX[i] !== shapeY[i]) {
+                if (shapeX[i] !== 1 && shapeY[i] !== 1) {
+                    throw new Error('Incompatible shape.')
+                }
+                exact = false;
+            }
+            shapeZ.push(Math.max(shapeX[i], shapeY[i]));
+        }
+        return {
+            shapeX: shapeX,
+            shapeY: shapeY,
+            shapeZ: shapeZ,
+            exact: exact
+        };
     }
 
 }

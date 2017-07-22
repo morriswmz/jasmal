@@ -2,7 +2,7 @@ import { Tensor } from '../../tensor';
 import { OpInput, OpOutput } from '../../commonTypes'; 
 import { DataBlock } from '../../storage';
 import { ComplexNumber } from '../../complexNumber';
-import { ShapeHelper } from '../../helper/shapeHelper';
+import { ShapeHelper, BroadcastingCheckResult } from '../../helper/shapeHelper';
 import { TemplateEngine } from './templateEngine';
 import { T_BLOCK_TEMPLATE, S_BLOCK_TEMPLATE, UNARY_OP_TEMPLATE,
          BIN_EL_OP_TEMPLATE, SS_BLOCK_TEMPLATE, ST_BLOCK_TEMPLATE,
@@ -109,25 +109,6 @@ export interface UnaryEWOpTemplate {
     opC?: string;
 }
 
-export interface BroadcastCheckResult {
-    /**
-     * Adjusted (by prepending new axis) shape of the first operand.
-     */
-    shapeX: number[];
-    /**
-     * Adjusted (by prepending new axis) shape of the second operand.
-     */
-    shapeY: number[];
-    /**
-     * Shape of the resulting tensor.
-     */
-    shapeZ: number[];
-    /**
-     * True if the two operands share the exact shape.
-     */
-    exact: boolean;
-}
-
 /**
  * Classes and helpers required by the compiled function. An object implementing
  * this interface will be passed as an argument so these classes and helpers 
@@ -144,7 +125,7 @@ interface OpCommonDependencies {
 
 interface BinaryOpDependencies extends OpCommonDependencies {
     compareShape: (shape1: number[], shape2: number[]) => boolean;
-    checkIfBroadcastable: (shapeX: number[], shapeY: number[]) => BroadcastCheckResult;
+    checkBroadcastingCompatibility: (shapeX: number[], shapeY: number[]) => BroadcastingCheckResult;
     determineOutputType: (t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean) => DType | undefined;
 }
 
@@ -167,36 +148,6 @@ export class TensorElementWiseOpCompiler {
             TensorElementWiseOpCompiler._instance = new TensorElementWiseOpCompiler();
         }
         return TensorElementWiseOpCompiler._instance;
-    }
-
-    // TODO: this should be moved to ShapeHelper.
-    /**
-    * Checks if the broadcasting is possible between the two shapes.
-    * @param shapeX Shape of tensor X.
-    * @param shapeY Shape of tensor Y.
-    */
-    public static checkIfBroadcastable(shapeX: number[], shapeY: number[]): BroadcastCheckResult {
-        'use strict';
-        // check shape
-        var shapeZ: number[] = [];
-        while (shapeX.length < shapeY.length) shapeX.unshift(1);
-        while (shapeY.length < shapeX.length) shapeY.unshift(1);
-        var exact = true;
-        for (var i = 0;i < shapeX.length;i++) {
-            if (shapeX[i] !== shapeY[i]) {
-                if (shapeX[i] !== 1 && shapeY[i] !== 1) {
-                    throw new Error('Incompatible shape.')
-                }
-                exact = false;
-            }
-            shapeZ.push(Math.max(shapeX[i], shapeY[i]));
-        }
-        return {
-            shapeX: shapeX,
-            shapeY: shapeY,
-            shapeZ: shapeZ,
-            exact: exact
-        };
     }
 
     public makeUnaryOp(opTemplate: UnaryEWOpTemplate,
@@ -309,7 +260,7 @@ export class TensorElementWiseOpCompiler {
             computeStrides: ShapeHelper.computeStrides,
             compareShape: ShapeHelper.compareShape,
             determineOutputType: outputDTypeResolver,
-            checkIfBroadcastable:  TensorElementWiseOpCompiler.checkIfBroadcastable,
+            checkBroadcastingCompatibility: ShapeHelper.checkBroadcastingCompatibility,
             isWiderType: DTypeHelper.isWiderType,
             dTypeToString: DTypeHelper.dTypeToString
         };

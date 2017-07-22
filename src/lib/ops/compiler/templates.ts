@@ -395,7 +395,7 @@ if (infoY.isComplex) {
  */
 export const TT_BLOCK_TEMPLATE =
 `var results, shapeX, shapeY, shapeZ;
-results = __dep__.checkIfBroadcastable(infoX.originalShape, infoY.originalShape);
+results = __dep__.checkBroadcastingCompatibility(infoX.originalShape, infoY.originalShape);
 shapeX = results.shapeX;
 shapeY = results.shapeY;
 shapeZ = results.shapeZ;
