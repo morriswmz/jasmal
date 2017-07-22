@@ -3,25 +3,7 @@ import { ComplexNumber } from '../complexNumber';
 import { OpInput, OpOutput, OpOutputWithIndex, Scalar } from '../commonTypes';
 import { DType } from '../dtype';
 
-/**
- * General rules:
- * 1. If all the inputs are scalars, the output is scalar.
- * 2. If any of the input is an array/tensor, the output will be a tensor.
- */
-
-/**
- * Represents a binary operation.
- */
-export type GenericBinaryOp = (x: OpInput, y: OpInput, inPlace?: boolean) => OpOutput;
-/**
- * Represents a unary operation.
- */
-export type GenericUnaryOp = (x: OpInput, inPlace?: boolean) => OpOutput;
-/**
- * Represents a unary operation with a parameter.
- */
-export type OneParamUnaryOp = (x: OpInput, p: number, inPlace?: boolean) => OpOutput;
-
+// TODO: split this into subfolders
 /**
  * Provides essential tensor operations.
  */
@@ -247,11 +229,12 @@ export interface IRandomOpProvider {
 
 }
 
+// TODO: add sort, sortRows, unique
 export interface IDataOpProvider {
 
-    min(x: OpInput, y?: OpInput, keepDims?: boolean): OpOutputWithIndex;
+    min(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
 
-    max(x: OpInput, y?: OpInput, keepDims?: boolean): OpOutputWithIndex;
+    max(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
 
     sum(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 

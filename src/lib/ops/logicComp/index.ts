@@ -10,7 +10,7 @@ export class LogicComparisonOpProviderFactory {
     
     public static create(): ILogicComparisonOpProvider {
         
-        const compiler = TensorElementWiseOpCompiler.GetInstance();
+        const compiler = TensorElementWiseOpCompiler.getInstance();
 
         const opEq = compiler.makeBinaryOp({
             opRR: '$reZ = ($reX === $reY) ? 1 : 0;'

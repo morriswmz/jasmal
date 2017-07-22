@@ -3,13 +3,13 @@ import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { Tensor } from '../../tensor';
 import { OpInput, OpOutput, OpInputType } from '../../commonTypes';
-import { MathHelper } from '../../helper/mathHelper';
+import { CMathHelper } from '../../helper/mathHelper';
 import { DataHelper } from "../../helper/dataHelper";
 
 export class MathOpProviderFactory {
     public static create(): IMathOpProvider {
         
-        const compiler = TensorElementWiseOpCompiler.GetInstance();
+        const compiler = TensorElementWiseOpCompiler.getInstance();
 
         const notImplemented = () => {
             throw new Error('Not implemented.');
@@ -22,14 +22,19 @@ export class MathOpProviderFactory {
             // custom rule here, only convert to float when the input is complex
             outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t,
             inlineFunctions: {
-                'length2': MathHelper.length2
+                'length2': CMathHelper.length2
             }
         });
 
         const opSign = compiler.makeUnaryOp({
             opR: '$reY = $reX > 0 ? 1 : ($reX < 0 ? -1 : ($reX === 0 ? 0 : NaN));',
-            opC: '$reY = $reX > 0 ? 1 : ($reX < 0 ? -1 : ($reX === 0 ? 0 : NaN));\n' + 
-                 '$imY = $imX > 0 ? 1 : ($imX < 0 ? -1 : ($imX === 0 ? 0 : NaN))'
+            opC: '$tmp1 = length2($reX, $imX);' +
+                 'if ($tmp1 === 0) { $reY = 0; $imY = 0; } else { $reY = $reX / $tmp1; $imY = $imX / $tmp1; }'
+        }, {
+            outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t,
+            inlineFunctions: {
+                'length2': CMathHelper.length2
+            }
         });
 
         const opMin2 = compiler.makeBinaryOp({
@@ -75,6 +80,10 @@ export class MathOpProviderFactory {
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
+
+        // ============
+        // Trigonometry
+        // ============
 
         const opSin = compiler.makeUnaryOp({
             opR: '$reY = Math.sin($reX);',
@@ -166,43 +175,12 @@ export class MathOpProviderFactory {
 
         const opSqrtA = compiler.makeUnaryOp({
             opR: 'if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $reY = 0; $imY = Math.sqrt(-$reX); }',
-            opC: '$tmp1 = sqrtc($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opC: '$tmp1 = csqrt($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
             // sqrt(z) => [sqrt(0.5*(Re(z) + |z|)), 0.5*Im(z) / sqrt(0.5*(Re(z) + |z|))]
             inlineFunctions: {
-                'sqrtc': (re: number, im: number): [number, number] => {
-                    if (isNaN(re) || isNaN(im)) {
-                        return [NaN, NaN];
-                    }
-                    if (im === 0) {
-                        if (re >= 0) {
-                            return [Math.sqrt(re), 0];
-                        } else {
-                            return [0, Math.sqrt(-re)];
-                        }
-                    } else {
-                        if (!isFinite(im)) {
-                            return [Infinity, im > 0 ? Infinity : -Infinity];
-                        } else if (!isFinite(re)) {
-                            return re > 0 ? [Infinity, 0] : [0, im >= 0 ? Infinity : -Infinity];
-                        } else {
-                            let r: number, t: number;
-                            let absRe = Math.abs(re), absIm = Math.abs(im);
-                            if (absRe < absIm) {
-                                r = absRe / absIm;
-                                t = Math.sqrt(0.5 * (re + absIm * Math.sqrt(1 + r * r)));
-                            } else {
-                                if (re === 0) {
-                                    return [0, 0];
-                                }
-                                r = absIm / absRe;
-                                t = Math.sqrt(0.5 * (re + absRe * Math.sqrt(1 + r * r)));
-                            }
-                            return [t, 0.5 * im / t];
-                        }
-                    }
-                }
+                'csqrt': CMathHelper.csqrt
             }
         });
 

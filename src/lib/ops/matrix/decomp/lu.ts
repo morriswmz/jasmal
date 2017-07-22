@@ -1,5 +1,5 @@
 import { Tensor } from '../../../tensor';
-import { MathHelper } from '../../../helper/mathHelper';
+import { CMathHelper } from '../../../helper/mathHelper';
 import { DataBlock } from '../../../storage';
 import { OutputDTypeResolver } from '../../../dtype';
 import { DataHelper } from "../../../helper/dataHelper";
@@ -114,7 +114,7 @@ export class LU {
         for (let i = 0; i < m; i++) {
             let maxAbs = 0.0;
             for (let j = 0; j < m; j++) {
-                let curAbs = MathHelper.length2(reX[i * m + j], imX[i * m + j]);
+                let curAbs = CMathHelper.length2(reX[i * m + j], imX[i * m + j]);
                 if (curAbs > maxAbs) {
                     maxAbs = curAbs;
                 }
@@ -148,7 +148,7 @@ export class LU {
                 reX[i * m + j] = accRe;
                 imX[i * m + j] = accIm;
                 // check abs
-                let curAbs = MathHelper.length2(accRe, accIm) * scales[i];
+                let curAbs = CMathHelper.length2(accRe, accIm) * scales[i];
                 if (curAbs >= maxAbs) {
                     maxAbs = curAbs;
                     idxMax = i;
@@ -183,7 +183,7 @@ export class LU {
                 // also zero -> no need to perform the division
                 if (reC !== 0 || imC !== 0) {
                     // 1.0 / pivot element
-                    [reC, imC] = MathHelper.complexInv(reC, imC);
+                    [reC, imC] = CMathHelper.cReciprocal(reC, imC);
                     for (let i = j + 1; i < m; i++) {
                         let tmp = reX[i * m + j];
                         reX[i * m + j] = tmp * reC - imX[i * m + j] * imC;
@@ -200,12 +200,12 @@ export class LU {
      * B will be overwritten with the solution X.
      * @param m Number of rows in B.
      * @param n Number of columns in B.
-     * @param reLU Compact storage of L and U of the PLU decomposition.
-     * @param p Permutation vector.
+     * @param reLU (Input) Compact storage of L and U of the PLU decomposition.
+     * @param p (Input) Permutation vector.
      * @param reB (Output) Matrix B.
      */
     public static luSolve(m: number, n: number, reLU: ArrayLike<number>,
-                          p: DataBlock, reB: DataBlock): void {
+                          p: ArrayLike<number>, reB: DataBlock): void {
         if (n === 1) {
             LU._luSolveColumn(n, reLU, reB);
         } else {
@@ -227,11 +227,11 @@ export class LU {
      * m x n. B will be overwritten with the solution X.
      * @param m Number of rows in B.
      * @param n Number of columns in B.
-     * @param reLU Real part of the compact storage of L and U of the PLU 
-     *  decomposition.
-     * @param imLU Imaginary part of the compact storage of L and U of the PLU 
-     *  decomposition.
-     * @param p Permutation vector.
+     * @param reLU (Input) Real part of the compact storage of L and U of the
+     *  PLU decomposition.
+     * @param imLU (Input) Imaginary part of the compact storage of L and U of 
+     *  the PLU decomposition.
+     * @param p (Input) Permutation vector.
      * @param reB (Output) Real part of B.
      * @param imB (Output) Imaginary part of B.
      */
@@ -260,8 +260,8 @@ export class LU {
     /**
      * Solves LUx = b in-place (b will be overridden).
      * @param n Length of b.
-     * @param reLU Compact storage of LU decomposition. Will be overwritten with
-     *             the solution.
+     * @param reLU (Input) Compact storage of LU decomposition. Will be
+     *             overwritten with the solution.
      * @param reB (Output) Vector b.
      */
     public static _luSolveColumn(n: number, reLU: ArrayLike<number>, reB: DataBlock): void {
@@ -295,8 +295,9 @@ export class LU {
     /**
      * Solves LUx = b in-place (b will be overridden) for the complex case.
      * @param n Length of b.
-     * @param reLU Real part of the compact storage of LU decomposition.
-     * @param imLU Imaginary part of the compact storage of LU decomposition.
+     * @param reLU (Input) Real part of the compact storage of LU decomposition.
+     * @param imLU (Input) Imaginary part of the compact storage of LU
+     *             decomposition.
      * @param reB (Output) Real part of the vector b. Will be overwritten with
      *            the solution.
      * @param imB (Output) Imaginary part of the vector b. Will be overwritten
@@ -333,7 +334,7 @@ export class LU {
                 accRe -= reLU[i * n + j] * reB[j] - imLU[i * n + j] * imB[j];
                 accIm -= reLU[i * n + j] * imB[j] + imLU[i * n + j] * reB[j];
             }
-            [reB[i], imB[i]] = MathHelper.complexDiv(accRe, accIm, reLU[i * n + i], imLU[i * n + i]);
+            [reB[i], imB[i]] = CMathHelper.cdivCC(accRe, accIm, reLU[i * n + i], imLU[i * n + i]);
         }
     }
 
@@ -341,7 +342,7 @@ export class LU {
      * Converts a compact LU matrix to full L and U matrices.
      * @param m Dimension of the matrix.
      * @param isImaginaryPart Whether we are converting the imaginary part.
-     * @param LU Compact LU storage.
+     * @param LU (Input) Compact LU storage.
      * @param L (Output) Storage of the L matrix.
      * @param U (Output) Storage of the U matrix.
      */
@@ -364,10 +365,10 @@ export class LU {
 
     /**
      * Converts the permutation vector to the corresponding permutation matrix.
-     * @param p Permutation vector.
+     * @param p (Input) Permutation vector.
      * @param P (Output) Storage for the permutation matrix P.
      */
-    public static permutationToFull(p: number[], P: DataBlock): void {
+    public static permutationToFull(p: ArrayLike<number>, P: DataBlock): void {
         for (let i = 0; i < p.length; i++) {
             P[p[i] * p.length + i] = 1;
         }

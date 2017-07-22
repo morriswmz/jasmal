@@ -4,68 +4,11 @@ import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { Tensor } from "../../tensor";
 import { ComplexNumber } from "../../complexNumber";
 import { ShapeHelper } from "../../helper/shapeHelper";
-
-const PROG_DIV_RC =
-`if (Math.abs($reY) > Math.abs($imY)) {
-    $tmp1 = $imY / $reY;
-    $tmp2 = $reY + $imY * $tmp1;
-    $imZ = -$tmp1 / $tmp2 * $reX
-    $reZ = $reX / $tmp2;
-} else {
-    if ($imY === 0) {
-        $reZ = Infinity;  $imZ = 0;
-    } else {
-        $tmp1 = $reY / $imY;
-        $tmp2 = $reY * $tmp1 + $imY;
-        $imZ = -$reX / $tmp2;
-        $reZ = $tmp1 / $tmp2 * $reX;
-    }
-}`;
-
-const PROG_DIV_CC =
-`if (Math.abs($reY) > Math.abs($imY)) {
-    $tmp1 = $imY / $reY;
-    $tmp2 = $reY + $imY * $tmp1;
-    $tmp3 = $reX;
-    $reZ = ($tmp3 + $imX * $tmp1) / $tmp2;
-    $imZ = ($imX - $tmp3 * $tmp1) / $tmp2;
-} else {
-    if ($imY === 0) {
-        if ($reX === 0) {
-            if ($imX === 0) {
-                $reZ = NaN; $imZ = NaN;
-            } else {
-                $reZ = 0; $imZ = $imX / 0;
-            }
-        } else {
-            $reZ = $reX / 0;
-            $imZ = $imX === 0 ? 0 : $imX / 0;
-        }
-    } else {
-        $tmp1 = $reY / $imY;
-        $tmp2 = $imY + $reY * $tmp1;
-        $tmp3 = $reX;
-        $reZ = ($imX + $tmp3 * $tmp1) / $tmp2;
-        $imZ = (- $tmp3 + $imX * $tmp1) / $tmp2;
-    }
-}`;
-
-const PROG_RECIPROCAL_C =
-`if (Math.abs($imX) < Math.abs($reX)) {
-    $tmp1 = $imX / $reX; $tmp2 = $reX + $imX * $tmp1;
-    $reY = 1 / $tmp2; $imY = - $tmp1 / $tmp2;
-} else {
-    if ($imX === 0) {
-        $reY = Infinity; $imY = 0;
-    } else {
-        $tmp1 = $reX / $imX; $tmp2 = $imX + $reX * $tmp1;
-        $reY = $tmp1 / $tmp2; $imY = - 1 / $tmp2;
-    }
-}`;
+import { CMathHelper } from "../../helper/mathHelper";
 
 export class ArithmeticOpProviderFactory {
     public static create(): IArithmeticOpProvider {
-        let compiler = TensorElementWiseOpCompiler.GetInstance();
+        let compiler = TensorElementWiseOpCompiler.getInstance();
         return {
             add: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX + $reY;',
@@ -93,14 +36,25 @@ export class ArithmeticOpProviderFactory {
             }),
             div: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX / $reY;',
-                opRC: PROG_DIV_RC,
+                opRC: '$tmp1 = cdivRC($reX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];',
                 opCR: '$reZ = $reX / $reY; $imZ = $imX / $reY;',
-                opCC: PROG_DIV_CC
-            }, {outputDTypeResolver: OutputDTypeResolver.bToFloat}),
+                opCC: '$tmp1 = cdivCC($reX, $imX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];'
+            }, {
+                outputDTypeResolver: OutputDTypeResolver.bToFloat,
+                inlineFunctions: {
+                    'cdivRC': CMathHelper.cdivRC,
+                    'cdivCC': CMathHelper.cdivCC
+                }
+            }),
             reciprocal: compiler.makeUnaryOp({
                 opR: '$reY = 1 / $reX;',
-                opC: PROG_RECIPROCAL_C
-            }, {outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat}),
+                opC: '$tmp1 = cReciprocal($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            }, {
+                outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat,
+                inlineFunctions: {
+                    'cReciprocal': CMathHelper.cReciprocal
+                }
+            }),
             rem: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX % $reY;'
             })

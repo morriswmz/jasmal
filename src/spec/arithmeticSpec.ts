@@ -204,12 +204,25 @@ describe('div()', () => {
         let expected = T.fromArray([NaN, 0, -1/3, Infinity]);
         checkTensor(actual, expected, EPSILON);
     });
+    it('should perform the element-wise division between two complex vectors', () => {
+        let C = T.fromArray([1, 2, 3, 4], [1, 2, 3, 4]);
+        let D = T.fromArray([1, -1, 0, 4], [1, 2, 0, -3]);
+        let actual = T.div(C, D);
+        let expected = T.fromArray([1, 0.4, Infinity, 0.16], [0, -1.2, Infinity, 1.12]);
+        checkTensor(actual, expected, EPSILON);
+    });
 });
 
 describe('reciprocal()', () => {
     it('should return the element-wise reciprocals of a real vector', () => {
         let actual = T.reciprocal([3, 5, 0, -2.2]);
         let expected = T.fromArray([1/3, 1/5, Infinity, -1/2.2]);
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should return the element-wise reciprocals of a complex vector', () => {
+        let A = T.fromArray([1, 2, 0, 0], [1, 0, -3, 0]);
+        let actual = T.reciprocal(A);
+        let expected = T.fromArray([0.5, 0.5, 0, Infinity], [-0.5, 0, 1/3, 0]);
         checkTensor(actual, expected, EPSILON);
     });
 });

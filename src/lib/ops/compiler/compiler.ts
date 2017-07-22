@@ -1,4 +1,3 @@
-import { GenericBinaryOp, GenericUnaryOp, OneParamUnaryOp } from '../definition';
 import { Tensor } from '../../tensor';
 import { OpInput, OpOutput } from '../../commonTypes'; 
 import { DataBlock } from '../../storage';
@@ -10,6 +9,26 @@ import { T_BLOCK_TEMPLATE, S_BLOCK_TEMPLATE, UNARY_OP_TEMPLATE,
          TS_BLOCK_TEMPLATE, TT_BLOCK_TEMPLATE, TT_NORMAL_BLOCK_TEMPLATE,
          TT_BROADCAST_SUB_BLOCK_TEMPLATE, TT_BROADCAST_BLOCK_TEMPLATE } from './templates';
 import { OutputDTypeResolver, DType, DTypeHelper } from '../../dtype';
+import { CMathHelper } from '../../helper/mathHelper';
+
+/**
+ * General rules:
+ * 1. If all the inputs are scalars, the output is scalar.
+ * 2. If any of the input is an array/tensor, the output will be a tensor.
+ */
+
+/**
+ * Represents a binary operation.
+ */
+export type GenericBinaryOp = (x: OpInput, y: OpInput, inPlace?: boolean) => OpOutput;
+/**
+ * Represents a unary operation.
+ */
+export type GenericUnaryOp = (x: OpInput, inPlace?: boolean) => OpOutput;
+/**
+ * Represents a unary operation with a parameter.
+ */
+export type OneParamUnaryOp = (x: OpInput, p: number, inPlace?: boolean) => OpOutput;
 
 /**
  * Defines the core operations.
@@ -116,7 +135,8 @@ export interface BroadcastCheckResult {
  */
 interface OpCommonDependencies {
     Tensor: Function;
-    ComplexNumber: Function;    
+    ComplexNumber: Function;
+    CMathHelper: Function;
     computeStrides: (shape: number[]) => number[];
     isWiderType(original: DType, newType: DType): boolean;
     dTypeToString: (dtype: DType) => string;
@@ -142,13 +162,14 @@ export class TensorElementWiseOpCompiler {
 
     private static _instance: TensorElementWiseOpCompiler;
 
-    public static GetInstance(): TensorElementWiseOpCompiler {
+    public static getInstance(): TensorElementWiseOpCompiler {
         if (!TensorElementWiseOpCompiler._instance) {
             TensorElementWiseOpCompiler._instance = new TensorElementWiseOpCompiler();
         }
         return TensorElementWiseOpCompiler._instance;
     }
 
+    // TODO: this should be moved to ShapeHelper.
     /**
     * Checks if the broadcasting is possible between the two shapes.
     * @param shapeX Shape of tensor X.
@@ -198,6 +219,7 @@ export class TensorElementWiseOpCompiler {
         return {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
+            CMathHelper: CMathHelper,
             computeStrides: ShapeHelper.computeStrides,
             determineOutputType: opConfig && opConfig.outputDTypeResolver
                 ? opConfig.outputDTypeResolver : OutputDTypeResolver.uNoChange,
@@ -283,6 +305,7 @@ export class TensorElementWiseOpCompiler {
         let deps: BinaryOpDependencies = {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
+            CMathHelper: CMathHelper,
             computeStrides: ShapeHelper.computeStrides,
             compareShape: ShapeHelper.compareShape,
             determineOutputType: outputDTypeResolver,

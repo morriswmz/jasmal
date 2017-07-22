@@ -483,35 +483,43 @@ export class MatrixOpProviderFactory {
         }
 
         const opEig = (x: OpInput): [Tensor, Tensor] => {
-            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            let X: Tensor;
+            let needExtraCopy = false;
+            if (x instanceof Tensor) {
+                X = x;
+                needExtraCopy = true;
+            } else {
+                X = Tensor.toTensor(x);
+            }
             let shapeX = X.shape;
             if (X.ndim !== 2 || shapeX[0] !== shapeX[1]) {
                 throw new Error('Square matrix expected.');
             }
+            let E = Tensor.zeros(shapeX);
+            let v = Tensor.zeros([shapeX[0]]);
             if (X.hasComplexStorage()) {
+                E.ensureComplexStorage();
+                X = needExtraCopy ? X.copy(true) : X;
                 // Hermitian check
-                if (opIsHermitian(X)) {    
-                    X = X.copy(true);
-                    let E = Tensor.zeros(shapeX);
-                    let v = new Array(shapeX[0]);
-                    E.ensureComplexStorage();
-                    Eigen.eigHermitian(shapeX[0], X.realData, X.imagData, v,
-                        E.realData, E.imagData);
-                    return [E, opDiag(v)];
+                if (opIsHermitian(X)) {  
+                    Eigen.eigHermitian(shapeX[0], X.realData, X.imagData, v.realData, E.realData, E.imagData);
                 } else {
-                    throw new Error('Only Hermitian matrices are supported.');
+                    v.ensureComplexStorage();
+                    Eigen.eigComplexGeneral(shapeX[0], X.realData, X.imagData, v.realData, v.imagData, E.realData, E.imagData);
                 }
             } else {
                 // symmetry check
                 if (opIsSymmetric(X)) {
-                    let E = Tensor.zeros(shapeX);
-                    let v = new Array(shapeX[0]);
-                    Eigen.eigSym(shapeX[0], X.realData, v, E.realData);
-                    return [E, opDiag(v)];
+                    // eigSym does not override the original matrix
+                    Eigen.eigSym(shapeX[0], X.realData, v.realData, E.realData);
                 } else {
-                    throw new Error('Only symmetric matrices are supported.')
+                    X = needExtraCopy ? X.copy(true) : X;
+                    E.ensureComplexStorage();
+                    v.ensureComplexStorage();
+                    Eigen.eigRealGeneral(shapeX[0], X.realData, v.realData, v.imagData, E.realData, E.imagData);
                 }
             }
+            return [E, opDiag(v)];
         }
 
         return {

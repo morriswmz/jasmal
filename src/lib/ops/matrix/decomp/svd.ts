@@ -1,5 +1,5 @@
 import { DataBlock } from '../../../storage';
-import { MathHelper } from '../../../helper/mathHelper';
+import { CMathHelper } from '../../../helper/mathHelper';
 
 /**
  * Singular value decomposition.
@@ -231,7 +231,7 @@ export class SVD {
                             break;
                         }
                         g = reS[i];
-                        h = MathHelper.length2(f, g);
+                        h = CMathHelper.length2(f, g);
                         reS[i] = h;
                         h = 1.0 / h;
                         c = g * h;
@@ -270,7 +270,7 @@ export class SVD {
                 g = rv1[nm];
                 h = rv1[k];
                 f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
-                g = MathHelper.length2(f, 1.0);
+                g = CMathHelper.length2(f, 1.0);
                 f = ((x - z) * (x + z) + h * (
                         (y / (f + f > 0 ? g : (f < 0 ? -g : 0))) - h)) / x;
                 c = 1.0;
@@ -281,7 +281,7 @@ export class SVD {
                     y = reS[i];
                     h = s * g;
                     g = c * g;
-                    z = MathHelper.length2(f, h);
+                    z = CMathHelper.length2(f, h);
                     rv1[j] = z;
                     c = f / z;
                     s = h / z;
@@ -297,7 +297,7 @@ export class SVD {
                             reV[jj * n + i] = z * c - x * s;
                         }
                     }
-                    z = MathHelper.length2(f, h);
+                    z = CMathHelper.length2(f, h);
                     reS[j] = z;
                     if (z) {
                         z = 1.0 / z;
@@ -414,7 +414,7 @@ export class SVD {
                 // Note: scaling a vector does not affect the resulting Householder
                 // transform matrix.
                 for (k = i;k < m;k++) {
-                    scale += MathHelper.length2(reA[k * n + i], imA[k * n + i]);
+                    scale += CMathHelper.length2(reA[k * n + i], imA[k * n + i]);
                 }
                 if (scale) {
                     // Scale is non-zero. If scale is zero, we do not need to do
@@ -427,7 +427,7 @@ export class SVD {
                     }
                     // now s = ||A[i,i:end]||_2^2 / scale^2
                     // f <- |A[i,i]|
-                    f = MathHelper.length2(reA[i * n + i], imA[i * n + i]);
+                    f = CMathHelper.length2(reA[i * n + i], imA[i * n + i]);
                     // g <- ||a|| (Here a = A[i:end,i])
                     g = Math.sqrt(s);
                     // \beta = 2/(w^H w) = 1/(s + |A[i,i]| * sqrt(s))
@@ -500,7 +500,7 @@ export class SVD {
             // note that we do not need to work on the last column
             if (i < m && i !== n - 1) {
                 for (k = l;k < n;k++) {
-                    scale += MathHelper.length2(reA[i * n + k], imA[i * n + k]);
+                    scale += CMathHelper.length2(reA[i * n + k], imA[i * n + k]);
                 }
                 if (scale) {
                     for (k = l;k < n;k++) {
@@ -517,7 +517,7 @@ export class SVD {
                     for (k = l;k < n;k++) {
                         imA[i * n + k] = -imA[i * n + k];
                     }
-                    f = MathHelper.length2(reA[i * n + l], imA[i * n + l]);
+                    f = CMathHelper.length2(reA[i * n + l], imA[i * n + l]);
                     g = Math.sqrt(s);
                     h = - f * g - s;
                     if (f) {
@@ -591,7 +591,7 @@ export class SVD {
                         // where r is the original |A[i,i+1]|.
                         // Because \beta = 1/(s + r * sqrt(s))
                         // -\beta can be recovered from -1/|A[i,i+1]|/g
-                        h = - 1.0 / MathHelper.length2(reA[i * n + l], imA[i * n + l]) / g;
+                        h = - 1.0 / CMathHelper.length2(reA[i * n + l], imA[i * n + l]) / g;
                         for (j = l;j < n;j++) {
                             accRe = 0;
                             accIm = 0;
@@ -648,7 +648,7 @@ export class SVD {
                 if (g) {
                     // update U[i:end,i+1:end]
                     // h is now -\beta
-                    h = - 1.0 / MathHelper.length2(reA[i * n + i], imA[i * n + i]) / g;
+                    h = - 1.0 / CMathHelper.length2(reA[i * n + i], imA[i * n + i]) / g;
                     for (j = l;j < n;j++) {
                         // acc <- w_2^H * D
                         accRe = 0;
@@ -730,7 +730,7 @@ export class SVD {
                             break;
                         }
                         g = reS[i];
-                        h = MathHelper.length2(f, g);
+                        h = CMathHelper.length2(f, g);
                         reS[i] = h;
                         h = 1.0 / h;
                         c = g * h;
@@ -774,7 +774,7 @@ export class SVD {
                 g = rv1[nm];
                 h = rv1[k];
                 f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
-                g = MathHelper.length2(f, 1.0);
+                g = CMathHelper.length2(f, 1.0);
                 f = ((x - z) * (x + z) + h * (
                         (y / (f + f > 0 ? g : (f < 0 ? -g : 0))) - h)) / x;
                 c = 1.0;
@@ -785,7 +785,7 @@ export class SVD {
                     y = reS[i];
                     h = s * g;
                     g = c * g;
-                    z = MathHelper.length2(f, h);
+                    z = CMathHelper.length2(f, h);
                     rv1[j] = z;
                     c = f / z;
                     s = h / z;
@@ -805,7 +805,7 @@ export class SVD {
                             imV[jj * n + i] = z * c - x * s;
                         }
                     }
-                    z = MathHelper.length2(f, h);
+                    z = CMathHelper.length2(f, h);
                     reS[j] = z;
                     if (z) {
                         z = 1.0 / z;

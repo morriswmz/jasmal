@@ -95,5 +95,10 @@ describe('Advanced indexing', () => {
                  [4, 6, 4, 6, 5]]);
             checkTensor(actual, expected);
         });
+        it('should form a new matrix when the index input is a matrix', () => {
+            let actual = A.get([[0, 1], [1, -1]]);
+            let expected = T.fromArray([[1, 2], [2, 6]]);
+            checkTensor(actual, expected);
+        });
     });
 });

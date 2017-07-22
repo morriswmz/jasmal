@@ -32,28 +32,39 @@ function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor, eps: number = 1
     }
 }
 
-function validateEVD(A: Tensor, E: Tensor, V: Tensor, eps: number = 1e-10): void {
+function validateEVD(A: Tensor, E: Tensor, V: Tensor, hermitian: boolean, eps: number = 1e-10): void {
     let n = A.shape[0];
     let Q: Tensor;
-    // E should be unitary
-    if (E.hasComplexStorage()) {
-        Q = <Tensor>T.matmul(E, E, T.MM_HERMITIAN);
-        checkTensor(Q, T.eye(n).ensureComplexStorage(), eps);
-    } else {
-        Q = <Tensor>T.matmul(E, E, T.MM_TRANSPOSED);
-        checkTensor(Q, T.eye(n), eps);
-    }
-    // E V E' = A
     // Since A may contain large elements, we scale the tolerance factor
     // according to A.
     let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);
-    if (E.hasComplexStorage()) {
-        Q = <Tensor>T.matmul(T.matmul(E, V), E, T.MM_HERMITIAN);
-        checkTensor(Q, A, tolA);
+    if (hermitian) {
+    // E should be unitary
+        if (E.hasComplexStorage()) {
+            Q = <Tensor>T.matmul(E, E, T.MM_HERMITIAN);
+            checkTensor(Q, T.eye(n).ensureComplexStorage(), eps);
+        } else {
+            Q = <Tensor>T.matmul(E, E, T.MM_TRANSPOSED);
+            checkTensor(Q, T.eye(n), eps);
+        }
+        // E V E' = A
+        if (E.hasComplexStorage()) {
+            Q = <Tensor>T.matmul(T.matmul(E, V), E, T.MM_HERMITIAN);
+            checkTensor(Q, A, tolA);
+        } else {
+            Q = <Tensor>T.matmul(T.matmul(E, V), E, T.MM_TRANSPOSED);
+            checkTensor(Q, A, tolA);
+        }
     } else {
-        Q = <Tensor>T.matmul(T.matmul(E, V), E, T.MM_TRANSPOSED);
-        checkTensor(Q, A, tolA);
+        // A * E = E * V
+        Q = <Tensor>T.sub(T.matmul(E, V), T.matmul(A, E));
+        let Z = T.zeros(Q.shape);
+        if (Q.hasComplexStorage()) {
+            Z.ensureComplexStorage();
+        }
+        checkTensor(Q, Z, tolA);
     }
+    
 }
 
 describe('inv()', () => {
@@ -170,8 +181,19 @@ describe('rank()', () => {
 });
 
 describe('eig()', () => {
-    var shapes = [[5, 5], [10, 10], [15, 15], [20, 20]];
+    var shapes = [[5, 5], [7, 7], [10, 10], [15, 15], [20, 20], [30, 30], [50, 50]];
     T.seed(201);
+    // real symmetrical
+    it('should perform eigendecomposition for a zero matrix', () => {
+        let A = T.zeros([10, 10]);
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V, true);
+    })
+    it('should perform eigendecomposition for a real diagonal matrix', () => {
+        let A = T.diag([100, 1, 50, -2, -10000]);
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V, true);
+    });
     it('should perform eigendecomposition for a real symmetrical matrix', () => {
         let A = T.fromArray(
             [[2, 1, 0],
@@ -179,16 +201,17 @@ describe('eig()', () => {
              [0, 1, 2]]
         );
         let [E, V] = T.eig(A);
-        validateEVD(A, E, V);
+        validateEVD(A, E, V, true);
     });
     for (let i = 0;i < shapes.length;i++) { 
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} real symmetrical matrix`, () => {
             let A = T.rand(shapes[i]);
             T.add(A, T.transpose(A), true);
             let [E, V] = T.eig(A);
-            validateEVD(A, E, V);
+            validateEVD(A, E, V, true);
         });
     }
+    // complex Hermitian
     it('should perform eigendecomposition for a Hermitian matrix', () => {
         let A = T.fromArray(
             [[2, 1, 0],
@@ -199,14 +222,57 @@ describe('eig()', () => {
              [0, 1, 0]]
         );
         let [E, V] = T.eig(A);
-        validateEVD(A, E, V);
+        validateEVD(A, E, V, true);
     });
     for (let i = 0;i < shapes.length;i++) { 
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} complex Hermitian matrix`, () => {
             let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
             T.add(A, T.hermitian(A), true);
             let [E, V] = T.eig(A);
-            validateEVD(A, E, V);
+            validateEVD(A, E, V, true);
+        });
+    }
+    // real general
+    it('should perform eigendecomposition for a general real matrix', () => {
+        let A = T.fromArray(
+            [[ 4,  1, 1, 0],
+             [-1,  1, 1, 0],
+             [-1, -1, 2, 0],
+             [ 0,  0, 0, 3]]);
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V, false);
+    });
+    it('should perform eigendecomposition for a Hilbert matrix', () => {
+        let A = T.hilb(8);
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V, false);
+    });
+    for (let i = 0;i < shapes.length;i++) { 
+        it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} general real matrix`, () => {
+            let A = T.rand(shapes[i]);
+            let [E, V] = T.eig(A);
+            validateEVD(A, E, V, false);
+        });
+    }
+    // complex general
+    it('should perform eigendecomposition for a general complex matrix', () => {
+        let A = T.fromArray(
+            [[ 4,  1, 1, 0],
+             [-1,  1, 1, 0],
+             [-1, -1, 2, 0],
+             [ 0,  0, 0, 3]],
+            [[-4, -1, -1,  0],
+             [ 1, -1, -1,  0],
+             [ 1,  1, -2,  0],
+             [ 0,  0,  0, -3]]);
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V, false);
+    });
+    for (let i = 0;i < shapes.length;i++) { 
+        it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} general complex matrix`, () => {
+            let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
+            let [E, V] = T.eig(A);
+            validateEVD(A, E, V, false);
         });
     }
 });

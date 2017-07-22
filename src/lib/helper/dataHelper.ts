@@ -18,9 +18,8 @@ export class DataHelper {
                                               tolerance: number): boolean {
         if (x === y) return true;
         if (x.length !== y.length) return false;
-        // TODO: fix NaN and Infinity handling
         for (let i = 0;i < x.length;i++) {
-            if (Math.abs(x[i] - y[i]) > tolerance) {
+            if (isNaN(x[i]) || isNaN(y[i]) || Math.abs(x[i] - y[i]) > tolerance) {
                 return false;
             }
         }
@@ -48,8 +47,7 @@ export class DataHelper {
     public static isArrayApproximatelyAllZeros(x: ArrayLike<number>,
                                                tolerance: number): boolean {
         for (let i = 0;i < x.length;i++) {
-            // TODO: fix NaN and Infinity handling
-            if (Math.abs(x[i]) > tolerance) {
+            if (isNaN(x[i]) || Math.abs(x[i]) > tolerance) {
                 return false;
             }
         }

@@ -1,4 +1,4 @@
-import { MathHelper } from './helper/mathHelper';
+import { CMathHelper } from './helper/mathHelper';
 
 export class ComplexNumber {
 
@@ -46,7 +46,7 @@ export class ComplexNumber {
         if (y._im === 0) {
             return this.divr(y._re);
         }
-        let [re, im] = MathHelper.complexDiv(this._re, this._im, y._re, y._im);
+        let [re, im] = CMathHelper.cdivCC(this._re, this._im, y._re, y._im);
         return new ComplexNumber(re, im);
     }
 
@@ -59,7 +59,7 @@ export class ComplexNumber {
     }
 
     public inv(): ComplexNumber {
-        let [re, im] = MathHelper.complexInv(this._re, this._im);
+        let [re, im] = CMathHelper.cReciprocal(this._re, this._im);
         return new ComplexNumber(re, im);
     }
 
@@ -84,7 +84,7 @@ export class ComplexNumber {
     }
 
     public static norm2(re: number, im: number) {
-        return MathHelper.length2(re, im);
+        return CMathHelper.length2(re, im);
     }
 
     public static angle2(re: number, im: number) {
