@@ -1,4 +1,4 @@
-import { IRandomOpProvider } from '../definition';
+import { IRandomOpProvider } from './definition';
 import { Tensor } from '../../tensor';
 import { IRandomEngine, MT19937Engine, NativeEngine } from './engine';
 import { MAX_SAFE_INTEGER } from '../../constant';

@@ -1,4 +1,4 @@
-import { IDataOpProvider } from '../definition';
+import { IDataOpProvider } from './definition';
 import { Tensor } from '../../tensor';
 import { NOT_IMPLEMENTED } from '../../constant';
 import { OpInput, OpOutput, OpOutputWithIndex } from '../../commonTypes';
@@ -319,6 +319,9 @@ export class DataOpProviderFactory {
             for (let i = 0;i < n;i++) {
                 indices[i] = i;
             }
+            // JavaScript's builtin sort is not stable. Since we want the
+            // indices, we can obtain a stable sort by comparing their indices
+            // when two elements are equal.
             if (dir === 'asc') {
                 indices.sort((ia, ib) => {
                     let a = dataX[ia], b = dataX[ib];
@@ -361,6 +364,8 @@ export class DataOpProviderFactory {
             }
             return outputIndices ? [Y, indices] : Y;
         }
+
+        
 
         return {
             min: opMin,

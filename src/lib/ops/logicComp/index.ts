@@ -1,4 +1,4 @@
-import { ILogicComparisonOpProvider } from '../definition';
+import { ILogicComparisonOpProvider } from './definition';
 import { NOT_IMPLEMENTED } from '../../constant';
 import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { DType, OutputDTypeResolver } from '../../dtype';

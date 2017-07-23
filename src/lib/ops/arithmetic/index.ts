@@ -1,4 +1,4 @@
-import { IArithmeticOpProvider } from '../definition';
+import { IArithmeticOpProvider } from './definition';
 import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { Tensor } from "../../tensor";

@@ -1,5 +1,5 @@
 import { Tensor } from '../../tensor';
-import { OpInput, OpOutput } from '../../commonTypes'; 
+import { OpInput, OpOutput, OpInputInternal } from '../../commonTypes'; 
 import { DataBlock } from '../../storage';
 import { ComplexNumber } from '../../complexNumber';
 import { ShapeHelper, BroadcastingCheckResult } from '../../helper/shapeHelper';
@@ -20,15 +20,15 @@ import { CMathHelper } from '../../helper/mathHelper';
 /**
  * Represents a binary operation.
  */
-export type GenericBinaryOp = (x: OpInput, y: OpInput, inPlace?: boolean) => OpOutput;
+export type GenericBinaryOp = (x: OpInputInternal, y: OpInputInternal, inPlace?: boolean) => OpOutput;
 /**
  * Represents a unary operation.
  */
-export type GenericUnaryOp = (x: OpInput, inPlace?: boolean) => OpOutput;
+export type GenericUnaryOp = (x: OpInputInternal, inPlace?: boolean) => OpOutput;
 /**
  * Represents a unary operation with a parameter.
  */
-export type OneParamUnaryOp = (x: OpInput, p: number, inPlace?: boolean) => OpOutput;
+export type OneParamUnaryOp = (x: OpInputInternal, p: number, inPlace?: boolean) => OpOutput;
 
 /**
  * Defines the core operations.

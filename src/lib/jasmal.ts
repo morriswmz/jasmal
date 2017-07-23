@@ -1,10 +1,14 @@
 import { DType } from './dtype';
 import { Tensor } from './tensor';
-import {
-    IRandomOpProvider, IArithmeticOpProvider, IMathOpProvider,
-    ICoreOpProvider, ILogicComparisonOpProvider, IMatrixOpProvider,
-    MatrixModifier, IDataOpProvider
-} from './ops/definition';
+import { TypedArray } from './commonTypes';
+import { IRandomEngine } from './ops/random/engine';
+import { ICoreOpProvider } from './ops/core/definition';
+import { IArithmeticOpProvider } from './ops/arithmetic/definition';
+import { IRandomOpProvider } from './ops/random/definition';
+import { MatrixModifier, IMatrixOpProvider } from './ops/matrix/definition';
+import { IMathOpProvider } from './ops/math/definition';
+import { ILogicComparisonOpProvider } from './ops/logicComp/definition';
+import { IDataOpProvider } from './ops/data/definition';
 import { RandomOpProviderFactory } from './ops/random';
 import { ArithmeticOpProviderFactory } from './ops/arithmetic';
 import { MathOpProviderFactory } from './ops/math';
@@ -13,8 +17,7 @@ import { CoreOpProviderFactory } from './ops/core';
 import { LogicComparisonOpProviderFactory } from './ops/logicComp';
 import { MatrixOpProviderFactory } from './ops/matrix';
 import { DataOpProviderFactory } from './ops/data';
-import { TypedArray } from './commonTypes';
-import { IRandomEngine } from './ops/random/engine';
+import { ObjectHelper } from './helper/objHelper';
 
 export interface JasmalOptions {
     rngEngine?: string | IRandomEngine;
@@ -78,8 +81,7 @@ export class JasmalEngine {
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create();
         let dataOpProvider = DataOpProviderFactory.create();
         
-
-        return {
+        let jasmalCore =  {
             LOGIC: DType.LOGIC,
             INT32: DType.INT32,
             FLOAT64: DType.FLOAT64,
@@ -96,107 +98,18 @@ export class JasmalEngine {
             zeros: Tensor.zeros,
             ones: Tensor.ones,
             fromArray: (re, im, dtype) => Tensor.fromArray(re, im, dtype),
-            complex: (x, y) => Tensor.complex(x, y),
+            complex: (x, y) => Tensor.complex(x, y)
+        };
 
-            reshape: coreOpProvider.reshape,
-            flatten: coreOpProvider.flatten,
-            squeeze: coreOpProvider.squeeze,
-            vec: coreOpProvider.vec,
-            concat: coreOpProvider.concat,
-            tile: coreOpProvider.tile,
-            permuteAxis: coreOpProvider.permuteAxis,
-            prependAxis: coreOpProvider.prependAxis,
-            appendAxis: coreOpProvider.appendAxis,
-            linspace: coreOpProvider.linspace,
-            logspace: coreOpProvider.logspace,
-            real: coreOpProvider.real,
-            imag: coreOpProvider.imag,
-            isreal: coreOpProvider.isreal,
-            isnan: coreOpProvider.isnan,
-            isinf: coreOpProvider.isinf,
-            find: coreOpProvider.find,
-
-            isSymmetric: matrixOpProvider.isSymmetric,
-            isHermitian: matrixOpProvider.isHermitian,
-            eye: matrixOpProvider.eye,
-            hilb: matrixOpProvider.hilb,
-            diag: matrixOpProvider.diag,
-            matmul: matrixOpProvider.matmul,
-            kron: matrixOpProvider.kron,
-            transpose: matrixOpProvider.transpose,
-            hermitian: matrixOpProvider.hermitian,
-            trace: matrixOpProvider.trace,
-            inv: matrixOpProvider.inv,
-            det: matrixOpProvider.det,
-            norm: matrixOpProvider.norm,
-            lu: matrixOpProvider.lu,
-            svd: matrixOpProvider.svd,
-            rank: matrixOpProvider.rank,
-            eig: matrixOpProvider.eig,
-
-            eq: logicCompOpProvider.eq,
-            neq: logicCompOpProvider.neq,
-            gt: logicCompOpProvider.gt,
-            ge: logicCompOpProvider.ge,
-            lt: logicCompOpProvider.lt,
-            le: logicCompOpProvider.le,
-            and: logicCompOpProvider.and,
-            or: logicCompOpProvider.or,
-            xor: logicCompOpProvider.xor,
-            not: logicCompOpProvider.not,
-            all: logicCompOpProvider.all,
-            any: logicCompOpProvider.any,
-
-            add: arithmeticOpProvider.add,
-            sub: arithmeticOpProvider.sub,
-            neg: arithmeticOpProvider.neg,
-            mul: arithmeticOpProvider.mul,
-            div: arithmeticOpProvider.div,
-            reciprocal: arithmeticOpProvider.reciprocal,
-            rem: arithmeticOpProvider.rem,
-
-            abs: mathOpProvider.abs,
-            sign: mathOpProvider.sign,
-            min2: mathOpProvider.min2,
-            max2: mathOpProvider.max2,
-            conj: mathOpProvider.conj,
-            angle: mathOpProvider.angle,
-            sin: mathOpProvider.sin,
-            cos: mathOpProvider.cos,
-            tan: mathOpProvider.tan,
-            cot: mathOpProvider.cot,
-            asin: mathOpProvider.asin,
-            acos: mathOpProvider.acos,
-            atan: mathOpProvider.atan,
-            sinh: mathOpProvider.sinh,
-            cosh: mathOpProvider.cosh,
-            tanh: mathOpProvider.tanh,
-            sqrt: mathOpProvider.sqrt,
-            exp: mathOpProvider.exp,
-            pow2: mathOpProvider.pow2,
-            log: mathOpProvider.log,
-            floor: mathOpProvider.floor,
-            ceil: mathOpProvider.ceil,
-            round: mathOpProvider.round,
-            rad2deg: mathOpProvider.rad2deg,
-            deg2rad: mathOpProvider.deg2rad,
-
-            seed: randomOpProvider.seed,
-            rand: randomOpProvider.rand,
-            randn: randomOpProvider.randn,
-            randi: randomOpProvider.randi,
-
-            min: dataOpProvider.min,
-            max: dataOpProvider.max,
-            sum: dataOpProvider.sum,
-            prod: dataOpProvider.prod,
-            cumsum: dataOpProvider.cumsum,
-            mean: dataOpProvider.mean,
-            median: dataOpProvider.median,
-            std: dataOpProvider.std,
-            var: dataOpProvider.var,
-            sort: dataOpProvider.sort
-        }
+        return ObjectHelper.createExtendChain(jasmalCore)
+            .extend(coreOpProvider)
+            .extend(randomOpProvider)
+            .extend(arithmeticOpProvider)
+            .extend(matrixOpProvider)
+            .extend(mathOpProvider)
+            .extend(logicCompOpProvider)
+            .extend(dataOpProvider)
+            .end();
         
     }
 }

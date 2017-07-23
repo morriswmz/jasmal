@@ -87,3 +87,8 @@ export interface OpInputInfo {
      */
     originalDType: DType;
 }
+
+// Internal Usage
+// ==============
+
+export type OpInputInternal = OpInput | OpInputInfo;

@@ -1,16 +1,17 @@
-import { IMatrixOpProvider, IArithmeticOpProvider, IMathOpProvider, MatrixModifier } from '../definition';
+import { IMatrixOpProvider, MatrixModifier } from './definition';
+import { IArithmeticOpProvider } from '../arithmetic/definition';
+import { OpInput, OpOutput, Scalar } from '../../commonTypes';
 import { Tensor } from '../../tensor';
+import { ComplexNumber } from '../../complexNumber';
 import { DataBlock } from '../../storage';
 import { DType } from '../../dtype';
-import { OpInput, OpOutput, Scalar } from '../../commonTypes';
 import { IMatrixBasicSubroutines, BuiltInMBS } from './mbs';
-import { ComplexNumber } from '../../complexNumber';
 import { LU } from './decomp/lu';
 import { SVD } from './decomp/svd';
-import { DataHelper } from '../../helper/dataHelper';
-import { EPSILON } from '../../constant';
-import { NormFunction } from './norm';
 import { Eigen } from "./decomp/eigen";
+import { DataHelper } from '../../helper/dataHelper';
+import { NormFunction } from './norm';
+import { EPSILON } from '../../constant';
 
 export class MatrixOpProviderFactory {
 

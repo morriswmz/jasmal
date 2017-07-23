@@ -1,4 +1,4 @@
-import { ICoreOpProvider } from '../definition';
+import { ICoreOpProvider } from './definition';
 import { Tensor } from '../../tensor';
 import { ShapeHelper } from '../../helper/shapeHelper';
 import { DataHelper } from '../../helper/dataHelper';
