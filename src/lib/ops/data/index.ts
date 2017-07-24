@@ -9,117 +9,117 @@ import { DataBlock } from '../../storage';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { DataHelper } from "../../helper/dataHelper";
 
-type RealDataFunction = (reX: ArrayLike<number>, offset: number, stride: number, n: number) => number;
-type ComplexDataFunction1 = (reX: ArrayLike<number>, imX: ArrayLike<number>, offset: number, stride: number, n: number)
-                              => number;
-type ComplexDataFunction2 = (reX: ArrayLike<number>, imX: ArrayLike<number>, offset: number, stride: number, n: number)
-                              => [number, number];
+type RIRODataFunction = (reX: ArrayLike<number>, offset: number, stride: number, n: number) => number;
+type CIRODataFunction = (reX: ArrayLike<number>, imX: ArrayLike<number>, offset: number, stride: number, n: number) => number;
+type CICODataFunction = (reX: ArrayLike<number>, imX: ArrayLike<number>, offset: number, stride: number, n: number) => [number, number];
+
+// TODO: split into smaller functions
+
+function reduceAlongDimension(X: Tensor, axis: number, keepDims: boolean,
+                                outputDType: DType,
+                                isOutputComplex: false,
+                                fReal: RIRODataFunction,
+                                fComplex?: CIRODataFunction): Tensor;
+function reduceAlongDimension(X: Tensor, axis: number, keepDims: boolean,
+                                outputDType: DType,
+                                isOutputComplex: true,
+                                fReal: RIRODataFunction,
+                                fComplex?: CICODataFunction): Tensor;
+function reduceAlongDimension(X: Tensor, axis: number, keepDims: boolean,
+                                outputDType: DType,
+                                isOutputComplex: boolean,
+                                fReal: RIRODataFunction,
+                                fComplex?: CIRODataFunction | CICODataFunction): Tensor {
+    if (axis >= X.ndim) {
+        throw new Error(`Invalid axis number ${axis}.`);
+    }
+    let shapeX = X.shape;
+    let shapeY = shapeX.slice();
+    shapeY[axis] = 1;
+    let Y = Tensor.zeros(shapeY, outputDType);
+    let stridesX = X.strides;
+    let stridesY = Y.strides;
+    let maxLevel = X.ndim - 1;
+    let stride = stridesX[axis];
+    let n = shapeX[axis];
+    let reX: ArrayLike<number>, imX: ArrayLike<number>;
+    let reY: DataBlock, imY: DataBlock;
+    if (X.hasComplexStorage()) {
+        if (fComplex == undefined) {
+            throw new Error('Operation not permitted for complex matrices.');
+        }
+        if (isOutputComplex) {
+            Y.ensureComplexStorage();
+            reX = X.realData;
+            imX = X.imagData;
+            reY = Y.realData;
+            imY = Y.imagData;
+            const doCalc = (level: number, offsetX: number, offsetY): void => {
+                if (level === maxLevel) {
+                    for (let j = 0;j < shapeY[level];j++) {
+                        [reY[offsetY], imY[offsetY]] = (<CICODataFunction>fComplex)(reX, imX, offsetX, stride, n);
+                        offsetX++;
+                        offsetY++;
+                    }
+                } else {
+                    for (let i = 0;i < shapeY[level];i++) {
+                        doCalc(level + 1, offsetX, offsetY);
+                        offsetX += stridesX[level];
+                        offsetY += stridesY[level];
+                    }
+                }
+            };
+            doCalc(0, 0, 0);
+        } else {
+            reX = X.realData;
+            imX = X.imagData;
+            reY = Y.realData;
+            const doCalc = (level: number, offsetX: number, offsetY): void => {
+                if (level === maxLevel) {
+                    for (let j = 0;j < shapeY[level];j++) {
+                        reY[offsetY] = (<CIRODataFunction>fComplex)(reX, imX, offsetX, stride, n);
+                        offsetX++;
+                        offsetY++;
+                    }
+                } else {
+                    for (let i = 0;i < shapeY[level];i++) {
+                        doCalc(level + 1, offsetX, offsetY);
+                        offsetX += stridesX[level];
+                        offsetY += stridesY[level];
+                    }
+                }
+            };
+            doCalc(0, 0, 0);
+        }
+    } else {
+        reX = X.realData;
+        reY = Y.realData;
+        const doCalc = (level: number, offsetX: number, offsetY): void => {
+            if (level === maxLevel) {
+                for (let j = 0;j < shapeY[level];j++) {
+                    reY[offsetY] = fReal(reX, offsetX, stride, n);
+                    offsetX++;
+                    offsetY++;
+                }
+            } else {
+                for (let i = 0;i < shapeY[level];i++) {
+                    doCalc(level + 1, offsetX, offsetY);
+                    offsetX += stridesX[level];
+                    offsetY += stridesY[level];
+                }
+            }
+        };
+        doCalc(0, 0, 0);
+    }
+    if (!keepDims) {
+        Y.reshape(ShapeHelper.getSqueezedShape(shapeY));
+    }
+    return Y;
+};
 
 export class DataOpProviderFactory {
 
     public static create(): IDataOpProvider {
-
-        function reduceAlongDimension(X: Tensor, axis: number, keepDims: boolean,
-                                      outputDType: DType,
-                                      isOutputComplex: false,
-                                      fReal: RealDataFunction,
-                                      fComplex?: ComplexDataFunction1): Tensor;
-        function reduceAlongDimension(X: Tensor, axis: number, keepDims: boolean,
-                                      outputDType: DType,
-                                      isOutputComplex: true,
-                                      fReal: RealDataFunction,
-                                      fComplex?: ComplexDataFunction2): Tensor;
-        function reduceAlongDimension(X: Tensor, axis: number, keepDims: boolean,
-                                      outputDType: DType,
-                                      isOutputComplex: boolean,
-                                      fReal: RealDataFunction,
-                                      fComplex?: ComplexDataFunction1 | ComplexDataFunction2): Tensor {
-            if (axis >= X.ndim) {
-                throw new Error(`Invalid axis number ${axis}.`);
-            }
-            let shapeX = X.shape;
-            let shapeY = shapeX.slice();
-            shapeY[axis] = 1;
-            let Y = Tensor.zeros(shapeY, outputDType);
-            let stridesX = X.strides;
-            let stridesY = Y.strides;
-            let maxLevel = X.ndim - 1;
-            let stride = stridesX[axis];
-            let n = shapeX[axis];
-            let reX: ArrayLike<number>, imX: ArrayLike<number>;
-            let reY: DataBlock, imY: DataBlock;
-            if (X.hasComplexStorage()) {
-                if (fComplex == undefined) {
-                    throw new Error('Operation not permitted for complex matrices.');
-                }
-                if (isOutputComplex) {
-                    Y.ensureComplexStorage();
-                    reX = X.realData;
-                    imX = X.imagData;
-                    reY = Y.realData;
-                    imY = Y.imagData;
-                    const doCalc = (level: number, offsetX: number, offsetY): void => {
-                        if (level === maxLevel) {
-                            for (let j = 0;j < shapeY[level];j++) {
-                                [reY[offsetY], imY[offsetY]] = (<ComplexDataFunction2>fComplex)(reX, imX, offsetX, stride, n);
-                                offsetX++;
-                                offsetY++;
-                            }
-                        } else {
-                            for (let i = 0;i < shapeY[level];i++) {
-                                doCalc(level + 1, offsetX, offsetY);
-                                offsetX += stridesX[level];
-                                offsetY += stridesY[level];
-                            }
-                        }
-                    };
-                    doCalc(0, 0, 0);
-                } else {
-                    reX = X.realData;
-                    imX = X.imagData;
-                    reY = Y.realData;
-                    const doCalc = (level: number, offsetX: number, offsetY): void => {
-                        if (level === maxLevel) {
-                            for (let j = 0;j < shapeY[level];j++) {
-                                reY[offsetY] = (<ComplexDataFunction1>fComplex)(reX, imX, offsetX, stride, n);
-                                offsetX++;
-                                offsetY++;
-                            }
-                        } else {
-                            for (let i = 0;i < shapeY[level];i++) {
-                                doCalc(level + 1, offsetX, offsetY);
-                                offsetX += stridesX[level];
-                                offsetY += stridesY[level];
-                            }
-                        }
-                    };
-                    doCalc(0, 0, 0);
-                }
-            } else {
-                reX = X.realData;
-                reY = Y.realData;
-                const doCalc = (level: number, offsetX: number, offsetY): void => {
-                    if (level === maxLevel) {
-                        for (let j = 0;j < shapeY[level];j++) {
-                            reY[offsetY] = fReal(reX, offsetX, stride, n);
-                            offsetX++;
-                            offsetY++;
-                        }
-                    } else {
-                        for (let i = 0;i < shapeY[level];i++) {
-                            doCalc(level + 1, offsetX, offsetY);
-                            offsetX += stridesX[level];
-                            offsetY += stridesY[level];
-                        }
-                    }
-                };
-                doCalc(0, 0, 0);
-            }
-            if (!keepDims) {
-                Y.reshape(ShapeHelper.getSqueezedShape(shapeY));
-            }
-            return Y;
-        };
 
         const opMin = (x: OpInput, axis: number = -1): OpOutputWithIndex => {
             let X = x instanceof Tensor ? x : Tensor.toTensor(x);
@@ -295,7 +295,7 @@ export class DataOpProviderFactory {
                     return Math.sqrt(DataFunction.var(X.realData));
                 }
             } else {
-                let f: ComplexDataFunction1 = DataFunction.cvar;
+                let f: CIRODataFunction = DataFunction.cvar;
                 return reduceAlongDimension(X, axis, keepDims, 
                     OutputDTypeResolver.uOnlyLogicToFloat(X.dtype, X.hasComplexStorage()),
                     false, (reX, offset, stride, n) => {

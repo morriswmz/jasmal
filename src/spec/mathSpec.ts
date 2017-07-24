@@ -1,6 +1,7 @@
 import { JasmalEngine } from '..';
 import { Tensor } from '../lib/tensor';
 import { checkTensor } from './testHelper';
+import { EPSILON } from '../lib/constant';
 const T = JasmalEngine.createInstance();
 
 describe('abs()', () => {
@@ -21,7 +22,7 @@ describe('abs()', () => {
     it('should also return the absolute values of complex numbers', () => {
         let actual = T.abs(T.fromArray([1, 1, Infinity], [-1, 0, 2]));
         let expected = T.fromArray([Math.sqrt(2), 1, Infinity]);
-        checkTensor(actual, expected, 1e-16);
+        checkTensor(actual, expected, EPSILON);
     });
 });
 
@@ -59,5 +60,64 @@ describe('sqrt()', () => {
             [0, 0.455089860562227, Math.sqrt(2), -1, 1, 0, Infinity, Infinity, Infinity, -Infinity]
         );
         checkTensor(actual, expected, 1e-14);
+    });
+});
+
+describe('exp()', () => {
+    it('should compute the exponentiation of real numbers', () => {
+        let actual = T.exp([0, -2, 3.3, -Infinity, Infinity]);
+        let expected = T.fromArray([1, Math.exp(-2), Math.exp(3.3), 0, Infinity]);
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the exponentiation of complex numbers', () => {
+        let z = T.fromArray([0, 2, 4], [-1, -0.1, 2]);
+        let actual = T.exp(z);
+        let expected = T.fromArray(
+            [ 0.54030230586813977,  7.35214159590899640, -22.720847417619233],
+            [-0.84147098480789650, -0.73767471615133029,  49.645957334580565]
+        );
+        checkTensor(actual, expected, EPSILON * 50);
+    });
+});
+
+// TODO: add math tests
+describe('sin()', () => {
+    it('should compute the sine of real numbers', () => {
+        let actual = T.sin([0, Math.PI/2, 0.5]);
+        let expected = T.fromArray([0, Math.sin(Math.PI/2), Math.sin(0.5)]);
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the sine of complex numbers', () => {
+        let x = T.fromArray([0.5, 0.8], [-6, 4.6]);
+        let actual = T.sin(x);
+        let expected = T.fromArray(
+            [96.707627492897842, 35.686445260153995],
+            [-177.01994941200556, 34.652193500570938]
+        );
+        checkTensor(actual, expected, 1e-12);
+    });
+});
+describe('cos()', () => {
+    it('should compute the cosine of real numbers', () => {
+
+    });
+    it('should compute the cosine of complex numbers', () => {
+
+    });
+});
+describe('tan()', () => {
+    it('should compute the tangent of real numbers', () => {
+
+    });
+    it('should compute the tangent of complex numbers', () => {
+
+    });
+});
+describe('cot()', () => {
+    it('should compute the cotangent of real numbers', () => {
+
+    });
+    it('should compute the cotangent of complex numbers', () => {
+
     });
 });

@@ -176,6 +176,10 @@ var detA = T.det(A);
 var [U1, S1, V1] = T.svd(A);
 // SVD also works for complex matrices.
 var [U2, S2, V2] = T.svd(C);
+// Eigendecomposition for general square matrices.
+var [E1, L1] = T.eig(A);
+// Eigendecomposition also works for general complex square matrices.
+var [E2, L2] = T.eig(C);
 ```
 
 ## Data functions

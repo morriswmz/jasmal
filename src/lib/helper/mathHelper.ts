@@ -142,4 +142,93 @@ export class CMathHelper {
         return [reY, imY];
     }
 
+    /**
+     * Complex tangent.
+     *           sin(2*Re(z)) + j sinh(2*Im(z))
+     * tan(z) = --------------------------------
+     *           cosh(2*Im(z)) + cos(2*Re(z))
+     * @param re 
+     * @param im 
+     */
+    public static ctan(re: number, im: number): [number, number] {
+        let re2 = re + re;
+        let im2 = im + im;
+        let ep = Math.exp(im2), en = Math.exp(-im2);
+        let d = 0.5 * (ep + en) + Math.cos(re2);
+        return [Math.sin(re2) / d, 0.5 * (ep - en) / d];
+    }
+
+    /**
+     * Complex cotangent.
+     *           sin(2*Re(z)) - j sinh(2*Im(z))
+     * cot(z) = --------------------------------
+     *            cosh(2*Im(z)) - cos(2*Re(z))
+     * @param re 
+     * @param im 
+     */
+    public static ccot(re: number, im: number): [number, number] {
+        let re2 = re + re;
+        let im2 = im + im;
+        let ep = Math.exp(im2), en = Math.exp(-im2);
+        let d = 0.5 * (ep + en) - Math.cos(re2);
+        return [Math.sin(re2) / d, -0.5 * (ep - en) / d];
+    }
+
+    /**
+     * Complex hyperbolic sine.
+     * @param re 
+     * @param im 
+     */
+    public static csinh(re: number, im: number): [number, number] {
+        let s = Math.sin(im), c = Math.cos(im);
+        let ep = Math.exp(re), en = Math.exp(-re);
+        return [0.5 * (ep - en) * c, 0.5 * (ep + en) * s];
+    }
+
+    /**
+     * Complex hyperbolic cosine.
+     * @param re 
+     * @param im 
+     */
+    public static ccosh(re: number, im: number): [number, number] {
+        let s = Math.sin(im), c = Math.cos(im);
+        let ep = Math.exp(re), en = Math.exp(-re);
+        return [0.5 * (ep + en) * c, 0.5 * (ep - en) * s];
+    }
+
+    /**
+     * Complex hyperbolic tangent.
+     * tanh(z) = (e^z - e^-z) / (e^z + e^-z)
+     *            sinh(2*Re(z)) + j sin(2*Im(z))
+     * tanh(z) = --------------------------------
+     *             cosh(2*Re(z)) + cos(2*Im(z))
+     * @param re 
+     * @param im 
+     */
+    public static ctanh(re: number, im: number): [number, number] {
+        let re2 = re + re;
+        let im2 = im + im;
+        let ep = Math.exp(re2), en = Math.exp(-re2);
+        let d = 0.5 * (ep + en) + Math.cos(im2);
+        return [0.5 * (ep - en) / d, Math.sin(im2) / d];
+    }
+
+    /**
+     * Complex hyperbolic cotangent.
+     * coth(z) = (e^z + e^-z) / (e^z - e^-z)
+     * Let z = x + j y, then
+     *            sinh(2*Re(z)) - j sin(2*Im(z))
+     * coth(z) = --------------------------------
+     *             cosh(2*Re(z)) - cos(2*Im(z))
+     * @param re 
+     * @param im 
+     */
+    public static ccoth(re: number, im: number): [number, number] {
+        let re2 = re + re;
+        let im2 = im + im;
+        let ep = Math.exp(re2), en = Math.exp(-re2);
+        let d = 0.5 * (ep + en) - Math.cos(im2);
+        return [0.5 * (ep - en) / d, -Math.sin(im2) / d];
+    }
+
 }

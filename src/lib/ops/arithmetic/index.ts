@@ -15,16 +15,22 @@ export class ArithmeticOpProviderFactory {
                 opRC: '$reZ = $reX + $reY; $imZ = $imY;',
                 opCR: '$reZ = $reX + $reY; $imZ = $imX;',
                 opCC: '$reZ = $reX + $reY; $imZ = $imX + $imY;'
+            }, {
+                outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             }),
             sub: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX - $reY;',
                 opRC: '$reZ = $reX - $reY; $imZ = -$imY;',
                 opCR: '$reZ = $reX - $reY; $imZ = $imX;',
                 opCC: '$reZ = $reX - $reY; $imZ = $imX - $imY;'
+            }, {
+                outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             }),
             neg: compiler.makeUnaryOp({
                 opR: '$reY = -$reX;',
                 opC: '$reY = -$reX; $imY = -$imX;'
+            }, {
+                outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
             }),
             mul: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX * $reY;',
@@ -33,6 +39,8 @@ export class ArithmeticOpProviderFactory {
                 opRC: '$imZ = $reX * $imY; $reZ = $reX * $reY;',
                 opCR: '$reZ = $reX * $reY; $imZ = $imX * $reY;',
                 opCC: '$tmp1 = $reX; $reZ = $tmp1 * $reY - $imX * $imY; $imZ = $tmp1 * $imY + $imX * $reY;'
+            }, {
+                outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             }),
             div: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX / $reY;',
@@ -57,6 +65,8 @@ export class ArithmeticOpProviderFactory {
             }),
             rem: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX % $reY;'
+            }, {
+                outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             })
         }
     }

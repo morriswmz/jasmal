@@ -1,7 +1,7 @@
 import { OpInput, OpOutputWithIndex, OpOutput } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 
-// TODO: add sortRows, unique
+// TODO: add sortRows, unique, hist
 export interface IDataOpProvider {
 
     min(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;

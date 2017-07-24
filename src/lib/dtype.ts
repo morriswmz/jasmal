@@ -94,6 +94,19 @@ export class OutputDTypeResolver {
     }
 
     /**
+     * Converts LOGIC to INT32 first, and then returns the wider type. 
+     * @param t1 
+     * @param isComplex1 
+     * @param t2 
+     * @param isComplex2 
+     */
+    public static bWiderWithLogicToInt(t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean): DType {
+        return DTypeHelper.getWiderType(
+            t1 === DType.LOGIC ? DType.INT32 : t1,
+            t2 === DType.LOGIC ? DType.INT32 : t2);
+    }
+
+    /**
      * Returns FLOAT64.
      * @param t1 
      * @param isComplex1 

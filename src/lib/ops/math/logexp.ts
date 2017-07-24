@@ -55,6 +55,7 @@ export class LogExpMathOpSetFactory {
                             return [Math.log(-re), Math.PI];
                         }
                     } else {
+                        // Ln(x + j y) = ln(sqrt(x^2 + y^2)) + j atan2(y, x)
                         // inline length2
                         let absRe = Math.abs(re),
                             absIm = Math.abs(im);

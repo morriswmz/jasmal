@@ -246,6 +246,8 @@ export class CoreOpProviderFactory {
                         copyWithAxisOffset(tensors[i].imagData, shapes[i], strides[i],
                             Y.imagData, finalStrides, axis, axisOffset);
                     }
+                    // Update the offset along the axis where the concatenation
+                    // is performed.
                     axisOffset += shapes[i][axis];
                 }
             }
@@ -259,10 +261,12 @@ export class CoreOpProviderFactory {
             const maxLevel = sourceShape.length - 1;
             const doCopy = (level: number, offsetS: number, offsetT: number): void => {
                 if (level === maxLevel) {
+                    // last level: do actual copy
                     for (let i = 0;i < sourceShape[level];i++) {
                         target[offsetT + i] = source[offsetS + i];
                     }
                 } else {
+                    // recursive calling (nested for loop)
                     for (let i = 0;i < sourceShape[level];i++) {
                         doCopy(level + 1, offsetS, offsetT);
                         offsetS += sourceStrides[level];
@@ -315,8 +319,11 @@ export class CoreOpProviderFactory {
                              sourceShape: number[], order: number[],
                              sourceStrides: number[], targetStrides: number[],
                              level: number, offsetSource: number, offsetTarget: number): void => {
+            // Y(i_{order[0]}, ..., i_{order[n-1]}) = X(i_0, ..., i_{n-1})
             if (level === sourceShape.length - 1) {
                 for (let i = 0;i < sourceShape[order[level]];i++) {
+                    // last level
+                    // Y(..., i_{order[n-1]}) = X(..., i_{order[n-1]}, ...)
                     target[offsetTarget + i] = source[offsetSource];
                     offsetSource += sourceStrides[order[level]]
                 }

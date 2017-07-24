@@ -30,7 +30,7 @@ export interface ICoreOpProvider {
     /**
      * Permutes a tensor according to the specified order such that
      *  shapeOut[i] = shapeIn[order[i]]
-     *  Y(i_order[0], ..., i_order[n-1]) = X(i_0, ..., i_{n-1})
+     *  Y(i_{order[0]}, ..., i_{order[n-1]}) = X(i_0, ..., i_{n-1})
      * @example
      *  // shape is [1, 2, 3]
      *  x = T.ones([1, 2, 3]); 

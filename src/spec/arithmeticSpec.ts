@@ -153,6 +153,30 @@ describe('sub()', () => {
         checkTensor(actual, expected);
     });
 
+    it('should preserve dtype when both inputs have dtype=INT32', () => {
+        let x = T.fromArray([1, 3, 4], [], T.INT32);
+        let y = T.fromArray([-2, 4, 1000], [122, 33, 44], T.INT32);
+        let actual = T.sub(x, y);
+        let expected = T.fromArray([3, -1, -996], [-122, -33, -44], T.INT32);
+        checkTensor(actual, expected);
+    });
+
+    it('should automatically promote output dtype', () => {
+        let x = T.fromArray([2, 3], [4, 5], T.INT32);
+        let y = T.fromArray([4, -42], [], T.FLOAT64);
+        let actual = T.sub(x, y);
+        let expected = T.fromArray([-2, 45], [4, 5], T.FLOAT64);
+        checkTensor(actual, expected);
+    });
+
+    it('should convert LOGIC to INT32', () => {
+        let x = T.fromArray([0, 1, 0], [], T.LOGIC);
+        let y = T.fromArray([1, 1, 2], [], T.INT32);
+        let actual = T.sub(x, y);
+        let expected = T.fromArray([-1, 0, -2], [], T.INT32);
+        checkTensor(actual, expected);
+    });
+
     it('should throw when in-place operation is not possible', () => {
         // first operand is not a tensor
         let case1 = () => { T.sub(1, 2, true); };
