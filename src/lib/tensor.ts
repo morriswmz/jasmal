@@ -1811,14 +1811,17 @@ export class Tensor {
 
     /**
      * Retrieves a new tensor by converting each element to the specified data
-     * type. Lose of precision will occur during type conversion.
+     * type. Loss of precision will occur during type conversion.
      * Note: you cannot convert complex values/nan values to logical values.
      * @param dtype Data type.
+     * @param alwaysCopy By default, if the specified dtype is the same as the
+     *  original one, a reference copy will be returned. Set this to true to
+     *  ensure that a deep copy is always returned.
      */
-    public asType(dtype: DType): Tensor {
+    public asType(dtype: DType, alwaysCopy: boolean = false): Tensor {
         if (dtype === this._re.dtype) {
             // just make a quick copy
-            return this.copy();
+            return this.copy(alwaysCopy);
         } else if (dtype === DType.LOGIC) {
             if (this.hasComplexStorage()) {
                 throw new Error('Cannot convert a complex tensor to a logic tensor.');

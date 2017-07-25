@@ -276,3 +276,23 @@ describe('eig()', () => {
         });
     }
 });
+
+describe('chol()', () => {
+    it('should perform Cholesky decomposition for a simple real symmetric matrix', () => {
+        let A = T.fromArray([[3, 1, 1], [1, 2, 1], [1, 1, 3]]);
+        let L = T.chol(A);
+        checkTensor(T.matmul(L, L, T.MM_TRANSPOSED), A, 1e-15);
+    });
+    it('should perform Cholesky decomposition for a simple Hermitian matrix', () => {
+        let A = T.fromArray(
+            [[3, 1, 1],
+             [1, 2, 1],
+             [1, 1, 3]],
+            [[ 0,  1, 0],
+             [-1,  0, 1],
+             [ 0, -1, 0]]
+        );
+        let L = T.chol(A);
+        checkTensor(T.matmul(L, L, T.MM_HERMITIAN), A, 1e-15);
+    });
+});

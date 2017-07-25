@@ -80,6 +80,31 @@ describe('exp()', () => {
     });
 });
 
+describe('log()', () => {
+    it('should compute the logarithm of positive numbers', () => {
+        let actual = T.log([0.1, 1, Math.E, 1e12]);
+        let expected = T.fromArray([Math.log(0.1), 0, 1, Math.log(1e12)]);
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the logarithm of real numbers', () => {
+        let actual = T.log([0, -1, -Math.E, -1e12]);
+        let expected = T.fromArray(
+            [-Infinity, 0, 1, Math.log(1e12)],
+            [0, Math.PI, Math.PI, Math.PI]
+        );
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the logarithm of complex numbers', () => {
+        let z = T.fromArray([0, 0.5, -3], [-1, 0.8, 9]);
+        let actual = T.log(z);
+        let expected = T.fromArray(
+            [0, -5.8266908127975671e-2, 2.2499048351651325],
+            [-1.5707963267948966, 1.0121970114513341, 1.8925468811915389]
+        );
+        checkTensor(actual, expected, 1e-14);
+    });
+});
+
 // TODO: add math tests
 describe('sin()', () => {
     it('should compute the sine of real numbers', () => {
@@ -88,8 +113,8 @@ describe('sin()', () => {
         checkTensor(actual, expected, EPSILON);
     });
     it('should compute the sine of complex numbers', () => {
-        let x = T.fromArray([0.5, 0.8], [-6, 4.6]);
-        let actual = T.sin(x);
+        let z = T.fromArray([0.5, 0.8], [-6, 4.6]);
+        let actual = T.sin(z);
         let expected = T.fromArray(
             [96.707627492897842, 35.686445260153995],
             [-177.01994941200556, 34.652193500570938]
@@ -97,27 +122,54 @@ describe('sin()', () => {
         checkTensor(actual, expected, 1e-12);
     });
 });
+
 describe('cos()', () => {
     it('should compute the cosine of real numbers', () => {
-
+        let actual = T.cos([0, Math.PI/2, 0.5]);
+        let expected = T.fromArray([1, Math.cos(Math.PI/2), Math.cos(0.5)]);
+        checkTensor(actual, expected, EPSILON);
     });
     it('should compute the cosine of complex numbers', () => {
-
+        let z = T.fromArray([0, 0.5, 1], [-1, 0.5, 3]);
+        let actual = T.cos(z);
+        let expected = T.fromArray(
+            [1.5430806348152439, 0.9895848833999199, 5.4395809910197643],
+            [0, -0.24982639750046154, -8.429751080849945]
+        );
+        checkTensor(actual, expected, 1e-14);
     });
 });
+
 describe('tan()', () => {
     it('should compute the tangent of real numbers', () => {
-
+        let actual = T.tan([0, Math.PI/4, Math.PI/2, -1]);
+        let expected = T.fromArray([0, Math.tan(Math.PI/4), Math.tan(Math.PI/2), Math.tan(-1)]);
+        checkTensor(actual, expected, EPSILON * 2);
     });
     it('should compute the tangent of complex numbers', () => {
-
+        let z = T.fromArray([0, 0.3, -2], [-1, 0.5, 1.5]);
+        let actual = T.tan(z);
+        let expected = T.fromArray(
+            [0, 0.23840508333812324, 0.080391015310168221],
+            [-0.76159415595576485, 0.49619706577350758, 1.0641443991765371]
+        );
+        checkTensor(actual, expected, 1e-14);
     });
 });
+
 describe('cot()', () => {
     it('should compute the cotangent of real numbers', () => {
-
+        let actual = T.cot([0, Math.PI/4, Math.PI/2, -2]);
+        let expected = T.fromArray([NaN, 1.0, 6.123233995736766e-17, 0.45765755436028577]);
+        checkTensor(actual, expected, EPSILON * 2);
     });
     it('should compute the cotangent of complex numbers', () => {
-
+        let z = T.fromArray([0, 0.5, -2], [-1, 0.4, 8]);
+        let actual = T.cot(z);
+        let expected = T.fromArray(
+            [0, 1.0556222918520826, 1.7033377703904913e-7],
+            [1.3130352854993315, -1.1141257265554689, -9.9999985288419813e-1]
+        );
+        checkTensor(actual, expected, 1e-14);
     });
 });

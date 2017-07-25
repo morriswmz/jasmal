@@ -20,6 +20,10 @@ export interface IMatrixOpProvider {
 
     diag(x: OpInput): Tensor;
 
+    tril(x: OpInput, k?: number): Tensor;
+
+    triu(x: OpInput, k?: number): Tensor;
+
     matmul(x: OpInput, y: OpInput, yModifier?: MatrixModifier): OpOutput;
 
     kron(x: OpInput, y: OpInput): Tensor;
@@ -44,5 +48,7 @@ export interface IMatrixOpProvider {
     rank(x: OpInput): number;
 
     eig(x: OpInput): [Tensor, Tensor];
+
+    chol(x: OpInput): Tensor;
 
 }

@@ -27,7 +27,7 @@ export class CMathHelper {
 
     /**
      * Evaluates complex division x/y without overflow. This is based on
-     * the cdiv function in ESIPACK (http://www.netlib.no/netlib/eispack/3090vf/double/cdiv.f)
+     * the cdiv function in EISPACK (http://www.netlib.no/netlib/eispack/3090vf/double/cdiv.f)
      * with modification to handle NaN and Infinity.
      * @param reX Re(x)
      * @param imX Im(x)
@@ -106,7 +106,7 @@ export class CMathHelper {
 
     /**
      * Computes complex square root. This is based on the csroot function in
-     * ESIPACK (http://www.netlib.no/netlib/eispack/3090vf/double/cdiv.f) with
+     * EISPACK (http://www.netlib.no/netlib/eispack/3090vf/double/cdiv.f) with
      * modifications to handle NaN and Infinity.
      * @param reX Real part.
      * @param imX Imaginary part.
@@ -143,6 +143,30 @@ export class CMathHelper {
     }
 
     /**
+     * Complex sine.
+     * sin(z) = sin(Re(z)) cosh(Im(z)) + j cos(Re(z)) sinh(Im(z))
+     * @param re 
+     * @param im 
+     */
+    public static csin(re: number, im: number): [number, number] {
+        let s = Math.sin(re), c = Math.cos(re);
+        let ep = Math.exp(im), en = Math.exp(-im);
+        return [0.5 * (ep + en) * s, 0.5 * (ep - en) * c];
+    }
+
+    /**
+     * Complex cosine.
+     * cos(z) = cos(Re(z)) cosh(Im(z)) - j sin(Re(z)) sinh(Im(z))
+     * @param re 
+     * @param im 
+     */
+    public static ccos(re: number, im: number): [number, number] {
+        let s = Math.sin(re), c = Math.cos(re);
+        let ep = Math.exp(im), en = Math.exp(-im);
+        return [0.5 * (ep + en) * c, -0.5 * (ep - en) * s];
+    }
+
+    /**
      * Complex tangent.
      *           sin(2*Re(z)) + j sinh(2*Im(z))
      * tan(z) = --------------------------------
@@ -176,6 +200,7 @@ export class CMathHelper {
 
     /**
      * Complex hyperbolic sine.
+     * sinh(z) = sinh(Re(z)) cos(Im(z)) + j cosh(Re(z)) sin(Im(z))
      * @param re 
      * @param im 
      */
@@ -187,6 +212,7 @@ export class CMathHelper {
 
     /**
      * Complex hyperbolic cosine.
+     * cosh(z) = cosh(Re(z)) cos(Im(z)) + j sinh(Re(z)) sin(Im(z))
      * @param re 
      * @param im 
      */

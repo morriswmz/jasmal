@@ -40,7 +40,7 @@ export class LogExpMathOpSetFactory {
 
         const opLogA = compiler.makeUnaryOp({
             opR: '$tmp1 = clog($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
-            opC: '$tmp1 = clog($reX, $imY); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opC: '$tmp1 = clog($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
             inlineFunctions: {

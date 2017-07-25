@@ -9,6 +9,7 @@ import { IMatrixBasicSubroutines, BuiltInMBS } from './mbs';
 import { LU } from './decomp/lu';
 import { SVD } from './decomp/svd';
 import { Eigen } from "./decomp/eigen";
+import { Cholesky } from "./decomp/chol";
 import { DataHelper } from '../../helper/dataHelper';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
@@ -83,6 +84,56 @@ export class MatrixOpProviderFactory {
                     }
                 } else {
                     throw new Error('Matrix or vector expected.')
+                }
+                return Y;
+            }
+        };
+
+        const copyLower = (m: number, n: number, k: number, x: ArrayLike<number>, y: DataBlock): void => {
+            for (let i = 0;i < m;i++) {
+                let maxJ = Math.min(n - 1, k + i);
+                for (let j = 0;j <= maxJ;j++) {
+                    y[i * n + j] = x[i * n + j];
+                }
+            }
+        };
+
+        const copyUpper = (m: number, n: number, k: number, x: ArrayLike<number>, y: DataBlock): void => {
+            for (let i = 0;i < m;i++) {
+                let minJ = Math.max(k + i, 0);
+                for (let j = minJ;j < n;j++) {
+                    y[i * n + j] = x[i * n + j];
+                }
+            }
+        };
+
+        const opTril = (x: OpInput, k: number = 0): Tensor => {
+            let info = Tensor.analyzeOpInput(x);
+            if (info.isInputScalar || info.originalShape.length > 2) {
+                throw new Error('Matrix or vector expected.');
+            } else {
+                let [m, n] = info.originalShape.length === 1 ? [1, info.originalShape[0]] : info.originalShape;
+                let Y = Tensor.zeros(info.originalShape, info.originalDType);
+                copyLower(m, n, k, info.reArr, Y.realData);
+                if (info.isComplex) {
+                    Y.ensureComplexStorage();
+                    copyLower(m, n, k, info.imArr, Y.imagData);
+                }
+                return Y;
+            }
+        };
+
+        const opTriu = (x: OpInput, k: number = 0): Tensor => {
+            let info = Tensor.analyzeOpInput(x);
+            if (info.isInputScalar || info.originalShape.length > 2) {
+                throw new Error('Matrix or vector expected.');
+            } else {
+                let [m, n] = info.originalShape.length === 1 ? [1, info.originalShape[0]] : info.originalShape;
+                let Y = Tensor.zeros(info.originalShape, info.originalDType);
+                copyUpper(m, n, k, info.reArr, Y.realData);
+                if (info.isComplex) {
+                    Y.ensureComplexStorage();
+                    copyUpper(m, n, k, info.imArr, Y.imagData);
                 }
                 return Y;
             }
@@ -356,7 +407,8 @@ export class MatrixOpProviderFactory {
         };
 
         function doCompactLU(x: OpInput): [Tensor, number[], number] {
-            let X = x instanceof Tensor ? x.asType(DType.FLOAT64) : Tensor.toTensor(x);            
+            // make a copy here as X will be overwritten
+            let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);            
             let shapeX = X.shape;
             if (shapeX.length !== 2 || shapeX[0] !== shapeX[1]) {
                 throw new Error('Square matrix expected.');
@@ -382,9 +434,9 @@ export class MatrixOpProviderFactory {
                 return [X, p];
             } else {
                 let shapeX = X.shape;
-                let L = Tensor.zeros(shapeX, DType.FLOAT64);
-                let U = Tensor.zeros(shapeX, DType.FLOAT64);
-                let P = Tensor.zeros(shapeX, DType.FLOAT64);
+                let L = Tensor.zeros(shapeX);
+                let U = Tensor.zeros(shapeX);
+                let P = Tensor.zeros(shapeX);
                 LU.compactToFull(shapeX[0], false, X.realData, L.realData, U.realData);
                 if (X.hasComplexStorage()) {
                     L.ensureComplexStorage();
@@ -429,7 +481,9 @@ export class MatrixOpProviderFactory {
         }
 
         const opSvd = (x: OpInput): [Tensor, Tensor, Tensor] => {
-            let X = x instanceof Tensor ? x.asType(DType.FLOAT64) : Tensor.toTensor(x);
+            // We need to make a copy here because svd procedure will override
+            // the original matrix.
+            let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
             let shapeX = X.shape;
             if (shapeX.length !== 2) {
                 throw new Error('Matrix expected.');
@@ -460,7 +514,9 @@ export class MatrixOpProviderFactory {
         };
 
         const opRank = (x: OpInput): number => {
-            let X = x instanceof Tensor ? x.copy(true) : Tensor.toTensor(x);
+            // We need to make a copy here because svd procedure will override
+            // the original matrix.
+            let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
             let shape = X.shape;
             let s = new Array(shape[1]);
             if (X.hasComplexStorage()) {
@@ -485,10 +541,18 @@ export class MatrixOpProviderFactory {
 
         const opEig = (x: OpInput): [Tensor, Tensor] => {
             let X: Tensor;
+            // We need to keep track of this because the eigendecomposition
+            // subroutine for real symmetric matrices does not override the
+            // input matrix.
             let needExtraCopy = false;
             if (x instanceof Tensor) {
                 X = x;
-                needExtraCopy = true;
+                if (X.dtype !== DType.FLOAT64) {
+                    // make sure the dtype is correct
+                    X = X.asType(DType.FLOAT64);
+                } else {
+                    needExtraCopy = true;
+                }
             } else {
                 X = Tensor.toTensor(x);
             }
@@ -521,7 +585,30 @@ export class MatrixOpProviderFactory {
                 }
             }
             return [E, opDiag(v)];
-        }
+        };
+
+        const opChol = (x: OpInput): Tensor => {
+            let X = opTril(x);
+            if (X.dtype !== DType.FLOAT64) {
+                // make sure data type is correct
+                X = X.asType(DType.FLOAT64);
+            }
+            let shapeX = X.shape;
+            let p: number;
+            if (shapeX[0] !== shapeX[1]) {
+                throw new Error('Square matrix expected.');
+            }
+            // X is already a copy, no need to make an extra copy here
+            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+                p = Cholesky.cchol(shapeX[0], X.realData, X.imagData);
+            } else {
+                p = Cholesky.chol(shapeX[0], X.realData);
+            }
+            if (p !== 0) {
+                throw new Error('Matrix is not positive definite.');
+            }
+            return X;
+        };
 
         return {
             isSymmetric: opIsSymmetric,
@@ -529,6 +616,8 @@ export class MatrixOpProviderFactory {
             eye: opEye,
             hilb: opHilb,
             diag: opDiag,
+            tril: opTril,
+            triu: opTriu,
             matmul: opMatMul,
             kron: opKron,
             transpose: opTranspose,
@@ -540,7 +629,8 @@ export class MatrixOpProviderFactory {
             lu: opLu,
             svd: opSvd,
             rank: opRank,
-            eig: opEig
+            eig: opEig,
+            chol: opChol
         }
     }
 }
