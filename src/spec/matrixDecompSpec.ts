@@ -10,25 +10,25 @@ function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor, eps: number = 1
     // U^T U = I
     let Ut = T.transpose(U);
     if (Ut.hasComplexStorage()) {
-        checkTensor(<Tensor>T.matmul(Ut, Ut, T.MM_HERMITIAN), T.eye(ns).ensureComplexStorage(), eps);
+        checkTensor(T.matmul(Ut, Ut, T.MM_HERMITIAN), T.eye(ns).ensureComplexStorage(), eps);
     } else {
-        checkTensor(<Tensor>T.matmul(Ut, Ut, T.MM_TRANSPOSED), T.eye(ns), eps);
+        checkTensor(T.matmul(Ut, Ut, T.MM_TRANSPOSED), T.eye(ns), eps);
     }
     // V^T V = I
     let Vt = T.transpose(V);
     if (Vt.hasComplexStorage()) {
-        checkTensor(<Tensor>T.matmul(Vt, Vt, T.MM_HERMITIAN), T.eye(n).ensureComplexStorage(), eps);
+        checkTensor(T.matmul(Vt, Vt, T.MM_HERMITIAN), T.eye(n).ensureComplexStorage(), eps);
     } else {
-        checkTensor(<Tensor>T.matmul(Vt, Vt, T.MM_TRANSPOSED), T.eye(n), eps);
+        checkTensor(T.matmul(Vt, Vt, T.MM_TRANSPOSED), T.eye(n), eps);
     }
     // USV^T = A
     // Since A may contain large elements, we scale the tolerance factor
     // according to A.
     let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);
     if (A.hasComplexStorage()) {
-        checkTensor(<Tensor>T.matmul(U, T.matmul(S, V, T.MM_HERMITIAN)), A, tolA);
+        checkTensor(T.matmul(U, T.matmul(S, V, T.MM_HERMITIAN)), A, tolA);
     } else {
-        checkTensor(<Tensor>T.matmul(U, T.matmul(S, V, T.MM_TRANSPOSED)), A, tolA);
+        checkTensor(T.matmul(U, T.matmul(S, V, T.MM_TRANSPOSED)), A, tolA);
     }
 }
 
@@ -64,7 +64,25 @@ function validateEVD(A: Tensor, E: Tensor, V: Tensor, hermitian: boolean, eps: n
         }
         checkTensor(Q, Z, tolA);
     }
-    
+}
+
+function validateQR(A: Tensor, Q: Tensor, R: Tensor, P: Tensor, eps: number = 1e-10): void {
+    let [m, n] = A.shape;
+    // Since A may contain large elements, we scale the tolerance factor
+    // according to A.
+    let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);
+    // Q^H Q = I
+    if (Q.hasComplexStorage()) {
+        checkTensor(T.matmul(Q, Q, T.MM_HERMITIAN), T.eye(m).ensureComplexStorage(), eps);
+    } else {
+        checkTensor(T.matmul(Q, Q, T.MM_TRANSPOSED), T.eye(m), eps);
+    }
+    // A P = Q R
+    let Z = T.zeros(A.shape);
+    if (Q.hasComplexStorage() || R.hasComplexStorage()) {
+        Z.ensureComplexStorage();
+    }
+    checkTensor(T.sub(T.matmul(A, P), T.matmul(Q, R)), Z, tolA);
 }
 
 describe('inv()', () => {
@@ -294,5 +312,13 @@ describe('chol()', () => {
         );
         let L = T.chol(A);
         checkTensor(T.matmul(L, L, T.MM_HERMITIAN), A, 1e-15);
+    });
+});
+
+describe('qr()', () => {
+    it('should perform QR decomposition for a simple real matrix.', () => {
+        let A = T.fromArray([[1, 2], [1, 2], [1, 2], [0, 0], [0, 0]]);
+        let [Q, R, P] = T.qr(A);
+        validateQR(A, Q, R, P);
     });
 });

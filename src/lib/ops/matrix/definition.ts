@@ -10,45 +10,182 @@ export const enum MatrixModifier {
 
 export interface IMatrixOpProvider {
 
+    /**
+     * Checks if a matrix is (skew-)symmetric.
+     * @param x Input matrix.
+     * @param skew (Optional) If set to true, will check if the input is skew-
+     *             symmetric. Default value is false.
+     */
     isSymmetric(x: OpInput, skew?: boolean): boolean;
 
+    /**
+     * Check if a matrix is (skew-)Hermitian.
+     * Note: if the input matrix is real, this function is equivalent to
+     *       isSymmetric().
+     * @param x Input matrix.
+     * @param skew (Optional) If set to true, will check if the input is skew-
+     *             Hermitian. Default value is false.
+     */
     isHermitian(x: OpInput, skew?: boolean): boolean;
 
+    /**
+     * Creates a matrix with the element on the main diagonal set to one.
+     * @param m Number of rows.
+     * @param n (Optional) Number of columns. Default value is m.
+     * @param dtype (Optional) Data type. Default value is FLOAT64.
+     */
     eye(m: number, n?: number, dtype?: DType): Tensor;
 
+    /**
+     * Creates a Hilbert matrix.
+     * @param m Number of rows/columns.
+     */
     hilb(n: number): Tensor;
 
+    /**
+     * Creates a diagonal matrix or extracts diagonal elements.
+     * If the input is a 1D vector (ndim = 1), its elements will be used to
+     * create a diagonal matrix.
+     * If the input is a m x n matrix (ndim = 2), its diagonal elements will be
+     * extracted and a 1D vector of length min(m, n) containing the diagonal
+     * elements will be returned.
+     * @param x Matrix/vector input.
+     */
     diag(x: OpInput): Tensor;
 
+    /**
+     * Extracts the lower triangular part of the input matrix as a new matrix.
+     * @param x Input matrix.
+     * @param k (Optional) Offset. For upper diagonals, k > 0; for lower
+     *          diagonals, k < 0; for the main diagonal, k = 0.
+     *          Default value is 0.
+     */
     tril(x: OpInput, k?: number): Tensor;
 
+    /**
+     * Extracts the upper triangular part of the input matrix as a new matrix.
+     * @param x Input matrix.
+     * @param k (Optional) Offset. For upper diagonals, k > 0; for lower
+     *          diagonals, k < 0; for the main diagonal, k = 0.
+     *          Default value is 0.
+     */
     triu(x: OpInput, k?: number): Tensor;
 
+    /**
+     * Performs matrix multiplication.
+     * @param x Input matrix x.
+     * @param y Input matrix y.
+     * @param yModifier Specifies whether whether transpose or Hermitian
+     *                  operation needs to be applied to y before performing the
+     *                  matrix multiplication. For example, if `yModifier` is
+     *                  set to `MM_TRANSPOSED`, this function will compute
+     *                  x y^T.
+     */
     matmul(x: OpInput, y: OpInput, yModifier?: MatrixModifier): OpOutput;
 
+    /**
+     * Computes the Kronecker product between two matrices.
+     * @param x Input matrix x.
+     * @param y Input matrix y.
+     */
     kron(x: OpInput, y: OpInput): Tensor;
 
+    /**
+     * Gets the transpose of the input matrix.
+     * @param x Input matrix.
+     */
     transpose(x: OpInput): Tensor;
 
+    /**
+     * Gets the Hermitian of the input matrix.
+     * @param x Input matrix.
+     */
     hermitian(x: OpInput): Tensor;
 
+    /**
+     * Computes the trace of the input matrix (must be square).
+     * @param x Input matrix.
+     */
     trace(x: OpInput): Scalar;
 
+    /**
+     * Computes the inverse of the input matrix (must be square).
+     * Note: this function uses PLU decomposition to compute the inverse.
+     * @param x Input matrix.
+     */
     inv(x: OpInput): Tensor;
 
+    /**
+     * Computes the determinant of the input matrix (must be square).
+     * Note: this function uses LUP decomposition to compute the inverse.
+     * @param x Input matrix.
+     */
     det(x: OpInput): Scalar;
 
+    /**
+     * Computes matrix/vector norms.
+     * For vectors,
+     * 1) if p = 0, counts the number of non-zero elements;
+     * 2) if p > 0 (including Infinity), computes the L-p norm of the vector.
+     * For matrices,
+     * 1) if p = 1, 2, or Infinity, computes the induced matrix norm;
+     * 2) if p = 'fro', computes the Frobenius norm.
+     * @param x Input matrix/vector.
+     * @param p Determines which norm will be calculated. For vectors, p must be
+     *          nonnegative. For matrices, p can only be 1, 2, Infinity or
+     *          'fro'.
+     */
     norm(x: OpInput, p: number | 'fro'): number;
 
+    /**
+     * Performs LUP decomposition and return the results in the compact form.
+     * @param x Input matrix.
+     */
     lu(x: OpInput, compact: true): [Tensor, number[]];
+    /**
+     * Performs LUP decomposition and return the results in the full form.
+     * @param x Input matrix.
+     */
     lu(x: OpInput, compact: false): [Tensor, Tensor, Tensor];
 
+    /**
+     * Performs singular value decomposition.
+     * Returns a 3-item tuple [U, S, V] such that x = USV^H.
+     * Let the shape of x be m x n, then the shapes of U, S, V, are
+     * m x min(m,n), min(m,n) x n, n x n, respectively. 
+     * @param x Input matrix x.
+     * @returns A 3-item tuple [U, S, V] such that x = USV^H.
+     */
     svd(x: OpInput): [Tensor, Tensor, Tensor];
 
+    /**
+     * Estimates the rank of the input matrix via from its singular values.
+     * @param x Input matrix.
+     */
     rank(x: OpInput): number;
 
+    /**
+     * Performs eigendecomposition of the input matrix.
+     * Returns a 2-item tuple [E, L] such that x E = E L.
+     * If the input matrix is symmetric/Hermitian, E will be unitary. For
+     * general matrices E is unnormalized.
+     * @param x Input matrix.
+     */
     eig(x: OpInput): [Tensor, Tensor];
 
+    /**
+     * Performs Cholesky decomposition of the input matrix.
+     * Note: this function assumes the input is symmetric/Hermitian and only
+     *       uses the lower triangular part of the input matrix. You are
+     *       responsible for ensuring that the input matrix is symmetric or
+     *       Hermitian.
+     * @param x Input matrix.
+     * @returns A lower triangular matrix L such that L*L' produces the original
+     *          matrix.
+     * @throws Throws an error when the input matrix is not positive definite. 
+     */
     chol(x: OpInput): Tensor;
+
+    qr(x: OpInput): [Tensor, Tensor, Tensor];
 
 }

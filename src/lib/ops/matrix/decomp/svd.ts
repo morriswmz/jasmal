@@ -55,7 +55,7 @@ export class SVD {
                     // f <- A[i,i]
                     f = reA[i * n + i];
                     // g <- - sgn(f) * sqrt(s)
-                    g = f > 0 ? -Math.sqrt(s) : (f < 0 ? Math.sqrt(s) : 0);
+                    g = f >= 0 ? -Math.sqrt(s) : Math.sqrt(s);
                     // \beta = 2/(w^T w) = 1/(s + sgn(f) * f * sqrt(s))
                     // h is actually -1/\beta
                     h = f * g - s;
@@ -102,7 +102,7 @@ export class SVD {
                     }
                     // same as above
                     f = reA[i * n + l];
-                    g = f > 0 ? -Math.sqrt(s) : (f < 0 ? Math.sqrt(s) : 0);
+                    g = f >= 0 ? -Math.sqrt(s) : Math.sqrt(s);
                     h = f * g - s;
                     reA[i * n + l] = f - g;
                     // A[i,i+1:end] *= -\beta (i.e., rv1 <- -\beta w)
@@ -272,7 +272,7 @@ export class SVD {
                 f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
                 g = CMathHelper.length2(f, 1.0);
                 f = ((x - z) * (x + z) + h * (
-                        (y / (f + f > 0 ? g : (f < 0 ? -g : 0))) - h)) / x;
+                        (y / (f + f >= 0 ? g : -g)) - h)) / x;
                 c = 1.0;
                 s = 1.0;
                 for (j = l;j <= nm;j++) {
@@ -776,7 +776,7 @@ export class SVD {
                 f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
                 g = CMathHelper.length2(f, 1.0);
                 f = ((x - z) * (x + z) + h * (
-                        (y / (f + f > 0 ? g : (f < 0 ? -g : 0))) - h)) / x;
+                        (y / (f + f >= 0 ? g : -g)) - h)) / x;
                 c = 1.0;
                 s = 1.0;
                 for (j = l;j <= nm;j++) {

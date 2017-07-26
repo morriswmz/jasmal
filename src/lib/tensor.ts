@@ -484,7 +484,7 @@ export class Tensor {
      *      Here `mask` must be a logic tensor with the same shape of this
      *      tensor. The type of `value` can be one of the following: number,
      *      ComplexNumber, number[], Tensor. `value` can be either a scalar,
-     *      or an array/Tensor whose size is equal to the number of true value
+     *      or an array/Tensor whose size is equal to the number of true values
      *      in `mask`.
      * 
      * 3. set(condition, value)
@@ -918,26 +918,26 @@ export class Tensor {
      * Gets multiple elements at once. This function supports the following call
      * signatures:
      * 
-     * 1. gets(indices, keepDims  = false)
+     * 1. gets(indices, keepDims = false)
      *      Here the type of `indices` can be one of the following: number,
      *      n-d array, Tensor. If `indices` is a scalar, this function is
      *      equivalent to {@link Tensor#getEl}. Otherwise, this function will
      *      attempt to construct a Tensor of the same shape according with the
      *      (i,j,...)-th element specified by `indices[i,j,...]`.
      * 
-     * 2. get(mask, keepDims  = false)
+     * 2. get(mask, keepDims = false)
      *      Here `mask` must be a logic tensor with the same shape of this
      *      tensor. Elements corresponding to the `true` values in `mask` will
      *      be returned.
      * 
-     * 3. get(condition, keepDims  = false)
+     * 3. get(condition, keepDims = false)
      *      Here `condition` is a function with the following signature:
      *      (re: number, im?: number) => boolean.
      *      Here `condition` will be tested against every element in this
      *      tensor. If `condition` returns true for the current element, the
      *      current element will be added to the list of returned elements.
      * 
-     * 4. get(i1, i2, ..., iD, keepDims  = false)
+     * 4. get(i1, i2, ..., iD, keepDims = false)
      *      Here D denote the number of dimensions of this tensor. The type of
      *      `i1`, ..., `iD` can be one of the following: number, number[],
      *      string, Tensor.
@@ -953,6 +953,10 @@ export class Tensor {
      *             length(ik) is 2.
      *          4) Otherwise, length(ik) is the number of elements in ik.
      *     `value` must be either a scalar or a tensor of shape S.
+     * 
+     * By default, singleton dimension will be removed from the returned sub-
+     * tensor. This in most cases will save many ugly squeeze() calls. However,
+     * if you wish to prevent this behavior, set `keepDims` to false.
      * 
      * @param args Arguments.
      */
@@ -1681,7 +1685,8 @@ export class Tensor {
 
     /**
      * Remove the imaginary part from this tensor.
-     * Unlike real(), this is an in-place operation.
+     * Unlike real(), this is an in-place operation and the
+     * **entire imaginary part will be discarded**.
      */
     public trimImaginaryPart(): Tensor {
         if (this.hasComplexStorage()) {
@@ -1694,7 +1699,7 @@ export class Tensor {
     /**
      * Creates a array by apply the given map function to every element
      * in this tensor (ignoring the shape of this tensor).
-     * @param f Map.
+     * @param f Map function.
      * @param dtype Data type of the output tensor.
      */
     public map<T>(f: (re: number, im: number) => T): T[] {
@@ -1715,8 +1720,8 @@ export class Tensor {
     /**
      * Applied the reduce function to each element in this function (ignoring
      * the shape of this tensor).
-     * @param f 
-     * @param initialValue
+     * @param f Reduce function.
+     * @param initialValue Initial value.
      */
     public reduce<T>(f: (re: number, im: number, result: T) => T, initialValue: T): T {
         let result = initialValue;

@@ -257,4 +257,40 @@ export class CMathHelper {
         return [0.5 * (ep - en) / d, -Math.sin(im2) / d];
     }
 
+    /**
+     * Complex logarithm.
+     * Log(z) = log(sqrt(Re(z)^2 + Im(z)^2)) + j atan2(Im(z), Re(z))
+     * @param re 
+     * @param im 
+     */
+    public static clog(re: number, im: number): [number, number] {
+        if (isNaN(re) || isNaN(im)) {
+            return [NaN, NaN];
+        }
+        if (im === 0) {
+            if (re >= 0) {
+                return [Math.log(re), 0];
+            } else {
+                return [Math.log(-re), Math.PI];
+            }
+        } else {
+            // inline length2
+            let absRe = Math.abs(re),
+                absIm = Math.abs(im);
+            let l: number, ratio: number;
+            if (absRe > absIm) {
+                ratio = absIm / absRe;
+                l = absRe * Math.sqrt(1.0 + ratio * ratio);
+            } else {
+                if (absIm === 0) {
+                    l =  absRe;
+                } else {
+                    ratio = absRe / absIm;
+                    l =  absIm * Math.sqrt(1.0 + ratio * ratio);
+                }
+            }
+            return [Math.log(l), Math.atan2(im, re)];
+        }
+    }
+
 }

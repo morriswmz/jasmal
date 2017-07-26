@@ -13,6 +13,7 @@ import { Cholesky } from "./decomp/chol";
 import { DataHelper } from '../../helper/dataHelper';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
+import { QR } from "./decomp/qr";
 
 export class MatrixOpProviderFactory {
 
@@ -480,6 +481,22 @@ export class MatrixOpProviderFactory {
             }
         }
 
+        const opQr = (x: OpInput): [Tensor, Tensor, Tensor] => {
+            let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
+            let shapeX = X.shape;
+            if (shapeX.length !== 2) {
+                throw new Error('Matrix expected.');
+            }
+            let Q = Tensor.zeros([shapeX[0], shapeX[0]]);
+            let P = Tensor.zeros([shapeX[1], shapeX[1]]);
+            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+                throw new Error('Not implemented.');
+            } else {
+                QR.qrpf(shapeX[0], shapeX[1], X.realData, Q.realData, P.realData);
+            }
+            return [Q, X, P];
+        };
+
         const opSvd = (x: OpInput): [Tensor, Tensor, Tensor] => {
             // We need to make a copy here because svd procedure will override
             // the original matrix.
@@ -488,7 +505,6 @@ export class MatrixOpProviderFactory {
             if (shapeX.length !== 2) {
                 throw new Error('Matrix expected.');
             }
-            X.ensureUnsharedLocalStorage();
             let s = new Array(shapeX[1]);
             let ns = Math.min(shapeX[0], shapeX[1]);
             let V = Tensor.zeros([shapeX[1], shapeX[1]]);
@@ -630,7 +646,8 @@ export class MatrixOpProviderFactory {
             svd: opSvd,
             rank: opRank,
             eig: opEig,
-            chol: opChol
+            chol: opChol,
+            qr: opQr
         }
     }
 }

@@ -1,11 +1,12 @@
+/**
+ * The methods in the Eigen class are ported from the Fortran 77 version of
+ * EISPACK: http://www.netlib.org/eispack/.
+ * All rights reserved by the authors of EISPACK.
+ * http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg01379.html
+ */
 import { DataBlock } from "../../../storage";
 import { CMathHelper } from "../../../helper/mathHelper";
 
-/**
- * The methods in this class are ported from EISPACK
- * (http://www.netlib.org/eispack/).
- * All rights reserved by the authors of EISPACK.
- */
 export class Eigen {
 
     /**

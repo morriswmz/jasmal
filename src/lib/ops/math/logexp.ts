@@ -1,13 +1,24 @@
 import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { OpInput, OpOutput } from '../../commonTypes';
-import { OutputDTypeResolver } from "../../dtype";
-import { Tensor } from "../../tensor";
-import { DataHelper } from "../../helper/dataHelper";
+import { OutputDTypeResolver } from '../../dtype';
+import { Tensor } from '../../tensor';
+import { DataHelper } from '../../helper/dataHelper';
+import { CMathHelper } from '../../helper/mathHelper';
 
 export interface ILogExpMathOpSet {
 
+    /**
+     * Computes element-wise natural logarithm.
+     * @param x
+     * @param inPlace
+     */
     log(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Computes element-wise exponentiation.
+     * @param x
+     * @param inPlace
+     */
     exp(x: OpInput, inPlace?: boolean): OpOutput;
 
 }
@@ -44,36 +55,7 @@ export class LogExpMathOpSetFactory {
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
             inlineFunctions: {
-                'clog': (re: number, im: number): [number, number] => {
-                    if (isNaN(re) || isNaN(im)) {
-                        return [NaN, NaN];
-                    }
-                    if (im === 0) {
-                        if (re >= 0) {
-                            return [Math.log(re), 0];
-                        } else {
-                            return [Math.log(-re), Math.PI];
-                        }
-                    } else {
-                        // Ln(x + j y) = ln(sqrt(x^2 + y^2)) + j atan2(y, x)
-                        // inline length2
-                        let absRe = Math.abs(re),
-                            absIm = Math.abs(im);
-                        let l: number, ratio: number;
-                        if (absRe > absIm) {
-                            ratio = absIm / absRe;
-                            l = absRe * Math.sqrt(1.0 + ratio * ratio);
-                        } else {
-                            if (absIm === 0) {
-                                l =  absRe;
-                            } else {
-                                ratio = absRe / absIm;
-                                l =  absIm * Math.sqrt(1.0 + ratio * ratio);
-                            }
-                        }
-                        return [Math.log(l), Math.atan2(im, re)];
-                    }
-                }
+                'clog': CMathHelper.clog
             }
         });
 
