@@ -626,6 +626,54 @@ export class MatrixOpProviderFactory {
             return X;
         };
 
+        const opLinsolve = (a: OpInput, b: OpInput): Tensor => {
+            let A = a instanceof Tensor ? a.asType(DType.FLOAT64, true) : Tensor.toTensor(a);
+            let B = b instanceof Tensor ? b.asType(DType.FLOAT64, true) : Tensor.toTensor(b);
+            if (A.ndim !== 2 || B.ndim !== 2) {
+                throw new Error('Matrix expected.');
+            }
+            let shapeA = A.shape;
+            let shapeB = B.shape;
+            if (shapeA[0] !== shapeB[0]) {
+                throw new Error('The number of rows in A must match that in B.');
+            }
+            let isAComplex = A.hasComplexStorage() && !DataHelper.isArrayAllZeros(A.imagData);
+            let isBComplex = B.hasComplexStorage() && !DataHelper.isArrayAllZeros(B.imagData);
+            if (shapeA[0] === shapeA[1]) {
+                // use LUP for square A
+                let p = new Array(shapeA[0]);
+                if (isAComplex) {
+                    B.ensureComplexStorage();
+                    LU.clu(shapeA[0], A.realData, A.imagData, p);
+                    LU.cluSolve(shapeA[0], shapeB[1], A.realData, A.imagData, p, B.realData, B.imagData);
+                } else {
+                    LU.lu(shapeA[0], A.realData, p);
+                    LU.luSolve(shapeA[0], shapeB[1], A.realData, p, B.realData);
+                    if (isBComplex) {
+                        LU.luSolve(shapeA[0], shapeB[1], A.realData, p, B.imagData);
+                    }
+                }
+                return B;
+            } else {
+                // use QR with pivoting
+                let X = Tensor.zeros([shapeA[1], shapeB[1]]);
+                if (isAComplex) {
+                    throw new Error('Not implemented.');                    
+                } else {
+                    let d = new Array(Math.min(shapeA[0], shapeA[1]));
+                    let ind = new Array(shapeA[1]);
+                    QR.qrp(shapeA[0], shapeA[1], A.realData, d, ind);
+                    QR.qrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, d, ind, B.realData, X.realData);
+                    if (isBComplex) {
+                        // solve for the complex part
+                        X.ensureComplexStorage();
+                        QR.qrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, d, ind, B.imagData, X.imagData);
+                    }
+                }
+                return X;
+            }
+        }
+
         return {
             isSymmetric: opIsSymmetric,
             isHermitian: opIsHermitian,
@@ -647,7 +695,8 @@ export class MatrixOpProviderFactory {
             rank: opRank,
             eig: opEig,
             chol: opChol,
-            qr: opQr
+            qr: opQr,
+            linsolve: opLinsolve
         }
     }
 }

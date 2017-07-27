@@ -317,8 +317,18 @@ describe('chol()', () => {
 
 describe('qr()', () => {
     it('should perform QR decomposition for a simple real matrix.', () => {
-        let A = T.fromArray([[1, 2], [1, 2], [1, 2], [0, 0], [0, 0]]);
+        let A = T.fromArray([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]);
         let [Q, R, P] = T.qr(A);
         validateQR(A, Q, R, P);
+    });
+});
+
+describe('linsolve()', () => {
+    it('should solve a real linear system with a rank deficient tall A.', () => {
+        let A = T.fromArray([[1, 2, 3], [2, 4, 6], [4, 6, 8], [1, 1, 1]]);
+        let B = T.ones([4, 2]);
+        let [Q, R, P] = T.qr(A);
+        let X = T.linsolve(A, B);
+
     });
 });

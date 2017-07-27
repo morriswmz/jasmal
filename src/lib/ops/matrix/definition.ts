@@ -188,4 +188,9 @@ export interface IMatrixOpProvider {
 
     qr(x: OpInput): [Tensor, Tensor, Tensor];
 
+    /**
+     * Solves the linear system AX = B.
+     */
+    linsolve(a: OpInput, b: OpInput): Tensor;
+
 }
