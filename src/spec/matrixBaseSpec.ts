@@ -136,10 +136,6 @@ describe('matmul()', () => {
         checkTensor(actual, expected);
     });
 
-    it('should throw when handling real x real with the "hermitian" modifier', () => {
-        expect(() => { T.matmul(M, M, T.MM_HERMITIAN);}).toThrow();
-    });
-
     it('should handle real x complex', () => {
         let actual = <Tensor>T.matmul(M, N);
         let expected = T.fromArray([[91, 67, 67], [67, 91, 67], [67, 67, 91]],

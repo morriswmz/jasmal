@@ -23,8 +23,9 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
     }
 
     public mmul(dims: [number, number, number], opB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
-        if (opB !== 0 && opB !== 1) {
-            throw new Error(`Unsupported operation id ${opB} over matrix B.`);
+        if (opB === 2) {
+            // Hermitian is equivalent to transpose for real matrices.
+            opB = 1;
         }
         if (dims[1] === 1) {
             this._mmul_vv(dims, opB, A, B, C);

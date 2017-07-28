@@ -4,7 +4,7 @@ import { Tensor } from '../lib/tensor';
 import { ComplexNumber } from '../lib/complexNumber';
 const T = JasmalEngine.createInstance();
 
-function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor, eps: number = 1e-10): void {
+function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor, eps: number = 1e-12): void {
     let [m, n] = A.shape;
     let ns = Math.min(m, n);
     // U^T U = I
@@ -32,14 +32,14 @@ function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor, eps: number = 1
     }
 }
 
-function validateEVD(A: Tensor, E: Tensor, V: Tensor, hermitian: boolean, eps: number = 1e-10): void {
+function validateEVD(A: Tensor, E: Tensor, V: Tensor, hermitian: boolean, eps: number = 1e-12): void {
     let n = A.shape[0];
     let Q: Tensor;
     // Since A may contain large elements, we scale the tolerance factor
     // according to A.
     let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);
     if (hermitian) {
-    // E should be unitary
+        // E should be unitary
         if (E.hasComplexStorage()) {
             Q = <Tensor>T.matmul(E, E, T.MM_HERMITIAN);
             checkTensor(Q, T.eye(n).ensureComplexStorage(), eps);
@@ -66,20 +66,21 @@ function validateEVD(A: Tensor, E: Tensor, V: Tensor, hermitian: boolean, eps: n
     }
 }
 
-function validateQR(A: Tensor, Q: Tensor, R: Tensor, P: Tensor, eps: number = 1e-10): void {
+function validateQR(A: Tensor, Q: Tensor, R: Tensor, P: Tensor, eps: number = 1e-12): void {
     let [m, n] = A.shape;
     // Since A may contain large elements, we scale the tolerance factor
     // according to A.
     let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);
     // Q^H Q = I
-    if (Q.hasComplexStorage()) {
-        checkTensor(T.matmul(Q, Q, T.MM_HERMITIAN), T.eye(m).ensureComplexStorage(), eps);
+    let I = <Tensor>T.matmul(Q, Q, T.MM_HERMITIAN);
+    if (I.hasComplexStorage()) {
+        checkTensor(I, T.eye(m).ensureComplexStorage(), eps);
     } else {
-        checkTensor(T.matmul(Q, Q, T.MM_TRANSPOSED), T.eye(m), eps);
+        checkTensor(I, T.eye(m), eps);
     }
     // A P = Q R
     let Z = T.zeros(A.shape);
-    if (Q.hasComplexStorage() || R.hasComplexStorage()) {
+    if (A.hasComplexStorage()) {
         Z.ensureComplexStorage();
     }
     checkTensor(T.sub(T.matmul(A, P), T.matmul(Q, R)), Z, tolA);
@@ -316,19 +317,74 @@ describe('chol()', () => {
 });
 
 describe('qr()', () => {
+    let shapes = [[5, 6], [8, 4], [12, 10], [20, 24], [30, 25]];
+    T.seed(42);
+    it('should perform QR decomposition for a 10x10 Hilbert matrix', () => {
+        let A = T.hilb(10);
+        let [Q, R, P] = T.qr(A);
+        validateQR(A, Q, R, P);
+    });
     it('should perform QR decomposition for a simple real matrix.', () => {
         let A = T.fromArray([[1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]);
         let [Q, R, P] = T.qr(A);
         validateQR(A, Q, R, P);
     });
+    for (let i = 0;i < shapes.length;i++) {
+        it(`should perform QR decomposition for a random ${shapes[i][0]} x ${shapes[i][1]} real matrix`, () => {
+            let A = T.randn(shapes[i]);
+            let [Q, R, P] = T.qr(A);
+            validateQR(A, Q, R, P);
+        });
+    }
+    it('should perform QR decomposition for a simple complex matrix.', () => {
+        let A = T.fromArray(
+            [[1, 2], [1, 2], [1, 2]],
+            [[1, 0], [1, 0], [1, 0]]
+        );
+        let [Q, R, P] = T.qr(A);
+        validateQR(A, Q, R, P);
+    });
+    for (let i = 0;i < shapes.length;i++) {
+        it(`should perform QR decomposition for a random ${shapes[i][0]} x ${shapes[i][1]} complex matrix`, () => {
+            let A = T.complex(T.randn(shapes[i]), T.randn(shapes[i]));
+            let [Q, R, P] = T.qr(A);
+            validateQR(A, Q, R, P);
+        });
+    }
 });
 
 describe('linsolve()', () => {
+    let shapes = [[3, 3], [6, 4], [16, 16], [20, 12], [30, 30], [50, 40], [80, 30]];
+    T.seed(42);
+
     it('should solve a real linear system with a rank deficient tall A.', () => {
         let A = T.fromArray([[1, 2, 3], [2, 4, 6], [4, 6, 8], [1, 1, 1]]);
         let B = T.ones([4, 2]);
-        let [Q, R, P] = T.qr(A);
-        let X = T.linsolve(A, B);
-
+        let actual = T.linsolve(A, B);
+        let expected = T.fromArray(
+            [[0.13793103448275812,0.13793103448275812 ],
+             [0, 0],
+             [0.10344827586206913, 0.10344827586206913]]);
+        checkTensor(actual, expected, 1e-14);
     });
+    for (let i = 0;i < shapes.length;i++) {
+        it(`should solve a real linear system with a random ${shapes[i][0]} x ${shapes[i][1]} A`, () => {
+            let A = T.randn(shapes[i]);
+            let B = T.randn([shapes[i][0], 4]);
+            let X = T.linsolve(A, B);
+            let lhs = T.matmul(T.matmul(T.transpose(A), A), X);
+            let rhs = T.matmul(T.transpose(A), B);
+            checkTensor(lhs, <Tensor>rhs, 1e-13 * Math.max(shapes[i][0], shapes[i][1]));
+        });
+    }
+    for (let i = 0;i < shapes.length;i++) {
+        it(`should solve a complex linear system with a random ${shapes[i][0]} x ${shapes[i][1]} A`, () => {
+            let A = T.complex(T.randn(shapes[i]), T.randn(shapes[i]));
+            let B = T.complex(T.randn([shapes[i][0], 4]), T.randn([shapes[i][0], 4]));
+            let X = T.linsolve(A, B);
+            let lhs = T.matmul(T.matmul(T.hermitian(A), A), X);
+            let rhs = T.matmul(T.hermitian(A), B);
+            checkTensor(lhs, <Tensor>rhs, 1e-13 * Math.max(shapes[i][0], shapes[i][1]));
+        });
+    }
 });

@@ -214,7 +214,7 @@ export class LU {
                 for (let i = 0;i < m;i++) {
                     columnCache[i] = reB[p[i] * n + j];
                 }
-                LU._luSolveColumn(n, reLU, columnCache);
+                LU._luSolveColumn(m, reLU, columnCache);
                 for (let i = 0;i < m;i++) {
                     reB[i * n + j] = columnCache[i];
                 }
@@ -248,7 +248,7 @@ export class LU {
                     columnCacheRe[i] = reB[p[i] * n + j];
                     columnCacheIm[i] = imB[p[i] * n + j];
                 }
-                LU._cluSolveColumn(n, reLU, imLU, columnCacheRe, columnCacheIm);
+                LU._cluSolveColumn(m, reLU, imLU, columnCacheRe, columnCacheIm);
                 for (let i = 0;i < m;i++) {
                     reB[i * n + j] = columnCacheRe[i];
                     imB[i * n + j] = columnCacheIm[i];

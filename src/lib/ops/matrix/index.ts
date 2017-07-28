@@ -8,12 +8,12 @@ import { DType } from '../../dtype';
 import { IMatrixBasicSubroutines, BuiltInMBS } from './mbs';
 import { LU } from './decomp/lu';
 import { SVD } from './decomp/svd';
-import { Eigen } from "./decomp/eigen";
-import { Cholesky } from "./decomp/chol";
+import { Eigen } from './decomp/eigen';
+import { Cholesky } from './decomp/chol';
+import { QR } from './decomp/qr';
 import { DataHelper } from '../../helper/dataHelper';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
-import { QR } from "./decomp/qr";
 
 export class MatrixOpProviderFactory {
 
@@ -490,7 +490,8 @@ export class MatrixOpProviderFactory {
             let Q = Tensor.zeros([shapeX[0], shapeX[0]]);
             let P = Tensor.zeros([shapeX[1], shapeX[1]]);
             if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
-                throw new Error('Not implemented.');
+                Q.ensureComplexStorage();
+                QR.cqrpf(shapeX[0], shapeX[1], X.realData, X.imagData, Q.realData, Q.imagData, P.realData);
             } else {
                 QR.qrpf(shapeX[0], shapeX[1], X.realData, Q.realData, P.realData);
             }
@@ -657,11 +658,17 @@ export class MatrixOpProviderFactory {
             } else {
                 // use QR with pivoting
                 let X = Tensor.zeros([shapeA[1], shapeB[1]]);
+                let l = Math.min(shapeA[0], shapeA[1]);
+                let d = new Array(l);
+                let ind = new Array(shapeA[1]);
                 if (isAComplex) {
-                    throw new Error('Not implemented.');                    
+                    X.ensureComplexStorage();
+                    let phr = new Array(l);
+                    let phi = new Array(l);
+                    QR.cqrp(shapeA[0], shapeA[1], A.realData, A.imagData, d, phr, phi, ind);
+                    QR.cqrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, A.imagData,
+                        d, ind, phr, phi, B.realData, B.imagData, X.realData, X.imagData);
                 } else {
-                    let d = new Array(Math.min(shapeA[0], shapeA[1]));
-                    let ind = new Array(shapeA[1]);
                     QR.qrp(shapeA[0], shapeA[1], A.realData, d, ind);
                     QR.qrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, d, ind, B.realData, X.realData);
                     if (isBComplex) {
@@ -672,7 +679,7 @@ export class MatrixOpProviderFactory {
                 }
                 return X;
             }
-        }
+        };
 
         return {
             isSymmetric: opIsSymmetric,
