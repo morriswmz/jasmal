@@ -2,7 +2,7 @@ import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { OpOutput, OpInput } from '../../commonTypes';
 import { OutputDTypeResolver } from '../../dtype';
 import { NOT_IMPLEMENTED } from '../../constant';
-import { CMathHelper } from '../../helper/mathHelper';
+import { CMath } from '../../complexNumber';
 
 export interface ITrigMathOpSet {
 
@@ -38,42 +38,30 @@ export class TrigMathOpSetFactory {
 
         const opSin = compiler.makeUnaryOp({
             opR: '$reY = Math.sin($reX);',
-            opC: '$tmp1 = csin($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opC: '$tmp1 = CMath.csin($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'csin': CMathHelper.csin
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         const opCos = compiler.makeUnaryOp({
             opR: '$reY = Math.cos($reX);',
-            opC: '$tmp1 = ccos($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opC: '$tmp1 = CMath.ccos($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'ccos': CMathHelper.ccos
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         const opTan = compiler.makeUnaryOp({
             opR: '$reY = Math.tan($reX);',
-            opC: '$tmp1 = ctan($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opC: '$tmp1 = CMath.ctan($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'ctan': CMathHelper.ctan
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         const opCot = compiler.makeUnaryOp({
             opR: '$tmp1 = Math.tan($reX); $reY = $tmp1 === 0.0 ? NaN : 1.0 / $tmp1;',
-            opC: '$tmp2 = ccot($reX, $imX); $reY = $tmp2[0]; $imY = $tmp2[1];'
+            opC: '$tmp2 = CMath.ccot($reX, $imX); $reY = $tmp2[0]; $imY = $tmp2[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'ccot': CMathHelper.ccot
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         // TODO: implement complex version of inverse trig functions
@@ -104,42 +92,30 @@ export class TrigMathOpSetFactory {
 
         const opSinh = compiler.makeUnaryOp({
             opR: '$reY = 0.5*(Math.exp($reX) - Math.exp(-$reX));',
-            opC: '$tmp1 = csinh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opC: '$tmp1 = CMath.csinh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'csinh': CMathHelper.csinh
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         const opCosh = compiler.makeUnaryOp({
             opR: '$reY = 0.5*(Math.exp($reX) + Math.exp(-$reX));',
-            opC: '$tmp1 = ccosh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opC: '$tmp1 = CMath.ccosh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'ccosh': CMathHelper.ccosh
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         const opTanh = compiler.makeUnaryOp({
             opR: '$tmp1 = Math.exp($reX); $tmp2 = Math.exp(-$reX); $reY = ($tmp1 - $tmp2) / ($tmp1 + $tmp2);',
-            opC: '$tmp3 = ctanh($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
+            opC: '$tmp3 = CMath.ctanh($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'ctanh': CMathHelper.ctanh
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         const opCoth = compiler.makeUnaryOp({
             opR: '$tmp1 = Math.exp($reX); $tmp2 = Math.exp(-$reX); $reY = ($tmp1 + $tmp2) / ($tmp1 - $tmp2);',
-            opC: '$tmp3 = ccoth($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
+            opC: '$tmp3 = CMath.ccoth($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'ccoth': CMathHelper.ccoth
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         return {

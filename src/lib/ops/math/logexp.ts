@@ -3,7 +3,7 @@ import { OpInput, OpOutput } from '../../commonTypes';
 import { OutputDTypeResolver } from '../../dtype';
 import { Tensor } from '../../tensor';
 import { DataHelper } from '../../helper/dataHelper';
-import { CMathHelper } from '../../helper/mathHelper';
+import { CMath } from '../../complexNumber';
 
 export interface ILogExpMathOpSet {
 
@@ -29,7 +29,7 @@ export class LogExpMathOpSetFactory {
 
         const opExp = compiler.makeUnaryOp({
             opR: '$reY = Math.exp($reX);',
-            opC: '$tmp1 = Math.exp($reX); $reY = $tmp1 * Math.cos($imX); $imY = $tmp1 * Math.sin($imX);'
+            opC: '$tmp1 = CMath.cexp($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
@@ -50,13 +50,10 @@ export class LogExpMathOpSetFactory {
         });
 
         const opLogA = compiler.makeUnaryOp({
-            opR: '$tmp1 = clog($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
-            opC: '$tmp1 = clog($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+            opR: '$tmp1 = CMath.clog($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
+            opC: '$tmp1 = CMath.clog($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
-            inlineFunctions: {
-                'clog': CMathHelper.clog
-            }
+            outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
         return {

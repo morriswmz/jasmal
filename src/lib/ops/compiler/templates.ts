@@ -7,6 +7,7 @@ import { OpInputType } from '../../commonTypes';
  */
 export const UNARY_OP_TEMPLATE =
 `'use strict';
+var CMath = __dep__.CMath;
 $InlineFunctions
 #if HAS_PARAM
 return function(x, param, inPlace) {
@@ -140,6 +141,7 @@ if (infoX.isComplex) {
  */
 export const BIN_EL_OP_TEMPLATE =
 `'use strict';
+var CMath = __dep__.CMath;
 $InlineFunctions
 return function (x, y, inPlace) {
     // process inputs

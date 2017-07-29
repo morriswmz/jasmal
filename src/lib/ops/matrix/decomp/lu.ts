@@ -1,5 +1,5 @@
 import { Tensor } from '../../../tensor';
-import { CMathHelper } from '../../../helper/mathHelper';
+import { CMath } from '../../../complexNumber';
 import { DataBlock } from '../../../storage';
 import { OutputDTypeResolver } from '../../../dtype';
 import { DataHelper } from "../../../helper/dataHelper";
@@ -114,7 +114,7 @@ export class LU {
         for (let i = 0; i < m; i++) {
             let maxAbs = 0.0;
             for (let j = 0; j < m; j++) {
-                let curAbs = CMathHelper.length2(reX[i * m + j], imX[i * m + j]);
+                let curAbs = CMath.length2(reX[i * m + j], imX[i * m + j]);
                 if (curAbs > maxAbs) {
                     maxAbs = curAbs;
                 }
@@ -148,7 +148,7 @@ export class LU {
                 reX[i * m + j] = accRe;
                 imX[i * m + j] = accIm;
                 // check abs
-                let curAbs = CMathHelper.length2(accRe, accIm) * scales[i];
+                let curAbs = CMath.length2(accRe, accIm) * scales[i];
                 if (curAbs >= maxAbs) {
                     maxAbs = curAbs;
                     idxMax = i;
@@ -183,7 +183,7 @@ export class LU {
                 // also zero -> no need to perform the division
                 if (reC !== 0 || imC !== 0) {
                     // 1.0 / pivot element
-                    [reC, imC] = CMathHelper.cReciprocal(reC, imC);
+                    [reC, imC] = CMath.cReciprocal(reC, imC);
                     for (let i = j + 1; i < m; i++) {
                         let tmp = reX[i * m + j];
                         reX[i * m + j] = tmp * reC - imX[i * m + j] * imC;
@@ -334,7 +334,7 @@ export class LU {
                 accRe -= reLU[i * n + j] * reB[j] - imLU[i * n + j] * imB[j];
                 accIm -= reLU[i * n + j] * imB[j] + imLU[i * n + j] * reB[j];
             }
-            [reB[i], imB[i]] = CMathHelper.cdivCC(accRe, accIm, reLU[i * n + i], imLU[i * n + i]);
+            [reB[i], imB[i]] = CMath.cdivCC(accRe, accIm, reLU[i * n + i], imLU[i * n + i]);
         }
     }
 

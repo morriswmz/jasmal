@@ -2,9 +2,8 @@ import { IArithmeticOpProvider } from './definition';
 import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { Tensor } from "../../tensor";
-import { ComplexNumber } from "../../complexNumber";
+import { ComplexNumber, CMath } from "../../complexNumber";
 import { ShapeHelper } from "../../helper/shapeHelper";
-import { CMathHelper } from "../../helper/mathHelper";
 
 export class ArithmeticOpProviderFactory {
     public static create(): IArithmeticOpProvider {
@@ -44,24 +43,17 @@ export class ArithmeticOpProviderFactory {
             }),
             div: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX / $reY;',
-                opRC: '$tmp1 = cdivRC($reX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];',
+                opRC: '$tmp1 = CMath.cdivRC($reX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];',
                 opCR: '$reZ = $reX / $reY; $imZ = $imX / $reY;',
-                opCC: '$tmp1 = cdivCC($reX, $imX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];'
+                opCC: '$tmp1 = CMath.cdivCC($reX, $imX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];'
             }, {
-                outputDTypeResolver: OutputDTypeResolver.bToFloat,
-                inlineFunctions: {
-                    'cdivRC': CMathHelper.cdivRC,
-                    'cdivCC': CMathHelper.cdivCC
-                }
+                outputDTypeResolver: OutputDTypeResolver.bToFloat
             }),
             reciprocal: compiler.makeUnaryOp({
                 opR: '$reY = 1 / $reX;',
-                opC: '$tmp1 = cReciprocal($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
+                opC: '$tmp1 = CMath.cReciprocal($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
             }, {
-                outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat,
-                inlineFunctions: {
-                    'cReciprocal': CMathHelper.cReciprocal
-                }
+                outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
             }),
             rem: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX % $reY;'

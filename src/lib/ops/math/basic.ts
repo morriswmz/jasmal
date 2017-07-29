@@ -1,4 +1,4 @@
-import { CMathHelper } from '../../helper/mathHelper';
+import { CMath } from '../../complexNumber';
 import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { OpInput, OpOutput } from '../../commonTypes';
@@ -29,24 +29,18 @@ export class BasicMathOpSetFactory {
 
         const opAbs = compiler.makeUnaryOp({
             opR: '$reY = Math.abs($reX);',
-            opC: '$reY = length2($reX, $imX);',
+            opC: '$reY = CMath.length2($reX, $imX);',
         }, {
             // custom rule here, only convert to float when the input is complex
-            outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t,
-            inlineFunctions: {
-                'length2': CMathHelper.length2
-            }
+            outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t
         });
 
         const opSign = compiler.makeUnaryOp({
             opR: '$reY = $reX > 0 ? 1 : ($reX < 0 ? -1 : ($reX === 0 ? 0 : NaN));',
-            opC: '$tmp1 = length2($reX, $imX);' +
+            opC: '$tmp1 = CMath.length2($reX, $imX);' +
                  'if ($tmp1 === 0) { $reY = 0; $imY = 0; } else { $reY = $reX / $tmp1; $imY = $imX / $tmp1; }'
         }, {
-            outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t,
-            inlineFunctions: {
-                'length2': CMathHelper.length2
-            }
+            outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t
         });
 
         const opMin2 = compiler.makeBinaryOp({

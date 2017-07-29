@@ -173,3 +173,46 @@ describe('cot()', () => {
         checkTensor(actual, expected, 1e-14);
     });
 });
+
+describe('pow2', () => {
+    it('should compute the power for real numbers', () => {
+        let x = T.fromArray([1, 2, 3.3, -3]);
+        let y = T.fromArray([2, -1.2, 4.4, -2]);
+        let actual = T.pow2(x, y);
+        let expected = T.fromArray([1, Math.pow(2, -1.2), Math.pow(3.3, 4.4), 1/9]);
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the power for real numbers with possible complex output', () => {
+        let x = T.fromArray([2, -2, -2]);
+        let y = T.fromArray([10, -6, 3.3]);
+        let actual = T.pow2(x, y);
+        let expected = T.fromArray(
+            [1024, 1.5625e-2, -5.7891882368512873],
+            [0, 0, -7.968134023406492]);
+        checkTensor(actual, expected, 1e-13);
+    });
+    it('should compute the power for complex numbers', () => {
+        let x = T.fromArray(
+            [0, 0,   4,  8, 3.2],
+            [3, 2, 1.1, -2,   0]
+        );
+        let y = T.fromArray(
+            [2,   0,    0, -2, 2.4],
+            [1, 3.3, -4.2,  7,  -1]
+        );
+        let actual = T.pow2(x, y);
+        let expected = T.fromArray(
+            [-0.85095334231007735,
+             -3.6831822518019123e-3,
+             2.941872544447163,
+             -7.3579410095963541e-2,
+             6.4646816470884474],
+            [-1.6661950031664541,
+             4.2284316598590176e-3,
+             0.93476190747432153,
+             3.5518314725028179e-2,
+             -14.970265377417148]
+        );
+        checkTensor(actual, expected, 1e-14);
+    });
+});

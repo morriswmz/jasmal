@@ -199,6 +199,18 @@ describe('rank()', () => {
     });
 });
 
+describe('cond()', () => {
+    it('should return one for an identity matrix', () => {
+        expect(T.cond(T.eye(4))).toBe(1);
+    });
+    it('should return a huge number for a singular matrix', () => {
+        expect(T.cond(T.ones([5, 8]))).toBeGreaterThan(1e60);
+    });
+    it('should return the condition number for a Hilbert matrix', () => {
+        expect(Math.abs(T.cond(T.hilb(10)) - 1.602502816811318e13) < 1e9).toBeTruthy();
+    });
+});
+
 describe('eig()', () => {
     var shapes = [[5, 5], [7, 7], [10, 10], [15, 15], [20, 20], [30, 30], [50, 50]];
     T.seed(201);
@@ -261,6 +273,15 @@ describe('eig()', () => {
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, false);
     });
+    it('should perform eigendecomposition for a unbalanced real matrix', () => {
+        let A = T.fromArray(
+            [[    4,    10, 50, 0],
+             [ -0.1,     1, 10, 0],
+             [-0.01, -0.01,  2, 0],
+             [    0,     0,  0, 3]]);
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V, false);
+    });
     it('should perform eigendecomposition for a Hilbert matrix', () => {
         let A = T.hilb(8);
         let [E, V] = T.eig(A);
@@ -284,6 +305,20 @@ describe('eig()', () => {
              [ 1, -1, -1,  0],
              [ 1,  1, -2,  0],
              [ 0,  0,  0, -3]]);
+        let [E, V] = T.eig(A);
+        validateEVD(A, E, V, false);
+    });
+    it('should perform eigendecomposition for a complex upper Hessenberg matrix', () => {
+        let A = T.fromArray(
+            [[  1,  10, 100, 1000],
+             [0.1,   1,  10,  100],
+             [  0, 0.1,   1,   10],
+             [  0,   0, 0.1,    1]],
+            [[  5,  25, 125,  625],
+             [0.2,   5,  25,  125],
+             [  0, 0.2,   5,   25],
+             [  0,   0, 0.2,    5]]
+        );
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, false);
     });

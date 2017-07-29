@@ -5,7 +5,7 @@
  * http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg01379.html
  */
 import { DataBlock } from "../../../storage";
-import { CMathHelper } from "../../../helper/mathHelper";
+import { CMath } from "../../../complexNumber";
 
 export class Eigen {
 
@@ -176,7 +176,7 @@ export class Eigen {
                         l2 = l1 + 1;
                         g = diag[l];
                         p = (diag[l1] - g) / (2.0 * sub[l]);
-                        r = CMathHelper.length2(p, 1.0);
+                        r = CMath.length2(p, 1.0);
                         diag[l] = sub[l] / (p + (p >= 0 ? r : -r));
                         diag[l1] = sub[l] * (p + (p >= 0 ? r : -r));
                         dl1 = diag[l1];
@@ -200,7 +200,7 @@ export class Eigen {
                             s2 = s;
                             g = c * sub[i];
                             h = c * p;
-                            r = CMathHelper.length2(p, sub[i]);
+                            r = CMath.length2(p, sub[i]);
                             sub[i + 1] = s * r;
                             s = sub[i] / r;
                             c = p / r;
@@ -310,7 +310,7 @@ export class Eigen {
                     e2[i] = scale * scale * h;
                     g = Math.sqrt(h);
                     e[i] = scale * g;
-                    f = CMathHelper.length2(ar[i * n + l], ai[i * n + l]);
+                    f = CMath.length2(ar[i * n + l], ai[i * n + l]);
                     // form next diagonal element of matrix t
                     if (f !== 0) {
                         tau[l] = (ai[i * n + l] * tau[n + i] - ar[i * n + l] * tau[i]) / f;
@@ -969,7 +969,7 @@ export class Eigen {
                 // last vector component chosen imaginary so that eigenvector
                 // matrix is triangular
                 if (Math.abs(h[en * n + na]) <= Math.abs(h[na * n + en])) {
-                    [h[na * n + na], h[na * n + en]] = CMathHelper.cdivCC(
+                    [h[na * n + na], h[na * n + en]] = CMath.cdivCC(
                         0.0, -h[na * n + en], h[na * n + na] - p, q);
                 } else {
                     h[na * n + na] = q / h[en * n + na];
@@ -1006,19 +1006,19 @@ export class Eigen {
                                     tst2 = tst1 + vr;
                                 } while (tst2 > tst1);
                             }
-                            [h[i * n + na], h[i * n + en]] = CMathHelper.cdivCC(
+                            [h[i * n + na], h[i * n + en]] = CMath.cdivCC(
                                 x * r - zz * ra + q * sa,
                                 x * s - zz * sa - q * ra,
                                 vr, vi);
                             if (Math.abs(x) <= Math.abs(zz) + Math.abs(q)) {
-                                [h[(i + 1) * n + na], h[(i + 1) * n + en]] = CMathHelper.cdivCC(
+                                [h[(i + 1) * n + na], h[(i + 1) * n + en]] = CMath.cdivCC(
                                     -r - y * h[i * n + na], -s - y * h[i * n + en], zz, q);
                             } else {
                                 h[(i + 1) * n + na] = (-ra - w * h[i * n + na] + q * h[i * n + en]) / x;
                                 h[(i + 1) * n + en] = (-sa - w * h[i * n + en] - q * h[i * n + na]) / x;
                             }
                         } else {
-                            [h[i * n + na], h[i * n + en]] = CMathHelper.cdivCC(-ra, -sa, w, q);
+                            [h[i * n + na], h[i * n + en]] = CMath.cdivCC(-ra, -sa, w, q);
                         }
                         // overflow control
                         t = Math.max(Math.abs(h[i * n + na]), Math.abs(h[i * n + en]));
@@ -1307,8 +1307,8 @@ export class Eigen {
         for (i = k;i <= l;i++) {
             scale[i] = 1.0;
         }
-        flag = false; // noconv = false
         do {
+            flag = false; // noconv = false
             for (i = k;i <= l;i++) {
                 c = 0.0;
                 r = 0.0;
@@ -1384,7 +1384,7 @@ export class Eigen {
             }
 
             g = Math.sqrt(h);
-            f = CMathHelper.length2(ortr[m], orti[m]);
+            f = CMath.length2(ortr[m], orti[m]);
             if (f !== 0.0) {
                 h += f * g;
                 g /= f;
@@ -1494,7 +1494,7 @@ export class Eigen {
                 if (hi[i * n + (i - 1)] === 0.0) {
                     continue;
                 }
-                norm = CMathHelper.length2(hr[i * n + (i - 1)], hi[i * n + (i - 1)]);
+                norm = CMath.length2(hr[i * n + (i - 1)], hi[i * n + (i - 1)]);
                 yr = hr[i * n + (i - 1)] / norm;
                 yi = hi[i * n + (i - 1)] / norm;
                 hr[i * n + (i - 1)] = norm;
@@ -1573,12 +1573,12 @@ export class Eigen {
                     if (xr !== 0.0 || xi !== 0.0) {
                         yr = (hr[enm1 * n + enm1] - sr) / 2.0;
                         yi = (hi[enm1 * n + enm1] - si) / 2.0;
-                        [zzr, zzi] = CMathHelper.csqrt((yr + yi) * (yr - yi) + xr, 2.0 * yr * yi + xi);
+                        [zzr, zzi] = CMath.csqrt((yr + yi) * (yr - yi) + xr, 2.0 * yr * yi + xi);
                         if (yr * zzr + yi * zzi < 0.0) {
                             zzr = -zzr;
                             zzi = -zzi;
                         }
-                        [xr, xi] = CMathHelper.cdivCC(xr, xi, yr + zzr, yi + zzi);
+                        [xr, xi] = CMath.cdivCC(xr, xi, yr + zzr, yi + zzi);
                         sr -= xr;
                         si -= xi;
                     }
@@ -1598,8 +1598,8 @@ export class Eigen {
                 for (i = lp1;i <= en;i++) {
                     sr = hr[i * n + (i - 1)];
                     hr[i * n + (i - 1)] = 0.0;
-                    norm = CMathHelper.length2(
-                        CMathHelper.length2(hr[(i - 1) * n + (i - 1)], hi[(i - 1) * n + (i - 1)]), sr);
+                    norm = CMath.length2(
+                        CMath.length2(hr[(i - 1) * n + (i - 1)], hi[(i - 1) * n + (i - 1)]), sr);
                     xr = hr[(i - 1) * n + (i - 1)] / norm;
                     wr[i - 1] = xr;
                     xi = hi[(i - 1) * n + (i - 1)] / norm;
@@ -1622,7 +1622,7 @@ export class Eigen {
 
                 si = hi[en * n + en];
                 if (si !== 0.0) {
-                    norm = CMathHelper.length2(hr[en * n + en], si);
+                    norm = CMath.length2(hr[en * n + en], si);
                     sr = hr[en * n + en] / norm;
                     si /= norm;
                     hr[en * n + en] = norm;
@@ -1722,7 +1722,7 @@ export class Eigen {
                         tst2 = norm + yr;
                     } while (tst2 > tst1);
                 }
-                [hr[i * n + en], hi[i * n + en]] = CMathHelper.cdivCC(zzr, zzi, yr, yi);
+                [hr[i * n + en], hi[i * n + en]] = CMath.cdivCC(zzr, zzi, yr, yi);
                 // overflow control
                 tr = Math.abs(hr[i * n + en]) + Math.abs(hi[i * n + en]);
                 if (tr === 0.0) {

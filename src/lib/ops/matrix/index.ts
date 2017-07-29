@@ -556,6 +556,20 @@ export class MatrixOpProviderFactory {
             return r;
         }
 
+        const opCond = (x: OpInput): number => {
+            // We need to make a copy here because svd procedure will override
+            // the original matrix.
+            let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
+            let shape = X.shape;
+            let s = new Array(shape[1]);
+            if (X.hasComplexStorage()) {
+                SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
+            } else {
+                SVD.svd(shape[0], shape[1], false, X.realData, s, []);
+            }
+            return s[0] / s[s.length - 1];
+        }
+
         const opEig = (x: OpInput): [Tensor, Tensor] => {
             let X: Tensor;
             // We need to keep track of this because the eigendecomposition
@@ -700,6 +714,7 @@ export class MatrixOpProviderFactory {
             lu: opLu,
             svd: opSvd,
             rank: opRank,
+            cond: opCond,
             eig: opEig,
             chol: opChol,
             qr: opQr,

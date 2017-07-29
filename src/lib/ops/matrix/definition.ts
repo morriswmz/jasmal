@@ -149,7 +149,7 @@ export interface IMatrixOpProvider {
     lu(x: OpInput, compact: false): [Tensor, Tensor, Tensor];
 
     /**
-     * Performs singular value decomposition.
+     * Computes the singular value decomposition.
      * Returns a 3-item tuple [U, S, V] such that x = USV^H.
      * Let the shape of x be m x n, then the shapes of U, S, V, are
      * m x min(m,n), min(m,n) x n, n x n, respectively. 
@@ -165,7 +165,14 @@ export interface IMatrixOpProvider {
     rank(x: OpInput): number;
 
     /**
-     * Performs eigendecomposition of the input matrix.
+     * Estimates the condition number of the input matrix from its singular
+     * values.
+     * @param x Input matrix.
+     */
+    cond(x: OpInput): number;
+
+    /**
+     * Computes the eigendecomposition of the input matrix.
      * Returns a 2-item tuple [E, L] such that x E = E L.
      * If the input matrix is symmetric/Hermitian, E will be unitary. For
      * general matrices E is unnormalized.
@@ -174,7 +181,7 @@ export interface IMatrixOpProvider {
     eig(x: OpInput): [Tensor, Tensor];
 
     /**
-     * Performs Cholesky decomposition of the input matrix.
+     * Computes the Cholesky decomposition of the input matrix.
      * Note: this function assumes the input is symmetric/Hermitian and only
      *       uses the lower triangular part of the input matrix. You are
      *       responsible for ensuring that the input matrix is symmetric or
@@ -186,10 +193,21 @@ export interface IMatrixOpProvider {
      */
     chol(x: OpInput): Tensor;
 
+    /**
+     * Computes the QR decomposition of the input matrix X.
+     * Returns a tuple [Q, R, P] such that XP = QR.
+     * @param x Input matrix.
+     */
     qr(x: OpInput): [Tensor, Tensor, Tensor];
 
     /**
-     * Solves the linear system AX = B.
+     * Solves the linear system AX = B, where A: m x n, X: n x p, B: m x p.
+     * If m = n, LUP decomposition is used to obtain X.
+     * If m > n, column pivoted QR decomposition is used to obtain a least
+     * square solution.
+     * If m < n or A is rank deficient, the solution cannot be trusted.
+     * @param a Matrix A.
+     * @param b Matrix B. 
      */
     linsolve(a: OpInput, b: OpInput): Tensor;
 

@@ -1,5 +1,5 @@
 import { SVD } from './decomp/svd';
-import { CMathHelper } from '../../helper/mathHelper';
+import { CMath } from '../../complexNumber';
 
 export class NormFunction {
 
@@ -71,7 +71,7 @@ export class NormFunction {
             if (isNaN(reX[i]) || isNaN(imX[i])) {
                 return NaN;
             }
-            let v = CMathHelper.length2(reX[i], imX[i]);
+            let v = CMath.length2(reX[i], imX[i]);
             if (v > norm) {
                 norm = v;
             }
@@ -96,7 +96,7 @@ export class NormFunction {
             if (isNaN(reX[i]) || isNaN(imX[i])) {
                 return NaN;
             }
-            norm += Math.pow(CMathHelper.length2(reX[i], imX[i]), p);
+            norm += Math.pow(CMath.length2(reX[i], imX[i]), p);
         }
         return Math.pow(norm, 1/p);
     }
@@ -129,7 +129,7 @@ export class NormFunction {
                 if (isNaN(elRe) || isNaN(elIm)) {
                     return NaN;
                 }
-                colSum += CMathHelper.length2(elRe, elIm);
+                colSum += CMath.length2(elRe, elIm);
             }
             if (colSum > norm) {
                 norm = colSum;
@@ -180,7 +180,7 @@ export class NormFunction {
                 if (isNaN(elRe) || isNaN(elIm)) {
                     return NaN;
                 }
-                rowSum += CMathHelper.length2(elRe, elIm);
+                rowSum += CMath.length2(elRe, elIm);
             }
             if (rowSum > norm) {
                 norm = rowSum;

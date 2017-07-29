@@ -1,7 +1,7 @@
 import { Tensor } from '../../tensor';
 import { OpInput, OpOutput, OpInputInternal } from '../../commonTypes'; 
 import { DataBlock } from '../../storage';
-import { ComplexNumber } from '../../complexNumber';
+import { ComplexNumber, CMath } from '../../complexNumber';
 import { ShapeHelper, BroadcastingCheckResult } from '../../helper/shapeHelper';
 import { TemplateEngine } from './templateEngine';
 import { T_BLOCK_TEMPLATE, S_BLOCK_TEMPLATE, UNARY_OP_TEMPLATE,
@@ -9,7 +9,6 @@ import { T_BLOCK_TEMPLATE, S_BLOCK_TEMPLATE, UNARY_OP_TEMPLATE,
          TS_BLOCK_TEMPLATE, TT_BLOCK_TEMPLATE, TT_NORMAL_BLOCK_TEMPLATE,
          TT_BROADCAST_SUB_BLOCK_TEMPLATE, TT_BROADCAST_BLOCK_TEMPLATE } from './templates';
 import { OutputDTypeResolver, DType, DTypeHelper } from '../../dtype';
-import { CMathHelper } from '../../helper/mathHelper';
 
 /**
  * General rules:
@@ -117,7 +116,7 @@ export interface UnaryEWOpTemplate {
 interface OpCommonDependencies {
     Tensor: Function;
     ComplexNumber: Function;
-    CMathHelper: Function;
+    CMath: Function;
     computeStrides: (shape: number[]) => number[];
     isWiderType(original: DType, newType: DType): boolean;
     dTypeToString: (dtype: DType) => string;
@@ -170,7 +169,7 @@ export class TensorElementWiseOpCompiler {
         return {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
-            CMathHelper: CMathHelper,
+            CMath: CMath,
             computeStrides: ShapeHelper.computeStrides,
             determineOutputType: opConfig && opConfig.outputDTypeResolver
                 ? opConfig.outputDTypeResolver : OutputDTypeResolver.uNoChange,
@@ -256,7 +255,7 @@ export class TensorElementWiseOpCompiler {
         let deps: BinaryOpDependencies = {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
-            CMathHelper: CMathHelper,
+            CMath: CMath,
             computeStrides: ShapeHelper.computeStrides,
             compareShape: ShapeHelper.compareShape,
             determineOutputType: outputDTypeResolver,

@@ -1,6 +1,6 @@
 import { DataBlock } from '../../../storage';
 import { EPSILON } from '../../../constant';
-import { CMathHelper } from '../../../helper/mathHelper';
+import { CMath } from '../../../complexNumber';
 
 export class QR {
 
@@ -352,7 +352,7 @@ export class QR {
             }
             if (s) {
                 // f <- |A[r,r]|
-                f = CMathHelper.length2(ar[r * n + r], ai[r * n + r]);
+                f = CMath.length2(ar[r * n + r], ai[r * n + r]);
                 // g <- sqrt(s) = ||a||
                 g = Math.sqrt(s);
                 // \beta = 2/(w^H w) = 1/(s + |A[r,r]| * sqrt(s))
@@ -445,7 +445,7 @@ export class QR {
                 // (I - \beta vv^H) Q = Q - (\beta v)(v^H [q_1 q_2 ...])
                 // h <- -\beta
                 // Note that \beta = 2/v^Hv = 1/(||a||^2 + |a_1| ||a||) = 1/g/a[i,i]
-                h = - 1.0 / g / CMathHelper.length2(ar[i * n + i], ai[i * n + i]);
+                h = - 1.0 / g / CMath.length2(ar[i * n + i], ai[i * n + i]);
                 for (j = i;j < m;j++) {
                     // compute v^H q_j
                     sr = 0.0;
@@ -552,7 +552,7 @@ export class QR {
                 // (I - \beta vv^H) B = B - (\beta v)(v^H [b_1 b_2 ...])
                 // h <- -\beta
                 // Note that -\beta = 2/v^v = 1/(||a||^2 + a_1 ||a||) = -1/g/a[i,i]
-                h = - 1.0 / g / CMathHelper.length2(ar[i * n + i], ai[i * n + i]);
+                h = - 1.0 / g / CMath.length2(ar[i * n + i], ai[i * n + i]);
                 for (j = 0;j < p;j++) {
                     // compute v^H b_j
                     sr = 0.0;
@@ -581,7 +581,7 @@ export class QR {
                     si -= ar[i * n + k] * xi[k * p + j] + ai[i * n + k] * xr[k * p + j]
                 }
                 // diagonal elements of R are stored in d
-                [xr[i * p + j], xi[i * p + j]] = CMathHelper.cdivCC(sr, si, -d[i] * phr[i], -d[i] * phi[i]);
+                [xr[i * p + j], xi[i * p + j]] = CMath.cdivCC(sr, si, -d[i] * phr[i], -d[i] * phi[i]);
             }
         }
         // apply permutation

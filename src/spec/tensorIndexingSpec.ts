@@ -14,29 +14,21 @@ describe('Advanced indexing', () => {
             let X = T.zeros([3, 4]);
             X.set(':', 1);
             checkTensor(X, T.ones(X.shape));
-            // should not change A
-            checkTensor(A, ACopy);
         });
         it('should set all elements at even indices to 1', () => {
             let X = T.zeros([3, 3]);
             X.set('::2', 1);
             checkTensor(X, T.fromArray([[1, 0, 1], [0, 1, 0], [1, 0, 1]]));
-            // should not change A
-            checkTensor(A, ACopy);
         });
         it('should set four corners to [1,2,3,4]', () => {
             let X = T.zeros([3, 3]);
             X.set([0, -1], [0, -1], [[1, 2], [3, 4]]);
             checkTensor(X, T.fromArray([[1, 0, 2], [0, 0, 0], [3, 0, 4]]));
-            // should not change A
-            checkTensor(A, ACopy);
         });
         it('should set all elements in the first row to 10', () => {
             let X = A.copy();
             X.set(0, ':', 10);
             checkTensor(X, T.fromArray([[10, 10, 10], [4, 5, 6]]));
-            // should not change A
-            checkTensor(A, ACopy);
         });
         it('should set all elements that are greater than 2 to -1', () => {
             let X = A.copy();
