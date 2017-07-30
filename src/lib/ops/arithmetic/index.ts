@@ -6,8 +6,7 @@ import { ComplexNumber, CMath } from "../../complexNumber";
 import { ShapeHelper } from "../../helper/shapeHelper";
 
 export class ArithmeticOpProviderFactory {
-    public static create(): IArithmeticOpProvider {
-        let compiler = TensorElementWiseOpCompiler.getInstance();
+    public static create(compiler: TensorElementWiseOpCompiler): IArithmeticOpProvider {
         return {
             add: compiler.makeBinaryOp({
                 opRR: '$reZ = $reX + $reY;',

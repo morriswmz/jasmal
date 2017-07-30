@@ -5,9 +5,10 @@ import { DataHelper } from '../../helper/dataHelper';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { DataBlock } from '../../storage';
 import { OpInput } from '../../commonTypes';
+import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 
 export class CoreOpProviderFactory {
-    public static create(): ICoreOpProvider {
+    public static create(compiler: TensorElementWiseOpCompiler): ICoreOpProvider {
 
         const opReshape = (x: OpInput, shape: number[]) => {
             if (x instanceof Tensor) {
@@ -351,41 +352,21 @@ export class CoreOpProviderFactory {
             return DataHelper.isArrayAllZeros(t.imagData);
         };
 
-        const opIsNaN = (x: OpInput): Tensor => {
-            let t = x instanceof Tensor ? x : Tensor.toTensor(x);
-            let result = Tensor.zeros(t.shape, DType.LOGIC);
-            let reX = t.realData;
-            let imX = t.imagData;
-            let reY = result.realData;
-            if (t.hasComplexStorage()) {
-                for (let i = 0;i < t.size;i++) {
-                    reY[i] = (isNaN(reX[i]) || isNaN(imX[i])) ? 1 : 0;
-                }
-            } else {
-                for (let i = 0;i < t.size;i++) {
-                    reY[i] = isNaN(reX[i]) ? 1 : 0;
-                }
-            }
-            return result;
-        };
+        const opIsNaN = compiler.makeUnaryOp({
+            opR: '$reY = isNaN($reX) ? 1 : 0;',
+            opC: '$reY = isNaN($reX) || isNaN($imX) ? 1 : 0'
+        }, {
+            noInPlaceOperation: true,
+            outputDTypeResolver: OutputDTypeResolver.uToLogic
+        });
 
-        const opIsInf = (x: OpInput): Tensor => {
-            let t = x instanceof Tensor ? x : Tensor.toTensor(x);
-            let result = Tensor.zeros(t.shape, DType.LOGIC);
-            let reX = t.realData;
-            let imX = t.imagData;
-            let reY = result.realData;
-            if (t.hasComplexStorage()) {
-                for (let i = 0;i < t.size;i++) {
-                    reY[i] = !(isFinite(reX[i]) && isFinite(imX[i])) && !(isNaN(reX[i]) || isNaN(imX[i])) ? 1 : 0;
-                }
-            } else {
-                for (let i = 0;i < t.size;i++) {
-                    reY[i] = !isFinite(reX[i]) && !isNaN(reX[i]) ? 1 : 0;
-                }
-            }
-            return result;
-        };
+        const opIsInf = compiler.makeUnaryOp({
+            opR: '$reY = !isFinite($reX) && !isNaN($reX) ? 1 : 0',
+            opC: '$reY = (!isFinite($reX) && !isNaN($reX)) || (!isFinite($imX) && !isNaN($imX)) ? 1 : 0;'
+        }, {
+            noInPlaceOperation: true,
+            outputDTypeResolver: OutputDTypeResolver.uToLogic
+        });
 
         const opFind = (x: OpInput, f?: (re: number, im: number) => boolean): number[] => {
             let t = x instanceof Tensor ? x : Tensor.toTensor(x);

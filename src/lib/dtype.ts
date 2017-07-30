@@ -54,6 +54,15 @@ export class OutputDTypeResolver {
     }
 
     /**
+     * Always returns LOGIC.
+     * @param t 
+     * @param isComplex 
+     */
+    public static uToLogic(t: DType, isComplex: boolean): DType {
+        return DType.LOGIC;
+    }
+
+    /**
      * Returns FLOAT64.
      * @param t 
      * @param isComplex 

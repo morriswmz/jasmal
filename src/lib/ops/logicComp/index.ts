@@ -8,9 +8,7 @@ import { DataHelper } from '../../helper/dataHelper';
 
 export class LogicComparisonOpProviderFactory {
     
-    public static create(): ILogicComparisonOpProvider {
-        
-        const compiler = TensorElementWiseOpCompiler.getInstance();
+    public static create(compiler: TensorElementWiseOpCompiler): ILogicComparisonOpProvider {
 
         const opEq = compiler.makeBinaryOp({
             opRR: '$reZ = ($reX === $reY) ? 1 : 0;'

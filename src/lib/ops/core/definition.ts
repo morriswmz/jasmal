@@ -46,8 +46,7 @@ export interface ICoreOpProvider {
     real(x: OpInput): Tensor;
 
     imag(x: OpInput): Tensor;
-
-    // TODO: is* should return a scalar if the input is a scalar
+    
     /**
      * Checks if every element of x is real.
      */

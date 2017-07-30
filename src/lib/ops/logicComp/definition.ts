@@ -20,7 +20,7 @@ export interface ILogicComparisonOpProvider {
 
     xor(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
 
-    not(x: OpInput): OpOutput;
+    not(x: OpInput, inPlace?: boolean): OpOutput;
 
     all(x: OpInput): boolean;
 

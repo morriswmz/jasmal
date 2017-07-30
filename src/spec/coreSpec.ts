@@ -130,3 +130,41 @@ describe('permuteAxis()', () => {
         checkTensor(actual, expected);
     });
 });
+
+describe('isnan()', () => {
+    it('should return a boolean for a scalar input.', () => {
+        expect(T.isnan(NaN)).toBe(1);
+        expect(T.isnan(0)).toBe(0);
+    });
+    it('should apply isNaN() to each element and return a logic tensor for a real input', () => {
+        let x = T.fromArray([[1, NaN], [Infinity, 2]]);
+        let actual = T.isnan(x);
+        let expected = T.fromArray([[0, 1], [0, 0]], [], T.LOGIC);
+        checkTensor(actual, expected);
+    });
+    it('should apply isNaN() to each element and return a logic tensor for a complex input', () => {
+        let x = T.fromArray([[1, NaN], [Infinity, 2]], [[NaN, NaN], [2, NaN]]);
+        let actual = T.isnan(x);
+        let expected = T.fromArray([[1, 1], [0, 1]], [], T.LOGIC);
+        checkTensor(actual, expected);
+    });
+});
+
+describe('isinf()', () => {
+    it('should return a boolean for a scalar input.', () => {
+        expect(T.isinf(Infinity)).toBe(1);
+        expect(T.isinf(0)).toBe(0);
+    });
+    it('should apply isinf() to each element and return a logic tensor for a real input', () => {
+        let x = T.fromArray([[1, NaN], [Infinity, -Infinity]]);
+        let actual = T.isinf(x);
+        let expected = T.fromArray([[0, 0], [1, 1]], [], T.LOGIC);
+        checkTensor(actual, expected);
+    });
+    it('should apply isinf() to each element and return a logic tensor for a complex input', () => {
+        let x = T.fromArray([[1, Infinity, -1], [-5, Infinity, 0]], [[NaN, 3, -9], [Infinity, Infinity, NaN]]);
+        let actual = T.isinf(x);
+        let expected = T.fromArray([[0, 1, 0], [1, 1, 0]], [], T.LOGIC);
+        checkTensor(actual, expected);
+    });
+});

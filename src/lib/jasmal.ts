@@ -18,6 +18,7 @@ import { LogicComparisonOpProviderFactory } from './ops/logicComp';
 import { MatrixOpProviderFactory } from './ops/matrix';
 import { DataOpProviderFactory } from './ops/data';
 import { ObjectHelper } from './helper/objHelper';
+import { TensorElementWiseOpCompiler } from './ops/compiler/compiler';
 
 export interface JasmalOptions {
     rngEngine?: string | IRandomEngine;
@@ -73,12 +74,14 @@ export class JasmalEngine {
             options = defaultOptions;
         }
 
-        let coreOpProvider = CoreOpProviderFactory.create();
+        let opCompiler = TensorElementWiseOpCompiler.getInstance();
+
+        let coreOpProvider = CoreOpProviderFactory.create(opCompiler);
         let randomOpProvider = RandomOpProviderFactory.create(options.rngEngine);
-        let arithmeticOpProvider = ArithmeticOpProviderFactory.create();
+        let arithmeticOpProvider = ArithmeticOpProviderFactory.create(opCompiler);
         let matrixOpProvider = MatrixOpProviderFactory.create(arithmeticOpProvider);
-        let mathOpProvider = MathOpProviderFactory.create();
-        let logicCompOpProvider = LogicComparisonOpProviderFactory.create();
+        let mathOpProvider = MathOpProviderFactory.create(opCompiler);
+        let logicCompOpProvider = LogicComparisonOpProviderFactory.create(opCompiler);
         let dataOpProvider = DataOpProviderFactory.create();
         
         let jasmalCore =  {

@@ -9,10 +9,8 @@ import { RoundingMathOpSetFactory } from './rounding';
 
 export class MathOpProviderFactory {
 
-    public static create(): IMathOpProvider {
+    public static create(compiler: TensorElementWiseOpCompiler): IMathOpProvider {
         
-        const compiler = TensorElementWiseOpCompiler.getInstance();
-
         const notImplemented = () => {
             throw new Error('Not implemented.');
         };
