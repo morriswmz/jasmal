@@ -4,7 +4,6 @@ import { checkTensor, checkComplex } from './testHelper';
 import { ComplexNumber } from '../lib/complexNumber';
 const T = JasmalEngine.createInstance();
 
-// TODO: more complex cases
 
 describe('min()', () => {
     it('should return the minimum in a vector', () => {
@@ -148,5 +147,59 @@ describe('sort()', () => {
         let expectedIndices = [2, 4, 6, 3, 7, 1, 0, 5];
         checkTensor(actualX, expectedX);
         expect(actualIndices).toEqual(expectedIndices);
+    });
+});
+
+describe('unique()', () => {
+    it('should find unique real numbers', () => {
+        let x = T.fromArray([3, 4, 3, 2, 3, -1, NaN, -1, Infinity, NaN]);
+        let expectedY = T.fromArray([-1, 2, 3, 4, Infinity, NaN, NaN]);
+        let expectedIy = [5, 3, 0, 1, 8, 6, 9];
+        let expectedIx = [[5, 7], [3], [0, 2, 4], [1], [8], [6], [9]];
+        let [actualY, actualIy, actualIx] = T.unique(x, true);
+        checkTensor(actualY, expectedY);
+        expect(actualIy).toEqual(expectedIy);
+        expect(actualIx).toEqual(expectedIx);
+    });
+    it('should find unique complex numbers', () => {
+        let x = T.fromArray(
+            [3, 3, 3, 3, -1, -1, Infinity, NaN,   0],
+            [2, 2, 5, 5, -2, -2,        0,   2, NaN]);
+        let expectedY = T.fromArray(
+            [-1,   0, 3, 3, Infinity, NaN],
+            [-2, NaN, 2, 5,        0,   2]);
+        let expectedIy = [4, 8, 0, 2, 6, 7];
+        let expectedIx = [[4, 5], [8], [0, 1], [2, 3], [6], [7]];
+        let [actualY, actualIy, actualIx] = T.unique(x, true);
+        checkTensor(actualY, expectedY);
+        expect(actualIy).toEqual(expectedIy);
+        expect(actualIx).toEqual(expectedIx);
+    });
+});
+
+describe('hist()', () => {
+    it('should produce the histogram', () => {
+        let x = T.fromArray([1, 1, 2, 3, 2, 4, 6, 7, 5, 2, 3, 9, 7, 6]);
+        let expectedH = T.fromArray([5, 3, 1, 4, 1]);
+        let expectedE = T.linspace(1, 9, 6);
+        let [actualH, actualE] = T.hist(x, 5);
+        checkTensor(actualH, expectedH);
+        checkTensor(actualE, expectedE);
+    });
+    it('should produce the histogram with infinities and NaNs', () => {
+        let x = T.fromArray([1, 1, 2, 3, NaN, 2, 4, 6, 7, 5, 2, 3, 9, 7, 6, Infinity, Infinity, -Infinity]);
+        let expectedH = T.fromArray([6, 3, 1, 4, 3]);
+        let expectedE = T.linspace(1, 9, 6);
+        let [actualH, actualE] = T.hist(x, 5);
+        checkTensor(actualH, expectedH);
+        checkTensor(actualE, expectedE);
+    });
+    it('should produce the histogram when there is only one finite value', () => {
+        let x = T.fromArray([0.8, Infinity, 0.8, NaN, -Infinity, -Infinity, 0.8, NaN]);
+        let expectedH = T.fromArray([2, 0, 3, 0, 1]);
+        let expectedE = T.fromArray([-2, -1, 0, 1, 2, 3]);
+        let [actualH, actualE] = T.hist(x, 5);
+        checkTensor(actualH, expectedH);
+        checkTensor(actualE, expectedE);
     });
 });

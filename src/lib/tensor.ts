@@ -1,7 +1,7 @@
-import { TensorStorage, DataBlock } from './storage';
+import { TensorStorage } from './storage';
 import { DType, DTypeHelper } from './dtype';
 import { ComplexNumber } from './complexNumber';
-import { Scalar, OpInputInfo, OpInputType, OpInput, TypedArray } from './commonTypes';
+import { Scalar, OpInputInfo, OpInputType, OpInput, TypedArray, DataBlock } from './commonTypes';
 import { ShapeHelper } from './helper/shapeHelper';
 import { DataHelper } from './helper/dataHelper';
 import { ObjectHelper } from "./helper/objHelper";
@@ -344,7 +344,8 @@ export class Tensor {
             if (Array.isArray(value[0])) {
                 // Detected a nested array, convert to Tensor.
                 // This is not very efficient because we need to copy every
-                // elements.
+                // elements, but we have to do this because flat indexing is
+                // used internally.
                 let tmp = Tensor.analyzeOpInput(Tensor.fromArray(value));
                 tmp.originalType = OpInputType.Array;
                 return tmp;

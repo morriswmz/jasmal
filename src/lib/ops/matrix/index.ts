@@ -1,9 +1,8 @@
 import { IMatrixOpProvider, MatrixModifier } from './definition';
 import { IArithmeticOpProvider } from '../arithmetic/definition';
-import { OpInput, OpOutput, Scalar } from '../../commonTypes';
+import { OpInput, OpOutput, Scalar, DataBlock } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 import { ComplexNumber } from '../../complexNumber';
-import { DataBlock } from '../../storage';
 import { DType } from '../../dtype';
 import { IMatrixBasicSubroutines, BuiltInMBS } from './mbs';
 import { LU } from './decomp/lu';

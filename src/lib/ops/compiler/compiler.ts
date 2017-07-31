@@ -1,6 +1,5 @@
 import { Tensor } from '../../tensor';
-import { OpInput, OpOutput, OpInputInternal } from '../../commonTypes'; 
-import { DataBlock } from '../../storage';
+import { OpInput, OpOutput, OpInputInternal, DataBlock } from '../../commonTypes'; 
 import { ComplexNumber, CMath } from '../../complexNumber';
 import { ShapeHelper, BroadcastingCheckResult } from '../../helper/shapeHelper';
 import { TemplateEngine } from './templateEngine';
@@ -132,14 +131,64 @@ interface UnaryOpDependencies extends OpCommonDependencies {
     determineOutputType: (t: DType, isComplex: boolean) => DType | undefined;
 }
 
-export class TensorElementWiseOpCompiler {
-    
-    private _engine: TemplateEngine;
+export class OpCompilerBase {
+
+    protected _engine: TemplateEngine;
 
     protected constructor() {
         this._engine = new TemplateEngine();
     }
 
+    /**
+     * Checks the symbols used in the given code. Throws when encounters any
+     * symbol that is not allowed. Returns a list of used symbols.
+     * @param code Block of code to be checked.
+     * @param allowed A list of allowed symbols. Case sensitive.
+     */
+    protected _checkUsedSymbols(code: string, allowed: string[]): string[] {
+        let reSymbol = /\$\w+/g;
+        let m: RegExpExecArray | null;
+        let used: {[key: string]: boolean} = {};
+        while (m = reSymbol.exec(code)) {
+            if (allowed.indexOf(m[0]) < 0) {
+                throw new Error(`Symbol ${m[0]} is not permitted in the following code:\n${code}`);
+            }
+            used[m[0]] = true;
+        }
+        let result: string[] = [];
+        for (let prop in used) {
+            if (used.hasOwnProperty(prop)) {
+                result.push(prop);
+            }
+        }
+        return result;
+    }
+
+    protected _flattenInlineFunctions(fs: {[key: string]: Function}): string {
+        let result = '';
+        for (let key in fs) {
+            if (fs.hasOwnProperty(key)) {
+                let fStr = fs[key].toString();
+                if (fStr.indexOf('[native code]') > 0) {
+                    throw new Error('Cannot inline native functions.');
+                }
+                // replace function name
+                let idxFirstP = fStr.indexOf('(');
+                if (idxFirstP < 0) {
+                    throw new Error('Cannot find the first pair of parenthesis.');
+                }
+                // note that the specified function name is NOT checked
+                fStr = 'function ' + key + fStr.substr(idxFirstP);
+                result += fStr + '\n';
+            }
+        }
+        return result;
+    }
+    
+}
+
+export class TensorElementWiseOpCompiler extends OpCompilerBase {
+    
     private static _instance: TensorElementWiseOpCompiler;
 
     public static getInstance(): TensorElementWiseOpCompiler {
@@ -478,52 +527,6 @@ export class TensorElementWiseOpCompiler {
             blockMap['$' + s + 'Block'] = this._engine.generate(TT_BROADCAST_SUB_BLOCK_TEMPLATE, subBlockMap, templateConfig);
         });
         return this._engine.generate(TT_BROADCAST_BLOCK_TEMPLATE, blockMap, templateConfig);
-    }
-
-    /**
-     * Checks the symbols used in the given code. Throws when encounters any
-     * symbol that is not allowed. Returns a list of used symbols.
-     * @param code Block of code to be checked.
-     * @param allowed A list of allowed symbols. Case sensitive.
-     */
-    private _checkUsedSymbols(code: string, allowed: string[]): string[] {
-        let reSymbol = /\$\w+/g;
-        let m: RegExpExecArray | null;
-        let used: {[key: string]: boolean} = {};
-        while (m = reSymbol.exec(code)) {
-            if (allowed.indexOf(m[0]) < 0) {
-                throw new Error(`Symbol ${m[0]} is not permitted in the following code:\n${code}`);
-            }
-            used[m[0]] = true;
-        }
-        let result: string[] = [];
-        for (let prop in used) {
-            if (used.hasOwnProperty(prop)) {
-                result.push(prop);
-            }
-        }
-        return result;
-    }
-
-    private _flattenInlineFunctions(fs: {[key: string]: Function}): string {
-        let result = '';
-        for (let key in fs) {
-            if (fs.hasOwnProperty(key)) {
-                let fStr = fs[key].toString();
-                if (fStr.indexOf('[native code]') > 0) {
-                    throw new Error('Cannot inline native functions.');
-                }
-                // replace function name
-                let idxFirstP = fStr.indexOf('(');
-                if (idxFirstP < 0) {
-                    throw new Error('Cannot find the first pair of parenthesis.');
-                }
-                // note that the specified function name is NOT checked
-                fStr = 'function ' + key + fStr.substr(idxFirstP);
-                result += fStr + '\n';
-            }
-        }
-        return result;
     }
 
 }

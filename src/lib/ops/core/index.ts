@@ -3,8 +3,7 @@ import { Tensor } from '../../tensor';
 import { ShapeHelper } from '../../helper/shapeHelper';
 import { DataHelper } from '../../helper/dataHelper';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
-import { DataBlock } from '../../storage';
-import { OpInput } from '../../commonTypes';
+import { OpInput, DataBlock } from '../../commonTypes';
 import { TensorElementWiseOpCompiler } from '../compiler/compiler';
 
 export class CoreOpProviderFactory {

@@ -82,7 +82,7 @@ export class JasmalEngine {
         let matrixOpProvider = MatrixOpProviderFactory.create(arithmeticOpProvider);
         let mathOpProvider = MathOpProviderFactory.create(opCompiler);
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create(opCompiler);
-        let dataOpProvider = DataOpProviderFactory.create();
+        let dataOpProvider = DataOpProviderFactory.create(coreOpProvider);
         
         let jasmalCore =  {
             LOGIC: DType.LOGIC,

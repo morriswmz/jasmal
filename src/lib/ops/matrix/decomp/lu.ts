@@ -1,6 +1,6 @@
 import { Tensor } from '../../../tensor';
 import { CMath } from '../../../complexNumber';
-import { DataBlock } from '../../../storage';
+import { DataBlock } from '../../../commonTypes';
 import { OutputDTypeResolver } from '../../../dtype';
 import { DataHelper } from "../../../helper/dataHelper";
 

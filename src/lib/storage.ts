@@ -1,15 +1,6 @@
 import { ShapeHelper } from './helper/shapeHelper';
 import { DType } from './dtype';
-import { TypedArray } from './commonTypes';
-
-/**
- * Represents a chunk of memory (supported by typed arrays).
- * This is a writable version of ArrayLike<number>.
- */
-export interface DataBlock {
-    [index: number]: number;
-    length: number;
-}
+import { TypedArray, DataBlock } from './commonTypes';
 
 export class TensorStorage {
 

@@ -2,6 +2,18 @@ import { ComplexNumber } from './complexNumber';
 import { Tensor } from './tensor';
 import { DType } from './dtype';
 
+/**
+ * Represents a chunk of memory (supported by typed arrays).
+ * This is a writable version of ArrayLike<number>.
+ */
+export interface DataBlock {
+    [index: number]: number;
+    length: number;
+}
+
+/**
+ * Represents typed arrays.
+ */
 export type TypedArray = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array;
 
 /**
@@ -66,13 +78,19 @@ export interface OpInputInfo {
     /**
      * An array like object storing the flattened real part. Will be empty if
      * isOriginalTypeScalar is true.
+     * Note: in most cases, writing into this object will **change** the input
+     * data immediately. If you do not want to overwrite the input data, make a
+     * first.
      */
-    reArr: ArrayLike<number>;
+    reArr: DataBlock;
     /**
      * An array like object storing the flattened imaginary part. Will be empty
      * if isOriginalTypeScalar is true or isComplex is false.
+     * Note: in most cases, writing into this object will **change** the input
+     * data immediately. If you do not want to overwrite the input data, make a
+     * first.
      */
-    imArr: ArrayLike<number>;
+    imArr: DataBlock;
     /**
      * The shape of the original input. For consistency, if the input type is
      * number or ComplexNumber, the shape will be [1].

@@ -1,4 +1,4 @@
-import { DataBlock } from '../../storage';
+import { DataBlock } from '../../commonTypes';
 
 export interface IMatrixBasicSubroutines {
 

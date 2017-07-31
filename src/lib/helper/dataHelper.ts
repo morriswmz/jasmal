@@ -1,6 +1,14 @@
-import { DataBlock } from '../storage';
+import { DataBlock } from '../commonTypes';
 
 export class DataHelper {
+
+    public static naturalNumbers(n: number): number[] {
+        let s = new Array<number>(n);
+        for (let i = 0;i < n;i++) {
+            s[i] = i;
+        }
+        return s;
+    }
 
     public static areArraysEqual(x: ArrayLike<number>, y: ArrayLike<number>): boolean {
         if (x === y) return true;
