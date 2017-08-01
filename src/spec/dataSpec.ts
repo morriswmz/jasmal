@@ -6,10 +6,43 @@ const T = JasmalEngine.createInstance();
 
 
 describe('min()', () => {
+    let v1 = [6, -1, 3, 0.5, -6.18];
+    let v2 = [6, -Infinity, 3, NaN, -9.2];
+    let A = T.fromArray([[1,4,-1], [2,-3,-2]]);
+
     it('should return the minimum in a vector', () => {
-        expect(T.min([6, -1, 3, 0.5, -6.18])).toEqual([-6.18, 4]);
-        expect(T.min([6, -Infinity, 3, NaN, -9.2])).toEqual([-Infinity, 1]);
+        expect(T.min(v1)).toEqual([-6.18, 4]);
+        expect(T.min(v2)).toEqual([-Infinity, 1]);
     });
+    it('should return the minimum in a vector (with keepDims = true)', () => {
+        let [x1, i1] = T.min(v1, -1, true);
+        checkTensor(x1, T.fromArray([-6.18]));
+        checkTensor(i1, T.fromArray([4], [], T.INT32));
+        let [x2, i2] = T.min(v2, -1, true);
+        checkTensor(x2, T.fromArray([-Infinity]));
+        checkTensor(i2, T.fromArray([1], [], T.INT32));
+    });
+    it('should return the minimums along all columns', () => {
+        let [M, I] = T.min(A, 0);
+        checkTensor(M, T.fromArray([1, -3, -2]));
+        checkTensor(I, T.fromArray([0, 1, 1], [], T.INT32));
+    });
+    it('should return the minimums along all columns (with keepDims = true)', () => {
+        let [M, I] = T.min(A, 0, true);
+        checkTensor(M, T.fromArray([[1, -3, -2]]));
+        checkTensor(I, T.fromArray([[0, 1, 1]], [], T.INT32));
+    });
+    it('should return the minimums along all rows', () => {
+        let [M, I] = T.min(A, 1);
+        checkTensor(M, T.fromArray([-1, -3]));
+        checkTensor(I, T.fromArray([2, 1], [], T.INT32));
+    });
+    it('should return the minimums along all rows (with keepDims = true)', () => {
+        let [M, I] = T.min(A, 1, true);
+        checkTensor(M, T.fromArray([[-1], [-3]]));
+        checkTensor(I, T.fromArray([[2], [1]], [], T.INT32));
+    });
+
 });
 
 describe('max()', () => {
@@ -21,6 +54,7 @@ describe('max()', () => {
 
 describe('sum()', () => {
     let A = T.fromArray([[1,2,3],[4,5,6]]);
+    let C = T.fromArray([[1,2,3],[4,5,6]], [[-1,-2,-3],[-4,-5,-6]]);
     it('should return the sum of all elements for a real matrix', () => {
         let sum = T.sum(A);
         expect(sum).toBe(21);    
@@ -40,6 +74,26 @@ describe('sum()', () => {
     it('should sum along all the rows for a real matrix (with keepDims = true)', () => {
         let sum = <Tensor>T.sum(A, 1, true);
         checkTensor(sum, T.fromArray([[6], [15]]));
+    });
+    it('should return the sum of all elements for a complex matrix', () => {
+        let sum = T.sum(C);
+        checkComplex(sum, new ComplexNumber(21, -21));
+    });
+    it('should sum along all the columns for a complex matrix', () => {
+        let sum = <Tensor>T.sum(C, 0);
+        checkTensor(sum, T.fromArray([5, 7, 9], [-5, -7, -9]));
+    });
+    it('should sum along all the columns for a complex matrix (with keepDims = true)', () => {
+        let sum = <Tensor>T.sum(C, 0, true);
+        checkTensor(sum, T.fromArray([[5, 7, 9]], [[-5, -7, -9]]));
+    });
+    it('should sum along all the rows for a complex matrix', () => {
+        let sum = <Tensor>T.sum(C, 1);
+        checkTensor(sum, T.fromArray([6, 15], [-6, -15]));
+    });
+    it('should sum along all the rows for a complex matrix (with keepDims = true)', () => {
+        let sum = <Tensor>T.sum(C, 1, true);
+        checkTensor(sum, T.fromArray([[6], [15]], [[-6], [-15]]));
     });
 });
 

@@ -1,4 +1,4 @@
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { OutputDTypeResolver } from '../../dtype';
 import { OpInput, OpOutput } from '../../commonTypes';
 
@@ -14,23 +14,23 @@ export interface IRoundingMathOpSet {
 
 export class RoundingMathOpSetFactory {
 
-    public static create(compiler: TensorElementWiseOpCompiler): IRoundingMathOpSet {
+    public static create(generator: ElementWiseOpGenerator): IRoundingMathOpSet {
 
-        const opFloor = compiler.makeUnaryOp({
+        const opFloor = generator.makeUnaryOp({
             opR: '$reY = Math.floor($reX);',
             opC: '$reY = Math.floor($reX); $imY = Math.floor($imX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
         });
 
-        const opCeil = compiler.makeUnaryOp({
+        const opCeil = generator.makeUnaryOp({
             opR: '$reY = Math.ceil($reX);',
             opC: '$reY = Math.ceil($reX); $imY = Math.ceil($imX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
         });
 
-        const opRound = compiler.makeUnaryOp({
+        const opRound = generator.makeUnaryOp({
             opR: '$reY = Math.round($reX);',
             opC: '$reY = Math.round($reX); $imY = Math.round($imX);'
         }, {

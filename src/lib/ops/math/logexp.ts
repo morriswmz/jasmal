@@ -1,4 +1,4 @@
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { OpInput, OpOutput } from '../../commonTypes';
 import { OutputDTypeResolver } from '../../dtype';
 import { Tensor } from '../../tensor';
@@ -25,9 +25,9 @@ export interface ILogExpMathOpSet {
 
 export class LogExpMathOpSetFactory {
 
-    public static create(compiler: TensorElementWiseOpCompiler): ILogExpMathOpSet {
+    public static create(generator: ElementWiseOpGenerator): ILogExpMathOpSet {
 
-        const opExp = compiler.makeUnaryOp({
+        const opExp = generator.makeUnaryOp({
             opR: '$reY = Math.exp($reX);',
             opC: '$tmp1 = CMath.cexp($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
@@ -43,13 +43,13 @@ export class LogExpMathOpSetFactory {
             }
         };
 
-        const opLogP = compiler.makeUnaryOp({
+        const opLogP = generator.makeUnaryOp({
             opR: '$reY = Math.log($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opLogA = compiler.makeUnaryOp({
+        const opLogA = generator.makeUnaryOp({
             opR: '$tmp1 = CMath.clog($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
             opC: '$tmp1 = CMath.clog($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {

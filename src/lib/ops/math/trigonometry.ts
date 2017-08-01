@@ -1,4 +1,4 @@
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { OpOutput, OpInput } from '../../commonTypes';
 import { OutputDTypeResolver } from '../../dtype';
 import { NOT_IMPLEMENTED } from '../../constant';
@@ -34,30 +34,30 @@ export interface ITrigMathOpSet {
 
 export class TrigMathOpSetFactory {
 
-    public static create(compiler: TensorElementWiseOpCompiler): ITrigMathOpSet {
+    public static create(generator: ElementWiseOpGenerator): ITrigMathOpSet {
 
-        const opSin = compiler.makeUnaryOp({
+        const opSin = generator.makeUnaryOp({
             opR: '$reY = Math.sin($reX);',
             opC: '$tmp1 = CMath.csin($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opCos = compiler.makeUnaryOp({
+        const opCos = generator.makeUnaryOp({
             opR: '$reY = Math.cos($reX);',
             opC: '$tmp1 = CMath.ccos($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opTan = compiler.makeUnaryOp({
+        const opTan = generator.makeUnaryOp({
             opR: '$reY = Math.tan($reX);',
             opC: '$tmp1 = CMath.ctan($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opCot = compiler.makeUnaryOp({
+        const opCot = generator.makeUnaryOp({
             opR: '$tmp1 = Math.tan($reX); $reY = $tmp1 === 0.0 ? NaN : 1.0 / $tmp1;',
             opC: '$tmp2 = CMath.ccot($reX, $imX); $reY = $tmp2[0]; $imY = $tmp2[1];'
         }, {
@@ -66,52 +66,52 @@ export class TrigMathOpSetFactory {
 
         // TODO: implement complex version of inverse trig functions
 
-        const opAsin = compiler.makeUnaryOp({
+        const opAsin = generator.makeUnaryOp({
             opR: '$reY = Math.asin($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opAcos = compiler.makeUnaryOp({
+        const opAcos = generator.makeUnaryOp({
             opR: '$reY = Math.acos($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opAtan = compiler.makeUnaryOp({
+        const opAtan = generator.makeUnaryOp({
             opR: '$reY = Math.atan($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opAcot = compiler.makeUnaryOp({
+        const opAcot = generator.makeUnaryOp({
             opR: '$reY = Math.PI * 0.5 - Math.atan($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opSinh = compiler.makeUnaryOp({
+        const opSinh = generator.makeUnaryOp({
             opR: '$reY = 0.5*(Math.exp($reX) - Math.exp(-$reX));',
             opC: '$tmp1 = CMath.csinh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opCosh = compiler.makeUnaryOp({
+        const opCosh = generator.makeUnaryOp({
             opR: '$reY = 0.5*(Math.exp($reX) + Math.exp(-$reX));',
             opC: '$tmp1 = CMath.ccosh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opTanh = compiler.makeUnaryOp({
+        const opTanh = generator.makeUnaryOp({
             opR: '$tmp1 = Math.exp($reX); $tmp2 = Math.exp(-$reX); $reY = ($tmp1 - $tmp2) / ($tmp1 + $tmp2);',
             opC: '$tmp3 = CMath.ctanh($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opCoth = compiler.makeUnaryOp({
+        const opCoth = generator.makeUnaryOp({
             opR: '$tmp1 = Math.exp($reX); $tmp2 = Math.exp(-$reX); $reY = ($tmp1 + $tmp2) / ($tmp1 - $tmp2);',
             opC: '$tmp3 = CMath.ccoth($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
         }, {

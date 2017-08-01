@@ -1,14 +1,14 @@
 import { IArithmeticOpProvider } from './definition';
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { Tensor } from "../../tensor";
 import { ComplexNumber, CMath } from "../../complexNumber";
 import { ShapeHelper } from "../../helper/shapeHelper";
 
 export class ArithmeticOpProviderFactory {
-    public static create(compiler: TensorElementWiseOpCompiler): IArithmeticOpProvider {
+    public static create(generator: ElementWiseOpGenerator): IArithmeticOpProvider {
         return {
-            add: compiler.makeBinaryOp({
+            add: generator.makeBinaryOp({
                 opRR: '$reZ = $reX + $reY;',
                 opRC: '$reZ = $reX + $reY; $imZ = $imY;',
                 opCR: '$reZ = $reX + $reY; $imZ = $imX;',
@@ -16,7 +16,7 @@ export class ArithmeticOpProviderFactory {
             }, {
                 outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             }),
-            sub: compiler.makeBinaryOp({
+            sub: generator.makeBinaryOp({
                 opRR: '$reZ = $reX - $reY;',
                 opRC: '$reZ = $reX - $reY; $imZ = -$imY;',
                 opCR: '$reZ = $reX - $reY; $imZ = $imX;',
@@ -24,13 +24,13 @@ export class ArithmeticOpProviderFactory {
             }, {
                 outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             }),
-            neg: compiler.makeUnaryOp({
+            neg: generator.makeUnaryOp({
                 opR: '$reY = -$reX;',
                 opC: '$reY = -$reX; $imY = -$imX;'
             }, {
                 outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
             }),
-            mul: compiler.makeBinaryOp({
+            mul: generator.makeBinaryOp({
                 opRR: '$reZ = $reX * $reY;',
                 // calculate the imaginary part first so no temporary variable
                 // is needed.
@@ -40,7 +40,7 @@ export class ArithmeticOpProviderFactory {
             }, {
                 outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             }),
-            div: compiler.makeBinaryOp({
+            div: generator.makeBinaryOp({
                 opRR: '$reZ = $reX / $reY;',
                 opRC: '$tmp1 = CMath.cdivRC($reX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];',
                 opCR: '$reZ = $reX / $reY; $imZ = $imX / $reY;',
@@ -48,13 +48,13 @@ export class ArithmeticOpProviderFactory {
             }, {
                 outputDTypeResolver: OutputDTypeResolver.bToFloat
             }),
-            reciprocal: compiler.makeUnaryOp({
+            reciprocal: generator.makeUnaryOp({
                 opR: '$reY = 1 / $reX;',
                 opC: '$tmp1 = CMath.cReciprocal($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
             }, {
                 outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
             }),
-            rem: compiler.makeBinaryOp({
+            rem: generator.makeBinaryOp({
                 opRR: '$reZ = $reX % $reY;'
             }, {
                 outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt

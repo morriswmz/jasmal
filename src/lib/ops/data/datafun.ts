@@ -11,11 +11,11 @@ export class DataFunction {
     public static max(x: ArrayLike<number>, offset: number = 0, stride: number = 1, n: number = -1): [number, number] {
         let ub: number;
         [n, ub] = DataFunction._processArgs(x.length, offset, stride, n);
-        let max = -Infinity, idx = offset;
-        for (let i = offset;i < ub;i += stride) {
+        let max = -Infinity, idx = offset, j = 0;;
+        for (let i = offset;i < ub;i += stride, j++) {
             if (x[i] > max) {
                 max = x[i];
-                idx = i;
+                idx = j;
             }
         }
         return [max, idx];
@@ -32,11 +32,11 @@ export class DataFunction {
     public static min(x: ArrayLike<number>, offset: number = 0, stride: number = 1, n: number = -1): [number, number] {
         let ub: number;
         [n, ub] = DataFunction._processArgs(x.length, offset, stride, n);
-        let min = Infinity, idx = offset;
-        for (let i = offset;i < ub;i += stride) {
+        let min = Infinity, idx = offset, j = 0;
+        for (let i = offset;i < ub;i += stride, j++) {
             if (x[i] < min) {
                 min = x[i];
-                idx = i;
+                idx = j;
             }
         }
         return [min, idx];

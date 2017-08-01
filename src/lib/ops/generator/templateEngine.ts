@@ -1,7 +1,7 @@
 export type Generator = (symbolMap: {[key: string]: string | undefined}, config?: {[key: string]: boolean}) => string;
 
 interface Token {
-    type: number; // 0 - normal, 1 - #if, 2 - #else, 3 - #elseif, 4 - #endif
+    type: number; // 0 - normal, 1 - #if, 2 - #else, 3 - #elseif, 4 - #endif, 5 - #ifnot
     value: string;
 }
 
@@ -24,7 +24,7 @@ export class TemplateEngine {
     }
 
     public createGenerator(template: string): Generator {
-        let condReg = /^[ \t]*#(if|endif|else|elseif)([ \t]+(\w+)[ \t]*)?$/gm;
+        let condReg = /^[ \t]*#(if|endif|else|elseif|ifnot)([ \t]+(\w+)[ \t]*)?$/gm;
         let tokens: Token[] = [];
         let idx = 0;
         // tokenize
@@ -44,7 +44,15 @@ export class TemplateEngine {
                     tokens.push({
                         type: 1,
                         value: match[3]
-                    })
+                    });
+                } else if (match[1] === 'ifnot') {
+                    if (!match[3]) {
+                        throw new Error('Missing condition after if.');
+                    }
+                    tokens.push({
+                        type: 5,
+                        value: match[3]
+                    });
                 } else if (match[1] === 'else') {
                     if (match[3]) {
                         throw new Error('Unexpected condition after else.');
@@ -97,9 +105,14 @@ export class TemplateEngine {
                 funcBody += `} else {\n`;
             } else if (tokens[i].type === 3) {
                 funcBody += `} else if (config.${tokens[i].value}) {\n`
-            } else {
+            } else if (tokens[i].type === 4) {
                 funcBody += '}\n';
                 balanceCounter--;
+            } else if (tokens[i].type === 5) {
+                funcBody += `if (!config.${tokens[i].value}) {\n`;
+                balanceCounter++;
+            } else {
+                throw new Error('Unexpected token id.');
             }
         }
         funcBody += 'return result;';

@@ -35,7 +35,7 @@ export type OpOutput = number | ComplexNumber | Tensor;
 /**
  * An output with both value and index.
  */
-export type OpOutputWithIndex = [number | ComplexNumber, number] | [Tensor, number[]];
+export type OpOutputWithIndex = [number | ComplexNumber, number] | [Tensor, Tensor];
 
 /**
  * Describes types of inputs.

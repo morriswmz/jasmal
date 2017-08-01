@@ -61,11 +61,13 @@ export class Tensor {
         this._re.refCount++;
         this._im = im;
         if (im !== TensorStorage.Empty) {
+            if (im.dtype !== re.dtype) {
+                throw new Error('Inconsistent dtype.');
+            }
             this._im.refCount++;
         }
         this._shape = shape;
         this._updateStridesAndCalculator();
-        
     }
 
     public static ZERO: Tensor = Tensor.zeros([1]);
@@ -177,13 +179,13 @@ export class Tensor {
      * @param re Real part.
      * @param im Imaginary part.
      */
-    public static scalar(re: number, im?: number): Tensor;
+    public static scalar(re: number, im?: number, dtype?: DType): Tensor;
     /**
      * Create a scalar tensor from a complex number.
      * @param z A complex number.
      */
     public static scalar(z: ComplexNumber): Tensor;
-    public static scalar(x: number | ComplexNumber, y?: number): Tensor {
+    public static scalar(x: number | ComplexNumber, y?: number, dtype: DType = DType.FLOAT64): Tensor {
         let re: number, im: number;
         if (x instanceof ComplexNumber) {
             re = x.re;
@@ -192,11 +194,11 @@ export class Tensor {
             re = x;
             im = y || 0;
         }
-        let reStorage = TensorStorage.create(1);
+        let reStorage = TensorStorage.create(1, dtype);
         reStorage.data[0] = re;
         let imStorage;
         if (im !== 0) {
-            imStorage = TensorStorage.create(1);
+            imStorage = TensorStorage.create(1, dtype);
             imStorage.data[0] = im;
         } else {
             imStorage = TensorStorage.Empty;
@@ -1668,7 +1670,6 @@ export class Tensor {
      * Retrieves the real part.
      */
     public real(): Tensor {
-        this._re.refCount++;
         return new Tensor(this._re, TensorStorage.Empty, this._shape);
     }
 
@@ -1677,7 +1678,6 @@ export class Tensor {
      */
     public imag(): Tensor {
         if (this.hasComplexStorage()) {
-            this._im.refCount++;
             return new Tensor(this._im, TensorStorage.Empty, this._shape);
         } else {
             return Tensor.zeros(this._shape, this.dtype);
@@ -1754,8 +1754,6 @@ export class Tensor {
      */
     public getReshapedCopy(newShape: number[]): Tensor {
         newShape = this._calculateNewShape(newShape);
-        this._re.refCount++;
-        if (this._im !== TensorStorage.Empty) this._im.refCount++;
         return new Tensor(this._re, this._im, newShape);
     }
 
@@ -1809,8 +1807,6 @@ export class Tensor {
                 this._im !== TensorStorage.Empty ? this._im.dataCopy() : TensorStorage.Empty,
                 this._shape);
         } else {
-            this._re.refCount++;
-            if (this._im !== TensorStorage.Empty) this._im.refCount++;
             return new Tensor(this._re, this._im, this._shape);
         }
     }

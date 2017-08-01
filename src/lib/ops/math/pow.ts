@@ -1,4 +1,4 @@
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { OpOutput, OpInput } from '../../commonTypes';
 import { OutputDTypeResolver, DType } from '../../dtype';
 import { CMath } from '../../complexNumber';
@@ -15,15 +15,15 @@ export interface IPowerMathOpSet {
 
 export class PowerMathOpSetFactory {
 
-    public static create(compiler: TensorElementWiseOpCompiler): IPowerMathOpSet {
+    public static create(generator: ElementWiseOpGenerator): IPowerMathOpSet {
 
-        const opSqrtP = compiler.makeUnaryOp({
+        const opSqrtP = generator.makeUnaryOp({
             opR: '$reY = Math.sqrt($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opSqrtA = compiler.makeUnaryOp({
+        const opSqrtA = generator.makeUnaryOp({
             opR: 'if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $reY = 0; $imY = Math.sqrt(-$reX); }',
             opC: '$tmp1 = CMath.csqrt($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
@@ -39,13 +39,13 @@ export class PowerMathOpSetFactory {
             }
         };
 
-        const opPowR = compiler.makeBinaryOp({
+        const opPowR = generator.makeBinaryOp({
             opRR: '$reZ = Math.pow($reX, $reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToFloat
         });
 
-        const opPowCC = compiler.makeBinaryOp({
+        const opPowCC = generator.makeBinaryOp({
             opRR: '$tmp1 = CMath.cpowRR($reX, $reY); $reZ = $tmp1[0]; $imZ = $tmp1[1];',
             opRC: '$tmp1 = CMath.cpow($reX, 0, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];',
             opCR: '$tmp1 = CMath.cpow($reX, $imX, $reY, 0); $reZ = $tmp1[0]; $imZ = $tmp1[1];',

@@ -1,5 +1,5 @@
 import { CMath } from '../../complexNumber';
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { OpInput, OpOutput } from '../../commonTypes';
 
@@ -25,9 +25,9 @@ export interface IBasicMathOpSet {
 
 export class BasicMathOpSetFactory {
 
-    public static create(compiler: TensorElementWiseOpCompiler): IBasicMathOpSet {
+    public static create(generator: ElementWiseOpGenerator): IBasicMathOpSet {
 
-        const opAbs = compiler.makeUnaryOp({
+        const opAbs = generator.makeUnaryOp({
             opR: '$reY = Math.abs($reX);',
             opC: '$reY = CMath.length2($reX, $imX);',
         }, {
@@ -35,7 +35,7 @@ export class BasicMathOpSetFactory {
             outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t
         });
 
-        const opSign = compiler.makeUnaryOp({
+        const opSign = generator.makeUnaryOp({
             opR: '$reY = $reX > 0 ? 1 : ($reX < 0 ? -1 : ($reX === 0 ? 0 : NaN));',
             opC: '$tmp1 = CMath.length2($reX, $imX);' +
                  'if ($tmp1 === 0) { $reY = 0; $imY = 0; } else { $reY = $reX / $tmp1; $imY = $imX / $tmp1; }'
@@ -43,33 +43,33 @@ export class BasicMathOpSetFactory {
             outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t
         });
 
-        const opMin2 = compiler.makeBinaryOp({
+        const opMin2 = generator.makeBinaryOp({
             opRR: '$reZ = Math.min($reX, $reY);'
         });
 
-        const opMax2 = compiler.makeBinaryOp({
+        const opMax2 = generator.makeBinaryOp({
             opRR: '$reZ = Math.max($reX, $reY);'
         });
 
-        const opConj = compiler.makeUnaryOp({
+        const opConj = generator.makeUnaryOp({
             opR: '$reY = $reX;',
             opC: '$reY = $reX; $imY = -$imX;'
         });
 
-        const opAngle = compiler.makeUnaryOp({
+        const opAngle = generator.makeUnaryOp({
             opR: '$reY = 0;',
             opC: '$reY = Math.atan2($imX, $reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opRad2Deg = compiler.makeUnaryOp({
+        const opRad2Deg = generator.makeUnaryOp({
             opR: '$reY = 180 / Math.PI * $reX;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opDeg2Rad = compiler.makeUnaryOp({
+        const opDeg2Rad = generator.makeUnaryOp({
             opR: '$reY = Math.PI / 180 * $reX;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat

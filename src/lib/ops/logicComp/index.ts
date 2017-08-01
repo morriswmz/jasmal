@@ -1,6 +1,6 @@
 import { ILogicComparisonOpProvider } from './definition';
 import { NOT_IMPLEMENTED } from '../../constant';
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { OpInput } from '../../commonTypes';
 import { Tensor } from '../../tensor';
@@ -8,69 +8,69 @@ import { DataHelper } from '../../helper/dataHelper';
 
 export class LogicComparisonOpProviderFactory {
     
-    public static create(compiler: TensorElementWiseOpCompiler): ILogicComparisonOpProvider {
+    public static create(generator: ElementWiseOpGenerator): ILogicComparisonOpProvider {
 
-        const opEq = compiler.makeBinaryOp({
+        const opEq = generator.makeBinaryOp({
             opRR: '$reZ = ($reX === $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogic,
             noInPlaceOperation: true
         });
 
-        const opNeq = compiler.makeBinaryOp({
+        const opNeq = generator.makeBinaryOp({
             opRR: '$reZ = ($reX !== $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogic,
             noInPlaceOperation: true
         });
 
-        const opGt = compiler.makeBinaryOp({
+        const opGt = generator.makeBinaryOp({
             opRR: '$reZ = ($reX > $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opGe = compiler.makeBinaryOp({
+        const opGe = generator.makeBinaryOp({
             opRR: '$reZ = ($reX >= $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opLt = compiler.makeBinaryOp({
+        const opLt = generator.makeBinaryOp({
             opRR: '$reZ = ($reX < $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opLe = compiler.makeBinaryOp({
+        const opLe = generator.makeBinaryOp({
             opRR: '$reZ = ($reX <= $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opAnd = compiler.makeBinaryOp({
+        const opAnd = generator.makeBinaryOp({
             opRR: '$reZ = ($reX !== 0) & ($reY !== 0);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
         });
 
-        const opOr = compiler.makeBinaryOp({
+        const opOr = generator.makeBinaryOp({
             opRR: '$reZ = ($reX !== 0) | ($reY !== 0);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
         });
 
-        const opXor = compiler.makeBinaryOp({
+        const opXor = generator.makeBinaryOp({
             opRR: '$reZ = ($reX !== 0) ^ ($reY !== 0);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
         });
 
-        const opNot = compiler.makeUnaryOp({
+        const opNot = generator.makeUnaryOp({
             opR: '$reY = ($reX !== 0) ? 0 : 1;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToLogicRealOnly,

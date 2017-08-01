@@ -4,10 +4,10 @@ import { ShapeHelper } from '../../helper/shapeHelper';
 import { DataHelper } from '../../helper/dataHelper';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { OpInput, DataBlock } from '../../commonTypes';
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 
 export class CoreOpProviderFactory {
-    public static create(compiler: TensorElementWiseOpCompiler): ICoreOpProvider {
+    public static create(generator: ElementWiseOpGenerator): ICoreOpProvider {
 
         const opReshape = (x: OpInput, shape: number[]) => {
             if (x instanceof Tensor) {
@@ -351,7 +351,7 @@ export class CoreOpProviderFactory {
             return DataHelper.isArrayAllZeros(t.imagData);
         };
 
-        const opIsNaN = compiler.makeUnaryOp({
+        const opIsNaN = generator.makeUnaryOp({
             opR: '$reY = isNaN($reX) ? 1 : 0;',
             opC: '$reY = isNaN($reX) || isNaN($imX) ? 1 : 0'
         }, {
@@ -359,7 +359,7 @@ export class CoreOpProviderFactory {
             outputDTypeResolver: OutputDTypeResolver.uToLogic
         });
 
-        const opIsInf = compiler.makeUnaryOp({
+        const opIsInf = generator.makeUnaryOp({
             opR: '$reY = !isFinite($reX) && !isNaN($reX) ? 1 : 0',
             opC: '$reY = (!isFinite($reX) && !isNaN($reX)) || (!isFinite($imX) && !isNaN($imX)) ? 1 : 0;'
         }, {

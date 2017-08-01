@@ -1,5 +1,5 @@
 import { IMathOpProvider } from './definition';
-import { TensorElementWiseOpCompiler } from '../compiler/compiler';
+import { ElementWiseOpGenerator } from '../generator';
 import { ObjectHelper } from '../../helper/objHelper';
 import { BasicMathOpSetFactory } from './basic';
 import { TrigMathOpSetFactory } from './trigonometry';
@@ -9,17 +9,17 @@ import { RoundingMathOpSetFactory } from './rounding';
 
 export class MathOpProviderFactory {
 
-    public static create(compiler: TensorElementWiseOpCompiler): IMathOpProvider {
+    public static create(generator: ElementWiseOpGenerator): IMathOpProvider {
         
         const notImplemented = () => {
             throw new Error('Not implemented.');
         };
 
-        const basicOps = BasicMathOpSetFactory.create(compiler);
-        const trigOps = TrigMathOpSetFactory.create(compiler);
-        const powerOps = PowerMathOpSetFactory.create(compiler);
-        const logExpOps = LogExpMathOpSetFactory.create(compiler);
-        const roundingOps = RoundingMathOpSetFactory.create(compiler);
+        const basicOps = BasicMathOpSetFactory.create(generator);
+        const trigOps = TrigMathOpSetFactory.create(generator);
+        const powerOps = PowerMathOpSetFactory.create(generator);
+        const logExpOps = LogExpMathOpSetFactory.create(generator);
+        const roundingOps = RoundingMathOpSetFactory.create(generator);
         
         return ObjectHelper.createExtendChain(basicOps)
             .extend(trigOps)
