@@ -48,7 +48,7 @@ return function(x, axis, keepDims) {
 export const S_BLOCK_TEMPLATE =
 `#ifnot NO_COMPLEX_INPUT
 if (isInputComplex) {
-    tmp = fComplex(X.realData, X.imagData);
+    tmp = fComplex(X.realData, X.imagData, 0, 1, X.size);
 #if OUTPUT_C_COMPLEX
 #if OUTPUT_INDICES
     if (keepDims) {
@@ -76,7 +76,7 @@ if (isInputComplex) {
 #endif
 }
 #endif
-tmp = fReal(X.realData);
+tmp = fReal(X.realData, 0, 1, X.size);
 #if OUTPUT_R_COMPLEX
 #if OUTPUT_INDICES
     if (keepDims) {

@@ -66,6 +66,12 @@ export class ReductionOpGenerator extends OpGeneratorBase {
         return fn(this._getDependencies(config), fReal);
     }
 
+    public makeOp(fReal: RIROReducer, fComplex: CICOReducer,
+                  outputComplexWhenInputIsComplex: true,
+                  config?: ReductionOpConfig): GenericReductionOp;
+    public makeOp(fReal: RIROReducer, fComplex: CIROReducer,
+                  outputComplexWhenInputIsComplex: false,
+                  config?: ReductionOpConfig): GenericReductionOp
     public makeOp(fReal: RIROReducer, fComplex: CICOReducer | CIROReducer,
                   outputComplexWhenInputIsComplex: boolean,
                   config?: ReductionOpConfig): GenericReductionOp {

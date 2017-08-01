@@ -147,6 +147,9 @@ describe('cumsum()', () => {
 });
 
 describe('mean()', () => {
+    it('should return the mean of a vector', () => {
+        expect(T.mean([1, 2, 3, 4])).toEqual(2.5);
+    });
     it('should return the mean of each row for a real matrix', () => {
         let A = T.fromArray(
             [[1, 2, 3, 4, 5, 6],
