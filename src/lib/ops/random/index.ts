@@ -117,7 +117,7 @@ export class RandomOpProviderFactory {
             for (;;) {
                 a = engine.nextUint32() >>> 5;
                 b = engine.nextUint32() >>> 6;
-                x = a * 67108864 + b;
+                x = a * 67108864 + b; // 53-bit
                 if (x >= threshold) {
                     return x % (max + 1);
                 }

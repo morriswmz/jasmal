@@ -400,7 +400,7 @@ export class MatrixOpProviderFactory {
                                 ? NormFunction.cmatInfNorm(shape[0], shape[1], X.realData, X.imagData)
                                 : NormFunction.matInfNorm(shape[0], shape[1], X.realData);
                         default:
-                            throw new Error('Only 1, 2, and infinity norm are supported for matrices.')
+                            throw new Error('Only 1, 2, and infinity norm are supported for matrices.');
                     }
                 }
             }
@@ -417,7 +417,7 @@ export class MatrixOpProviderFactory {
             let m = shapeX[0];
             let p: number[] = new Array(m);
             let sign: number;
-            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+            if (X.hasNonZeroComplexStorage()) {
                 sign = LU.clu(m, X.realData, X.imagData, p);
             } else {
                 X.trimImaginaryPart();
@@ -488,7 +488,7 @@ export class MatrixOpProviderFactory {
             }
             let Q = Tensor.zeros([shapeX[0], shapeX[0]]);
             let P = Tensor.zeros([shapeX[1], shapeX[1]]);
-            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+            if (X.hasNonZeroComplexStorage()) {
                 Q.ensureComplexStorage();
                 QR.cqrpf(shapeX[0], shapeX[1], X.realData, X.imagData, Q.realData, Q.imagData, P.realData);
             } else {
@@ -508,7 +508,7 @@ export class MatrixOpProviderFactory {
             let s = new Array(shapeX[1]);
             let ns = Math.min(shapeX[0], shapeX[1]);
             let V = Tensor.zeros([shapeX[1], shapeX[1]]);
-            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+            if (X.hasNonZeroComplexStorage()) {
                 V.ensureComplexStorage();
                 SVD.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s, V.realData, V.imagData);
             } else {
@@ -529,13 +529,13 @@ export class MatrixOpProviderFactory {
             }
         };
 
-        const opRank = (x: OpInput): number => {
+        const opRank = (x: OpInput, tol?: number): number => {
             // We need to make a copy here because svd procedure will override
             // the original matrix.
             let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
             let shape = X.shape;
             let s = new Array(shape[1]);
-            if (X.hasComplexStorage()) {
+            if (X.hasNonZeroComplexStorage()) {
                 SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
             } else {
                 SVD.svd(shape[0], shape[1], false, X.realData, s, []);
@@ -545,10 +545,10 @@ export class MatrixOpProviderFactory {
             if (sMax === 0) {
                 return 0;
             }
-            let threshold = EPSILON * sMax;
+            tol = tol == undefined ? EPSILON * sMax : tol;
             let r = 0;
             for (;r < s.length;r++) {
-                if (s[r] < threshold) {
+                if (s[r] < tol) {
                     break;
                 }
             }
@@ -561,13 +561,49 @@ export class MatrixOpProviderFactory {
             let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
             let shape = X.shape;
             let s = new Array(shape[1]);
-            if (X.hasComplexStorage()) {
+            if (X.hasNonZeroComplexStorage()) {
                 SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
             } else {
                 SVD.svd(shape[0], shape[1], false, X.realData, s, []);
             }
             return s[0] / s[s.length - 1];
         }
+
+        const opPinv = (x: OpInput, tol?: number): Tensor => {
+            // We need to make a copy here because svd procedure will override
+            // the original matrix.
+            let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
+            let shapeX = X.shape;
+            let s = new Array(shapeX[1]);
+            let V = Tensor.zeros([shapeX[1], shapeX[1]]);
+            if (X.hasNonZeroComplexStorage()) {
+                V.ensureComplexStorage();
+                SVD.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s, V.realData, V.imagData);
+            } else {
+                SVD.svd(shapeX[0], shapeX[1], true, X.realData, s, V.realData);
+            }
+            // zero matrix
+            let sMax = s[0];
+            if (sMax === 0) {
+                return Tensor.zeros([shapeX[1], shapeX[0]]);
+            }
+            // threshold over singular values
+            tol = tol == undefined ? EPSILON * sMax : tol;
+            let r = 0;
+            for (;r < s.length;r++) {
+                if (s[r] < tol) {
+                    break;
+                }
+            }
+            if (r === 0) {
+                return Tensor.zeros([shapeX[1], shapeX[0]]);
+            }
+            for (let i = 0;i < r;i++) {
+                s[i] = 1.0 / s[i];
+            }
+            let Z = <Tensor>arithmOp.mul(V.get(':',':' + r, true), s.slice(0, r));
+            return <Tensor>opMatMul(Z, X.get(':',':' + r, true), MatrixModifier.Hermitian);
+        };
 
         const opEig = (x: OpInput): [Tensor, Tensor] => {
             let X: Tensor;
@@ -592,7 +628,7 @@ export class MatrixOpProviderFactory {
             }
             let E = Tensor.zeros(shapeX);
             let v = Tensor.zeros([shapeX[0]]);
-            if (X.hasComplexStorage()) {
+            if (X.hasNonZeroComplexStorage()) {
                 E.ensureComplexStorage();
                 X = needExtraCopy ? X.copy(true) : X;
                 // Hermitian check
@@ -629,7 +665,7 @@ export class MatrixOpProviderFactory {
                 throw new Error('Square matrix expected.');
             }
             // X is already a copy, no need to make an extra copy here
-            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+            if (X.hasNonZeroComplexStorage()) {
                 p = Cholesky.cchol(shapeX[0], X.realData, X.imagData);
             } else {
                 p = Cholesky.chol(shapeX[0], X.realData);
@@ -651,8 +687,8 @@ export class MatrixOpProviderFactory {
             if (shapeA[0] !== shapeB[0]) {
                 throw new Error('The number of rows in A must match that in B.');
             }
-            let isAComplex = A.hasComplexStorage() && !DataHelper.isArrayAllZeros(A.imagData);
-            let isBComplex = B.hasComplexStorage() && !DataHelper.isArrayAllZeros(B.imagData);
+            let isAComplex = A.hasNonZeroComplexStorage();
+            let isBComplex = B.hasNonZeroComplexStorage();
             if (shapeA[0] === shapeA[1]) {
                 // use LUP for square A
                 let p = new Array(shapeA[0]);
@@ -714,6 +750,7 @@ export class MatrixOpProviderFactory {
             svd: opSvd,
             rank: opRank,
             cond: opCond,
+            pinv: opPinv,
             eig: opEig,
             chol: opChol,
             qr: opQr,

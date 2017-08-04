@@ -116,8 +116,8 @@ describe('Tensor creation', () => {
             }
         });
     });
-    describe('setEl()/getEl() > ', () => {
-        it('[2x3x2 FLOAT64]', () => {
+    describe('setEl()/getEl()', () => {
+        it('getEl() should return the value set by setEl() for a 2x3x2 FLOAT64 tensor', () => {
             let x = T.zeros([2, 3, 2]);
             for (let i = 0;i < 2;i++) {
                 for (let j = 0;j < 3;j++) {
@@ -129,7 +129,7 @@ describe('Tensor creation', () => {
                 }
             }
         });
-        it('[2x3x2 FLOAT64 Complex]', () => {
+        it('getEl() should return the value set by setEl() for a complex 2x3x2 FLOAT64 tensor', () => {
             let x = T.zeros([2, 3, 2]);
             for (let i = 0;i < 2;i++) {
                 for (let j = 0;j < 3;j++) {
@@ -144,24 +144,24 @@ describe('Tensor creation', () => {
             }
         });
     });
-    describe('equality tests', () => {
+    describe('isEqual()/isNumericallyEqual()/isApproximatelyEqual()', () => {
         let A1 = T.fromArray([[1, 2], [3, 4]], [], T.FLOAT64);
         let A2 = T.fromArray([[1, 2], [3, 4]], [], T.FLOAT64);
         let A3 = T.fromArray([[1, 2], [3, 4]], [], T.INT32);
         let B = T.fromArray([[1, 2], [3, 4]], [[0, 0], [0, 0]]);
         let C1 = T.fromArray([[1.001, 2.001], [2.999, 4.001]], [[-0.001, 0], [0.001, 0.001]]);
         let C2 = T.fromArray([[1.001, 2.008], [2.999, 4.001]], [[-0.001, 0], [0.001, 0.001]]);
-        it('tests strict equality', () => {
+        it('should test strict equality', () => {
             expect(Tensor.isEqual(A1, A2)).toBeTruthy();
             expect(Tensor.isEqual(A1, A3)).toBeFalsy();
             expect(Tensor.isEqual(A1, B)).toBeFalsy();
         });
-        it('tests numerical equality', () => {
+        it('should test numerical equality', () => {
             expect(Tensor.isNumericallyEqual(A1, A2)).toBeTruthy();            
             expect(Tensor.isNumericallyEqual(A1, A3)).toBeTruthy();
             expect(Tensor.isNumericallyEqual(A1, B)).toBeTruthy();            
         });
-        it('tests approximate equality', () => {
+        it('should test approximate equality', () => {
             expect(Tensor.isApproximatelyEqual(A1, A2, 0.005)).toBeTruthy();
             expect(Tensor.isApproximatelyEqual(A1, A3, 0.005)).toBeTruthy();
             expect(Tensor.isApproximatelyEqual(A1, B, 0.005)).toBeTruthy();
@@ -171,14 +171,14 @@ describe('Tensor creation', () => {
     });
     describe('copy()', () => {
         let x = T.fromArray([[1, 2, 3]], [[-1, -2, -3]]);
-        it('reference copy', () => {
+        it('it should return a "reference" copy by default', () => {
             let y = x.copy();
             expect(y.shape).toEqual(x.shape);
             expect(y.dtype).toEqual(x.dtype);
             expect(y.realData).toBe(x.realData);
             expect(y.imagData).toBe(x.imagData);
         });
-        it('copy immediately', () => {
+        it('it should copy immediately when required', () => {
             let y = x.copy(true);
             expect(y.shape).toEqual(x.shape);
             expect(y.dtype).toEqual(x.dtype);
@@ -187,13 +187,15 @@ describe('Tensor creation', () => {
             expect(y.realData).toEqual(x.realData);
             expect(y.imagData).toEqual(x.imagData);
         });
-        it('setting an element after reference copy', () => {
+        it('setting an element after reference copy should not change the original tensor', () => {
             let y = x.copy();
             y.setEl(0, new ComplexNumber(9, -9));
             expect(y.realData[0]).toBe(9);
             expect(y.imagData[0]).toBe(-9);
             expect(x.realData[0]).toBe(1);
             expect(x.imagData[0]).toBe(-1);
+            expect(x.realData[1]).toBe(2);
+            expect(x.imagData[1]).toBe(-2);
         });
     });
     

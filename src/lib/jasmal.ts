@@ -31,19 +31,20 @@ export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
     /**
      * Logic data type.
      */
-    LOGIC: DType;
-    INT32: DType;
-    FLOAT64: DType;
+    readonly LOGIC: DType;
+    readonly INT32: DType;
+    readonly FLOAT64: DType;
 
-    MM_NONE: MatrixModifier;
-    MM_TRANSPOSED: MatrixModifier;
-    MM_HERMITIAN: MatrixModifier;
+    readonly MM_NONE: MatrixModifier;
+    readonly MM_TRANSPOSED: MatrixModifier;
+    readonly MM_HERMITIAN: MatrixModifier;
 
-    PI: number;
-    J: ComplexNumber;
+    readonly PI: number;
+    readonly J: ComplexNumber;
 
     complexNumber(re: number, im?: number): ComplexNumber;
     isComplexNumber(x: any): boolean;
+    isTensor(x: any): boolean;
 
     zeros(shape: number[], dtype?: DType): Tensor;
     ones(shape: number[], dtype?: DType): Tensor;
@@ -99,6 +100,7 @@ export class JasmalEngine {
 
             complexNumber: (re, im?) => new ComplexNumber(re, im),
             isComplexNumber: x => x instanceof ComplexNumber,
+            isTensor: x => x instanceof Tensor,
             zeros: Tensor.zeros,
             ones: Tensor.ones,
             fromArray: (re, im, dtype) => Tensor.fromArray(re, im, dtype),

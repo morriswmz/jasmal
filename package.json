@@ -1,6 +1,6 @@
 {
   "name": "jasmal",
-  "version": "0.2.1",
+  "version": "0.5.1",
   "description": "Just another JavaScript matrix/tensor library (with full complex number support).",
   "author": {
     "name": "Mianzhi Wang",
@@ -27,6 +27,6 @@
     "build": "tsc -p .",
     "test": "npm run build && node runTests.js",
     "buildclient": "tsc -p tsconfig.client.json",
-    "prepublish": "npm run build"    
+    "prepublish": "npm run build"
   }
 }

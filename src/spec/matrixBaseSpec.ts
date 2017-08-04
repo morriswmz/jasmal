@@ -115,7 +115,34 @@ describe('isSymmetric()', () => {
 });
 
 describe('isHermitian()', () => {
-
+    it('should return true for a real symmetric matrix', () => {
+        expect(T.isHermitian([[1, 9], [9, 2]])).toBe(true);
+    });
+    it('should return true for a real skew symmetric matrix when skew = true', () => {
+        expect(T.isHermitian([[0, 9], [-9, 0]], true)).toBe(true);
+    });
+    it('should return false for a real non-symmetric matrix', () => {
+        expect(T.isHermitian([[1, 9], [8, 1]])).toBe(false);
+    });
+    it('should return false for a real matrix that is not skew symmetric when skew = true', () => {
+        expect(T.isHermitian([[1, 9], [9, 2]], true)).toBe(false);
+    });
+    it('should return true for a complex Hermitian matrix', () => {
+        let A = T.fromArray([[2, 3], [3, 2]], [[0, -1], [1, 0]]);
+        expect(T.isHermitian(A)).toBe(true);
+    });
+    it('should return true for a complex skew Hermitian matrix when skew = true', () => {
+        let A = T.fromArray([[0, 3], [-3, 0]], [[0, -1], [-1, 0]]);
+        expect(T.isHermitian(A, true)).toBe(true);
+    });
+    it('should return false for a complex matrix that is not Hermitian', () => {
+        let A = T.fromArray([[2, 3], [3, 2]], [[0, -1], [-1, 0]]);
+        expect(T.isHermitian(A)).toBe(false);
+    });
+    it('should return false for a complex matrix that is not skew Hermitian when skew = true', () => {
+        let A = T.fromArray([[0, 3], [-3, 0]], [[0, -1], [1, 0]]);
+        expect(T.isHermitian(A, true)).toBe(false);
+    });
 });
 
 describe('matmul()', () => {

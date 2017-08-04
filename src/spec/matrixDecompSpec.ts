@@ -3,6 +3,7 @@ import { checkTensor, maxAbs } from './testHelper';
 import { Tensor } from '../lib/tensor';
 import { ComplexNumber } from '../lib/complexNumber';
 const T = JasmalEngine.createInstance();
+T.seed(42);
 
 function validateSVD(A: Tensor, U: Tensor, S: Tensor, V: Tensor, eps: number = 1e-12): void {
     let [m, n] = A.shape;
@@ -135,7 +136,6 @@ describe('det()', () => {
 
 describe('svd()', () => {
     let A: Tensor, U: Tensor, S: Tensor, V: Tensor;
-    T.seed(192);
     let shapes = [[2, 4], [10, 15], [20, 30], [40, 30], [50, 50]];
     it('should perform SVD for a zero matrix', () => {
         [U, S, V] = T.svd(T.zeros([4, 3]));
@@ -211,9 +211,37 @@ describe('cond()', () => {
     });
 });
 
+describe('pinv()', () => {
+    it('should return a zero matrix for a zero matrix', () => {
+        checkTensor(T.pinv(T.zeros([3, 5])), T.zeros([5, 3]));
+    });
+    it('should return an identity matrix for an identity matrix', () => {
+        checkTensor(T.pinv(T.eye(3, 4)), T.eye(4, 3));
+    });
+    it('should return the pseudo inverse of a simple real matrix', () => {
+        let A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
+        let actual = T.pinv(A);
+        let expected = T.fromArray(
+            [[-0.94444444444444464,  0.44444444444444442],
+             [-0.11111111111111084,  0.11111111111111099],
+             [ 0.72222222222222199, -0.22222222222222204]]);
+        checkTensor(actual, expected, 1e-14);
+    });
+    let shapes = [[8, 6], [12, 20], [16, 12], [12, 16], [20, 8], [24, 30], [40, 30]];
+    for (let i = 0;i < shapes.length;i++) {
+        it(`should compute the pseudo inverse for complex matrix of ${shapes[i][0]} x ${shapes[i][1]}`, () => {
+            let A = T.complex(T.randn(shapes[i]), T.randn(shapes[i]));
+            let Ainv = T.pinv(A);
+            let tol = 1e-15 * Math.max(shapes[i][0], shapes[i][1]);
+            // A * Ainv * A = A, Ainv * A * Ainv = Ainv
+            checkTensor(T.matmul(T.matmul(A, Ainv), A), A, tol);
+            checkTensor(T.matmul(T.matmul(Ainv, A), Ainv), Ainv, tol);
+        });
+    }
+});
+
 describe('eig()', () => {
     var shapes = [[5, 5], [7, 7], [10, 10], [15, 15], [20, 20], [30, 30], [50, 50]];
-    T.seed(201);
     // real symmetrical
     it('should perform eigendecomposition for a zero matrix', () => {
         let A = T.zeros([10, 10]);
@@ -353,7 +381,6 @@ describe('chol()', () => {
 
 describe('qr()', () => {
     let shapes = [[5, 6], [8, 4], [12, 10], [20, 24], [30, 25]];
-    T.seed(42);
     it('should perform QR decomposition for a 10x10 Hilbert matrix', () => {
         let A = T.hilb(10);
         let [Q, R, P] = T.qr(A);
@@ -390,7 +417,6 @@ describe('qr()', () => {
 
 describe('linsolve()', () => {
     let shapes = [[3, 3], [6, 4], [16, 16], [20, 12], [30, 30], [50, 40], [80, 30]];
-    T.seed(42);
 
     it('should solve a real linear system with a rank deficient tall A.', () => {
         let A = T.fromArray([[1, 2, 3], [2, 4, 6], [4, 6, 8], [1, 1, 1]]);

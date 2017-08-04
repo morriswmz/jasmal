@@ -2,8 +2,8 @@ import { IArithmeticOpProvider } from './definition';
 import { ElementWiseOpGenerator } from '../generator';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { Tensor } from "../../tensor";
-import { ComplexNumber, CMath } from "../../complexNumber";
-import { ShapeHelper } from "../../helper/shapeHelper";
+import { ComplexNumber, CMath } from '../../complexNumber';
+import { ShapeHelper } from '../../helper/shapeHelper';
 
 export class ArithmeticOpProviderFactory {
     public static create(generator: ElementWiseOpGenerator): IArithmeticOpProvider {

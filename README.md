@@ -3,29 +3,93 @@
 **JASMAL** stands for **J**ust **A**nother Java**S**cript **MA**trix **L**ibrary,
 or **JA**va**S**cript **MA**trix **L**ibrary. This is a **work-in-progress**
 library I used to create interactive simulations on my
-[blog](research.wmz.ninja/articles/2017/06/bartlett-mvdr-beamformer-in-the-browser.html).
+[blog](research.wmz.ninja/articles/2017/07/music-in-the-browser.html).
 
-Despite its name, JASMAL can actually handle multi-dimensional arrays. It
-also has built-in complex number support and provides flexible indexing schemes.
-It also support broadcasting for various binary operations.
+Despite its name, JASMAL can actually handle multi-dimensional arrays. It also has
+
+* built-in complex number support
+* flexible indexing schemes (e.g., `get('::-1', ':')` returns a new matrix
+  with the rows reversed)
+* broadcasting support for various binary operations
+* subroutines for common matrix operations such as `trace()`, `inv()`, `det()`,
+  `linsolve()`, `rank()`, `kron()`.
+* subroutines for LU decomposition, QR decomposition, singular value
+  decomposition, and eigendecomposition for both real and complex matrices 
 
 # Basic Usage
 
 To access the JASMAL engine, simply use `var T = require('jasmal').JasmalEngine.createInstance()`.
 
-## Creation
+## Type Basics
+
+JASMAL is built around [tensor](src/lib/tensor.ts) objects, which use typed
+arrays for data storage. In plain JavaScript, jagged arrays is usually used to
+store multi-dimensional arrays. The following code show how to convert between
+JavaScript arrays and tensor objects:
+
 ``` JavaScript
-// creates a complex number
-var c = T.complexNumber(1, -1);
-// creates a 3 x 3 zero matrix
+// Creates a tensor from JavaScript arrays.
+let A = T.fromArray([[1, 2], [3, 4]]); // real 2 x 2
+let C = T.fromArray([[1, 2], [3, 4]], [[-1, -2], [-3, -4]]); // complex 2 x 2
+// Convert a tensor to a JavaScript array.
+let a = A.toArray(true); // real part only, arr = [[1, 2], [3, 4]]
+let [reC, imC] = C.toArray(false); // convert both real and imaginary parts
+                                   // reC = [[1, 2], [3, 4]];
+                                   // imC = [[-1, -2], [-3, -4]];
+
+```
+
+Note that during the conversions the data are **always copied** because JASMAL
+cannot be sure whether you will modify the array element in the future.
+
+JASMAL also includes a built-in [ComplexNumber](src/lib/complexNumber.ts)
+type to support complex scalars. Complex numbers can be created with the
+following code:
+
+``` JavaScript
+// Creates a complex number.
+let c = T.complexNumber(1, -1);
+// Retrieves the real part.
+let re = c.re;
+// Test if c is a ComplexNumber instance.
+console.log(T.isComplexNumber(c)); // true
+```
+
+Instead of only allowing tensor objects as inputs, most of the JASMAL functions
+also allows JavaScript arrays, ComplexNumber instances, or numbers as
+inputs. Conversion to tensor objects is automatically performed internally.
+For instance, `T.add([[1], [2]], [[3, 4]])` produces the same result as the 
+following code:
+
+``` JavaScript
+let x = T.fromArray([[1], [2]]);
+let y = T.fromArray([[3, 4]]);
+let z = T.add(x, y);
+```
+
+This is very convenient, but it leads to one problem: how is the output type
+determined? For instance, should `T.add(1, 2)` output a number or a tensor
+object? In JASMAL, unless otherwise specified, the following rules applies:
+
+* If all the inputs are scalars (`number` or `ComplexNumber`), the output will
+  be a scalar. In this case, if the output's imaginary part is zero, a
+  JavaScript number will be returned. Otherwise a `ComplexNumber` instance will
+  be returned.
+* If any of the inputs is a tensor object or a JavaScript array, the output will
+  be a tensor object.
+* Some functions have a parameter named `keepDims`. If `keepDims` is set to
+  `true`, the output will always be a tensor object.
+
+## Creation
+
+``` JavaScript
+// Creates a 3 x 3 zero matrix.
 var Z = T.zeros([3, 3]);
-// creates a 3 x 3 identity matrix
+// Creates a 3 x 3 identity matrix.
 var I = T.eye([3, 3]);
-// creates a 3 x 4 x 3 array whose elements are all ones with data type INT32
+// Creates a 3 x 4 x 3 array whose elements are all ones with data type INT32.
 var X = T.ones([3, 4, 3], T.INT32);
-// from JavaScript arrays
-var A = T.fromArray([[1, 2], [3, 4]]); // real
-var C = T.fromArray([[1, 2], [3, 4]], [[-1, -2], [-3, -4]]); // complex
+
 ```
 
 ## Indexing
@@ -47,27 +111,7 @@ A.get(':', 0, true); // gets the first columns as a 2D column vector
 
 A.get('::-1', ':'); // gets a new matrix with the rows reversed
 A.get([0, -1], [0, -1]); // gets a new matrix consists of the four corners
-A.get([0, 1, 1, 2, 0, 1], ':'); // Sample rows
-```
-
-### Accessing the underlying data storage
-
-JASMAL stores multi-dimensional arrays in the row major order. You can
-directly access the underlying storage and manipulate them:
-
-``` JavaScript
-// If you want to write to the underlying storage directly, ensure that it is
-// not shared.
-A.ensureUnsharedLocalStorage();
-var re = A.realData;
-re[0] = 1;
-var im;
-// If a matrix does not have complex data storage, accessing its imaginary data
-// storage will result in an error.
-if (A.hasComplexStorage()) {
-    im = A.imagData;
-    im[0] = -1;
-}
+A.get([0, 1, 1, 2, 0, 1], ':'); // sample rows
 ```
 
 ## Matrix/Tensor manipulation
@@ -129,7 +173,7 @@ inputs.
 // Absolute value
 T.abs([[1, 2], [-3, 4]]);
 // Sine
-T.sin([1, 2, 3]);
+T.sin(T.linspace(0, Math.PI*2, 100));
 // Square root
 T.sqrt(-1);
 ```
@@ -191,3 +235,54 @@ var sum = T.sum(A);
 // Sum each row and returns a column vector. We specify keepDims = true here.
 var sums = T.sum(A, 1, true);
 ```
+
+# Performance
+
+Unfortunately, JavaScript is slow for numerical computations. Therefore,
+multiply two 1000 x 1000 matrices or performing the singular value decomposition
+of a 500 x 500 matrix take seconds in the browser.
+
+Element-wise indexing can also be slow with JASMAL because of the overhead
+needed for implementing the flexible indexing schemes. For instance, if you
+want to set all the elements in a matrix to zero, `M.set(':', 0)` is much much
+faster than the following code:
+``` JavaScript
+for (let i = 0;i < m;i++) {
+    for (let j = 0;j < n;j++) {
+        M.set(i, j, 0);
+    }
+}
+```
+
+### Accessing the underlying data storage directly
+
+JASMAL stores multi-dimensional arrays in the row major order. If you want to 
+completely bypass the indexing overhead of JASMAL's indexing functions, you can
+directly access the underlying storage and manipulate them:
+
+``` JavaScript
+// If you want to write to the underlying storage directly, ensure that it is
+// not shared.
+A.ensureUnsharedLocalStorage();
+var re = A.realData;
+re[0] = 1;
+var im;
+// If a matrix does not have complex data storage, accessing its imaginary data
+// storage will result in an error.
+if (!A.hasComplexStorage()) {
+    // Make sure the complex data storage is available.
+    A.ensureComplexStorage();
+}
+im = A.imagData;
+im[0] = -1;
+```
+
+# License
+
+JASMAL is released under the [MIT](LICENSE.md) license.
+[eigen.ts](src/lib/ops/matrix/decomp/eigen.ts)
+contains several subroutines ported from the pristine Fortran code
+[EISPACK](http://www.netlib.org/eispack/),
+which are distributed using the Modified BSD or MIT license
+([source](http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg01379.html)).
+All rights reserved by the authors of EISPACK. 

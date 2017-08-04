@@ -161,8 +161,9 @@ export interface IMatrixOpProvider {
     /**
      * Estimates the rank of the input matrix via from its singular values.
      * @param x Input matrix.
+     * @param tol Tolerance for small singular values.
      */
-    rank(x: OpInput): number;
+    rank(x: OpInput, tol?: number): number;
 
     /**
      * Estimates the condition number of the input matrix from its singular
@@ -170,6 +171,14 @@ export interface IMatrixOpProvider {
      * @param x Input matrix.
      */
     cond(x: OpInput): number;
+
+    /**
+     * Obtains the pseudo inverse of the input matrix from its singular value
+     * decomposition.
+     * @param x Input matrix.
+     * @param tol Tolerance for small singular values.
+     */
+    pinv(x: OpInput, tol?: number): Tensor;
 
     /**
      * Computes the eigendecomposition of the input matrix.

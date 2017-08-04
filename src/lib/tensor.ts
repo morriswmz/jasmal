@@ -331,7 +331,7 @@ export class Tensor {
                     imArr = value._im.data;
                 }
             } else {
-                if (value.hasComplexStorage() && !DataHelper.isArrayAllZeros(value._im.data)) {
+                if (value.hasNonZeroComplexStorage()) {
                     imArr = value._im.data;
                     isComplex = true;
                 }
@@ -464,9 +464,17 @@ export class Tensor {
     /**
      * Returns whether this tensor has complex storage.
      * Note: DO NOT use this method to test if a tensor is numerically complex.
+     *       Use hasNonZeroComplexStorage() instead.
      */
     public hasComplexStorage(): boolean {
         return this._im !== TensorStorage.Empty;
+    }
+
+    /**
+     * Returns where this tensor has non-zero complex storage.
+     */
+    public hasNonZeroComplexStorage(): boolean {
+        return this._im !== TensorStorage.Empty && !DataHelper.isArrayAllZeros(this._im.data);
     }
 
     /**
@@ -1239,7 +1247,7 @@ export class Tensor {
             // tensor as a mask. We unify them into list of index iterators.
             let ind = args[i];
             if (ind instanceof Tensor) {
-                if (ind.hasComplexStorage() && !DataHelper.isArrayAllZeros(ind._im.data)) {
+                if (ind.hasNonZeroComplexStorage()) {
                     throw new Error('Indices cannot be complex');
                 }
                 if (ind.dtype === DType.LOGIC) {
@@ -1446,7 +1454,7 @@ export class Tensor {
                         }, keepDims);
                     }
                 } else {
-                    if (arg0.hasComplexStorage() && !DataHelper.isArrayAllZeros(arg0._im.data)) {
+                    if (arg0.hasNonZeroComplexStorage()) {
                         throw new Error('Complex tensor cannot be used for indexing.');
                     }
                     if (doSet) {

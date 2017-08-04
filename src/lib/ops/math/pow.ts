@@ -9,7 +9,7 @@ export interface IPowerMathOpSet {
 
     sqrt(x: OpInput, inPlace?: boolean): OpOutput;
 
-    pow2(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    pow(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
 
 }
 
@@ -54,7 +54,7 @@ export class PowerMathOpSetFactory {
             outputDTypeResolver: OutputDTypeResolver.bToFloat
         });
 
-        const opPow2 = (x: OpInput, y: OpInput, inPlace: boolean = false): OpOutput => {
+        const opPow = (x: OpInput, y: OpInput, inPlace: boolean = false): OpOutput => {
             let infoX = Tensor.analyzeOpInput(x);
             let infoY = Tensor.analyzeOpInput(y);
             let Z: OpOutput;
@@ -80,7 +80,7 @@ export class PowerMathOpSetFactory {
 
         return {
             sqrt: opSqrt,
-            pow2: opPow2
+            pow: opPow
         };
 
     }

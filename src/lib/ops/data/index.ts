@@ -8,7 +8,7 @@ import { ShapeHelper } from '../../helper/shapeHelper';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { DataHelper } from '../../helper/dataHelper';
 import { ICoreOpProvider } from '../core/definition';
-import { ReductionOpGenerator } from '../generator/reduction/generator';
+import { ReductionOpGenerator } from '../generator';
 
 export class DataOpProviderFactory {
 
@@ -129,7 +129,7 @@ export class DataOpProviderFactory {
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: boolean): Tensor | [Tensor, number[]] {
             let X = x instanceof Tensor ? x : Tensor.toTensor(x);
-            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+            if (X.hasNonZeroComplexStorage()) {
                 throw new Error('Cannot order complex elements.');
             }
             let n = X.size;
@@ -166,7 +166,7 @@ export class DataOpProviderFactory {
             let uniqueRe: number[] = [];
             let uniqueIm: number[] = [];
             let Y: Tensor;
-            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.realData)) {
+            if (X.hasNonZeroComplexStorage()) {
                 dataIm = X.imagData;
                 // sort complex numbers
                 indices.sort((ia, ib) => {
@@ -273,7 +273,7 @@ export class DataOpProviderFactory {
 
         const opHist = (x: OpInput, nBins: number = 10): [Tensor, Tensor] => {
             let X = x instanceof Tensor ? x : Tensor.toTensor(x);
-            if (X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData)) {
+            if (X.hasNonZeroComplexStorage()) {
                 throw new Error('Input must be real.');
             }
             if (nBins <= 0 || Math.floor(nBins) !== nBins) {

@@ -15,6 +15,13 @@ describe('Advanced indexing', () => {
             X.set(':', 1);
             checkTensor(X, T.ones(X.shape));
         });
+        it('should set masked elements to 7', () => {
+            let mask = T.fromArray([[1, 1, 0], [0, 1, 1]], [], T.LOGIC);
+            let X = A.copy();
+            X.set(mask, 7);
+            checkTensor(X, T.fromArray([[7, 7, 3], [4, 7, 7]]));
+            checkTensor(A, ACopy); // should not change A
+        });
         it('should set all elements at even indices to 1', () => {
             let X = T.zeros([3, 3]);
             X.set('::2', 1);
@@ -48,39 +55,49 @@ describe('Advanced indexing', () => {
              [-3, 0, 0, -4]]);
         let C = T.fromArray([[1, 2, 3], [4, 5, 6]], [[-1, -2, -3], [-4, -5, -6]]);
 
-        it('gets a single element using flat indexing', () => {
+        it('should get a single element using flat indexing', () => {
             expect(A.get(1)).toBe(2);
         });
-        it('gets a single element using (i,j) indexing', () => {
+        it('should get a single element using (i,j) indexing', () => {
             expect(A.get(0, 1)).toBe(2);
-        })
-        it('gets a single complex element using flat indexing with a negative index', () => {
+        });
+        it('should get a single element using (i,j) indexing with keepDims = true', () => {
+            let actual = A.get(0, 1, true);
+            let expected = T.fromArray([[2]]);
+            checkTensor(actual, expected);
+        });
+        it('should get a single complex element using flat indexing with a negative index', () => {
             expect((<ComplexNumber>C.get(-1)).equals(new ComplexNumber(6, -6))).toBeTruthy();
-        })
-        it('gets a single complex element using (i,j) indexing with negative indices', () => {
+        });
+        it('should get a single complex element using (i,j) indexing with negative indices', () => {
             expect((<ComplexNumber>C.get(-1, 0)).equals(new ComplexNumber(4, -4))).toBeTruthy();
-        })
-        it('reverses all elements', () => {
+        });
+        it('should return a tensor with all the elements reversed', () => {
             let actual = <Tensor>A.get('::-1');
             let expected = T.fromArray([6, 5, 4, 3, 2, 1]);
             checkTensor(actual, expected);
         });
-        it('reverses rows', () => {
+        it('should return a tensor with all the rows reversed', () => {
             let actual = <Tensor>C.get('::-1',':');
             let expected = T.fromArray([[4, 5, 6], [1, 2, 3]], [[-4, -5, -6], [-1, -2, -3]]);
             checkTensor(actual, expected);
         });
-        it('gets a sub tensor', () => {
+        it('should return a sub tensor', () => {
             let actual = B.get([1, 2], '1:3');
             let expected = T.fromArray([[20, 30], [40, 50]]);
             checkTensor(actual, expected);
         });
-        it('gets all negative elements', () => {
+        it('should return four corners using masked indexing', () => {
+            let actual = A.get(T.fromArray([1, 1], [], T.LOGIC), T.fromArray([1, 0, 1], [], T.LOGIC));
+            let expected = T.fromArray([[1, 3], [4, 6]]);
+            checkTensor(actual, expected);
+        });
+        it('should return all negative elements', () => {
             let actual = B.get(x => x < 0);
             let expected = T.fromArray([-1, -2, -3, -4]);
             checkTensor(actual, expected);
         });
-        it('samples columns', () => {
+        it('should sample columns', () => {
             let actual = A.get(':', [0, -1, 0, -1, 1]);
             let expected = T.fromArray(
                 [[1, 3, 1, 3, 2],

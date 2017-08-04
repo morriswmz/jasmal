@@ -178,14 +178,14 @@ describe('pow2', () => {
     it('should compute the power for real numbers', () => {
         let x = T.fromArray([1, 2, 3.3, -3]);
         let y = T.fromArray([2, -1.2, 4.4, -2]);
-        let actual = T.pow2(x, y);
+        let actual = T.pow(x, y);
         let expected = T.fromArray([1, Math.pow(2, -1.2), Math.pow(3.3, 4.4), 1/9]);
         checkTensor(actual, expected, EPSILON);
     });
     it('should compute the power for real numbers with possible complex output', () => {
         let x = T.fromArray([2, -2, -2]);
         let y = T.fromArray([10, -6, 3.3]);
-        let actual = T.pow2(x, y);
+        let actual = T.pow(x, y);
         let expected = T.fromArray(
             [1024, 1.5625e-2, -5.7891882368512873],
             [0, 0, -7.968134023406492]);
@@ -200,7 +200,7 @@ describe('pow2', () => {
             [2,   0,    0, -2, 2.4],
             [1, 3.3, -4.2,  7,  -1]
         );
-        let actual = T.pow2(x, y);
+        let actual = T.pow(x, y);
         let expected = T.fromArray(
             [-0.85095334231007735,
              -3.6831822518019123e-3,

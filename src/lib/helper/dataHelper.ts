@@ -2,6 +2,10 @@ import { DataBlock } from '../commonTypes';
 
 export class DataHelper {
 
+    /**
+     * Generates an array of natural numbers [0, 1, 2, ..., n].
+     * @param n 
+     */
     public static naturalNumbers(n: number): number[] {
         let s = new Array<number>(n);
         for (let i = 0;i < n;i++) {
