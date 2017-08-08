@@ -8,13 +8,14 @@ const T = JasmalEngine.createInstance();
 describe('min()', () => {
     let v1 = [6, -1, 3, 0.5, -6.18];
     let v2 = [6, -Infinity, 3, NaN, -9.2];
+    let v3 = T.fromArray([[3], [-1.2], [Infinity], [-4]]);
     let A = T.fromArray([[1,4,-1], [2,-3,-2]]);
 
-    it('should return the minimum in a vector', () => {
+    it('should return the minimum in a 1D vector', () => {
         expect(T.min(v1)).toEqual([-6.18, 4]);
         expect(T.min(v2)).toEqual([-Infinity, 1]);
     });
-    it('should return the minimum in a vector (with keepDims = true)', () => {
+    it('should return the minimum in a 1D vector as a tensor when keepDims = true', () => {
         let [x1, i1] = T.min(v1, -1, true);
         checkTensor(x1, T.fromArray([-6.18]));
         checkTensor(i1, T.fromArray([4], [], T.INT32));
@@ -22,12 +23,38 @@ describe('min()', () => {
         checkTensor(x2, T.fromArray([-Infinity]));
         checkTensor(i2, T.fromArray([1], [], T.INT32));
     });
+    it('should return the minimum in a 2D column vector', () => {
+        expect(T.min(v3)).toEqual([-4, 3]);
+    });
+    it('should return the minimum in a 2D column vector as a tensor with keepDims = true', () => {
+        let [M, I] = T.min(v3, -1, true);
+        checkTensor(M, T.fromArray([[-4]]));
+        checkTensor(I, T.fromArray([[3]], [], T.INT32));
+    });
+    it('should return the minimums in a 2D column vector as a 1D vector when axis = 1', () => {
+        let [M, I] = T.min(v3, 1);
+        checkTensor(M, T.fromArray([3, -1.2, Infinity, -4]));
+        checkTensor(I, T.fromArray([0, 0, 0, 0], [], T.INT32));
+    });
+    it('should return the minimum in a 2D column vector as a 1D vector when axis = 0', () => {
+        let [M, I] = T.min(v3, 0);
+        checkTensor(M, T.fromArray([-4]));
+        checkTensor(I, T.fromArray([3], [], T.INT32));
+    });
+    it('should return the minimum in a matrix', () => {
+        expect(T.min(A)).toEqual([-3, 4]);
+    });
+    it('should return the minimum in a matrix as a 1x1 tensor when keepDims = true)', () => {
+        let [M, I] = T.min(A, -1, true);
+        checkTensor(M, T.fromArray([[-3]]));
+        checkTensor(I, T.fromArray([[4]], [], T.INT32));
+    });
     it('should return the minimums along all columns', () => {
         let [M, I] = T.min(A, 0);
         checkTensor(M, T.fromArray([1, -3, -2]));
         checkTensor(I, T.fromArray([0, 1, 1], [], T.INT32));
     });
-    it('should return the minimums along all columns (with keepDims = true)', () => {
+    it('should return the minimums along all columns as a 2D tensor when keepDims = true', () => {
         let [M, I] = T.min(A, 0, true);
         checkTensor(M, T.fromArray([[1, -3, -2]]));
         checkTensor(I, T.fromArray([[0, 1, 1]], [], T.INT32));
@@ -37,12 +64,16 @@ describe('min()', () => {
         checkTensor(M, T.fromArray([-1, -3]));
         checkTensor(I, T.fromArray([2, 1], [], T.INT32));
     });
-    it('should return the minimums along all rows (with keepDims = true)', () => {
+    it('should return the minimums along all rows as a 2D tensor when keepDims = true', () => {
         let [M, I] = T.min(A, 1, true);
         checkTensor(M, T.fromArray([[-1], [-3]]));
         checkTensor(I, T.fromArray([[2], [1]], [], T.INT32));
     });
-
+    it('should keep other singleton dimensions intact', () => {
+        let [M, I] = T.min([[[1, -2]]], 2);
+        checkTensor(M, T.fromArray([[-2]]));
+        checkTensor(I, T.fromArray([[1]], [], T.INT32));
+    });
 });
 
 describe('max()', () => {

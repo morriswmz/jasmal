@@ -11,8 +11,8 @@ export class DataFunction {
     public static max(x: ArrayLike<number>, offset: number = 0, stride: number = 1, n: number = -1): [number, number] {
         let ub: number;
         [n, ub] = DataFunction._processArgs(x.length, offset, stride, n);
-        let max = -Infinity, idx = offset, j = 0;;
-        for (let i = offset;i < ub;i += stride, j++) {
+        let max = x[offset], idx = 0, j = 1;
+        for (let i = offset + stride;i < ub;i += stride, j++) {
             if (x[i] > max) {
                 max = x[i];
                 idx = j;
@@ -32,8 +32,8 @@ export class DataFunction {
     public static min(x: ArrayLike<number>, offset: number = 0, stride: number = 1, n: number = -1): [number, number] {
         let ub: number;
         [n, ub] = DataFunction._processArgs(x.length, offset, stride, n);
-        let min = Infinity, idx = offset, j = 0;
-        for (let i = offset;i < ub;i += stride, j++) {
+        let min = x[offset], idx = 0, j = 1;
+        for (let i = offset + stride;i < ub;i += stride, j++) {
             if (x[i] < min) {
                 min = x[i];
                 idx = j;

@@ -3,6 +3,7 @@ import { ComplexNumber } from '../lib/complexNumber';
 import { Tensor } from '../lib/tensor';
 import { checkArrayLike } from './testHelper';
 import { DType } from '../lib/dtype';
+import { TensorStorage } from '../lib/storage';
 const T = JasmalEngine.createInstance();
 
 describe('DType constants', () => {
@@ -116,6 +117,37 @@ describe('Tensor creation', () => {
             }
         });
     });
+});
+
+describe('Tensor basic methods', () => {
+    describe('ensureComplexStorage()', () => {
+        it('should create the complex storage with the correct DType', () => {
+            let A = T.ones([3, 4], T.INT32);
+            A.ensureComplexStorage();
+            let imStore = <TensorStorage>(<any>A)._im;
+            expect(imStore.dtype).toBe(A.dtype);
+            expect(imStore.refCount).toBe(1);
+            let expectedArr = new Array(A.size);
+            for (let i = 0;i < A.size;i++) {
+                expectedArr[i] = 0;
+            }
+            checkArrayLike(imStore.data, expectedArr);
+        });
+        it('should do nothing when the tensor is already a complex one', () => {
+            let expectedArr = [4, 5, 6];
+            let A = T.fromArray([1, 2, 3], expectedArr);
+            let imStore = <TensorStorage>(<any>A)._im;
+            A.ensureComplexStorage();
+            expect((<any>A)._im).toBe(imStore);
+            expect(imStore.refCount).toBe(1);
+            checkArrayLike(imStore.data, expectedArr);
+        });
+        it('should throw for logic tensors', () => {
+            let L = T.zeros([5, 2], T.LOGIC);
+            expect(() => L.ensureComplexStorage()).toThrow();
+        });
+    });
+
     describe('setEl()/getEl()', () => {
         it('getEl() should return the value set by setEl() for a 2x3x2 FLOAT64 tensor', () => {
             let x = T.zeros([2, 3, 2]);
@@ -198,6 +230,4 @@ describe('Tensor creation', () => {
             expect(x.imagData[1]).toBe(-2);
         });
     });
-    
-
 });

@@ -10,7 +10,7 @@ const enum TokenType {
 }
 
 interface Token {
-    type: TokenType; // 0 - normal, 1 - #if, 2 - #else, 3 - #elseif, 4 - #endif, 5 - #ifnot
+    type: TokenType;
     value: string;
 }
 

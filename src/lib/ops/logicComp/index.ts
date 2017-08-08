@@ -11,14 +11,20 @@ export class LogicComparisonOpProviderFactory {
     public static create(generator: ElementWiseOpGenerator): ILogicComparisonOpProvider {
 
         const opEq = generator.makeBinaryOp({
-            opRR: '$reZ = ($reX === $reY) ? 1 : 0;'
+            opRR: '$reZ = ($reX === $reY) ? 1 : 0;',
+            opRC: '$reZ = ($reX === $reY && $imY === 0) ? 1 : 0;',
+            opCR: '$reZ = ($reX === $reY && $imX === 0) ? 1 : 0;',
+            opCC: '$reZ = ($reX === $reY && $imX === $imY) ? 1 : 0'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogic,
             noInPlaceOperation: true
         });
 
         const opNeq = generator.makeBinaryOp({
-            opRR: '$reZ = ($reX !== $reY) ? 1 : 0;'
+            opRR: '$reZ = ($reX !== $reY) ? 1 : 0;',
+            opRC: '$reZ = ($reX !== $reY || $imY !== 0) ? 1 : 0;',
+            opCR: '$reZ = ($reX !== $reY || $imX !== 0) ? 1 : 0;',
+            opCC: '$reZ = ($reX !== $reY || $imX !== $imY) ? 1 : 0'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogic,
             noInPlaceOperation: true

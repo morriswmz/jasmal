@@ -56,6 +56,14 @@ export class Tensor {
     private _strides: number[];
     private _offsetCalculator: OffsetCalculator;
 
+    /**
+     * Internal constructor for Tensor objects.
+     * Note: the refCount of the input parameters will be automatically
+     *       increased.
+     * @param re 
+     * @param im 
+     * @param shape 
+     */
     protected constructor(re: TensorStorage, im: TensorStorage, shape: number[]) {
         this._re = re;
         this._re.refCount++;
@@ -179,13 +187,13 @@ export class Tensor {
      * @param re Real part.
      * @param im Imaginary part.
      */
-    public static scalar(re: number, im?: number, dtype?: DType): Tensor;
+    public static scalar(re: number, im?: number, dtype?: DType, ndim?: number): Tensor;
     /**
      * Create a scalar tensor from a complex number.
      * @param z A complex number.
      */
     public static scalar(z: ComplexNumber): Tensor;
-    public static scalar(x: number | ComplexNumber, y?: number, dtype: DType = DType.FLOAT64): Tensor {
+    public static scalar(x: number | ComplexNumber, y?: number, dtype: DType = DType.FLOAT64, ndim: number = 1): Tensor {
         let re: number, im: number;
         if (x instanceof ComplexNumber) {
             re = x.re;
@@ -203,7 +211,16 @@ export class Tensor {
         } else {
             imStorage = TensorStorage.Empty;
         }
-        return new Tensor(reStorage, imStorage, [1]);
+        let T = new Tensor(reStorage, imStorage, [1]);
+        if (ndim > 1) {
+            let shape = new Array(ndim);
+            for (let i = 0;i < ndim;i++) {
+                shape[i] = 1;
+            }
+            T._shape = shape;
+            T._updateStridesAndCalculator();
+        }
+        return T;
     }
 
     /**
@@ -339,7 +356,7 @@ export class Tensor {
             originalShape = value.shape;
             originalType = OpInputType.Tensor;
             originalDType = value.dtype;
-        } else if (Array.isArray(value)) {
+        } else if (Array.isArray(value) || ObjectHelper.isTypedArray(value)) {
             if (value.length === 0) {
                 throw new Array('Value cannot be an empty array.');
             }
@@ -352,6 +369,7 @@ export class Tensor {
                 tmp.originalType = OpInputType.Array;
                 return tmp;
             } else {
+                // plain array
                 reArr = value;
                 hasOnlyOneElement = value.length === 1;
                 if (hasOnlyOneElement) {
@@ -567,7 +585,11 @@ export class Tensor {
         } else {
             ndim = this.ndim;
             strides = this._strides;
-            // determine trailingOffset
+            // Determine trailingOffset
+            // If the sub tensor has many trailing singleton dimensions, we can
+            // just combine them by computing the proper trailing offset.
+            // e.g. T[i, j, 0, 1, 3] = T[i, j, 0*d[2] + 1*d[1] + 3*d[0]]
+            // The trailing offset if given by 0*d[2] + 1*d[1] + 3*d[0].
             let i = shapeSub.length - 1;
             while (shapeSub[i] === 1 && i > 0) {
                 i--;
@@ -1454,6 +1476,7 @@ export class Tensor {
                         }, keepDims);
                     }
                 } else {
+                    // indexing with signed integers
                     if (arg0.hasNonZeroComplexStorage()) {
                         throw new Error('Complex tensor cannot be used for indexing.');
                     }
@@ -1466,6 +1489,8 @@ export class Tensor {
                         if (arg0.ndim === 1 || arg0.isScalar()) {
                             return this._getBatch(this._parseSignedIndices(arg0.realData), keepDims);
                         } else {
+                            // we want to preserve the original shape for the
+                            // get case
                             originalShape = arg0.shape;
                             tmp = <Tensor>this._getBatch(this._parseSignedIndices(arg0.realData), keepDims);
                             tmp._shape = originalShape;
@@ -1667,6 +1692,7 @@ export class Tensor {
         if (!this.hasComplexStorage()) {
             if (this.dtype !== DType.LOGIC) {
                 this._im = TensorStorage.create(this._re.data.length, this._re.dtype);
+                this._im.refCount++;
             } else {
                 throw new Error('Logic tensors cannot have a complex storage.')
             }

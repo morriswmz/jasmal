@@ -21,7 +21,7 @@ return function(x, axis, keepDims) {
     if (axis !== -1 && ((axis | 0) !== axis || axis >= X.ndim)) {
         throw new Error('Invalid axis number ' + axis + '.');
     }
-    var isInputComplex = X.hasComplexStorage() && !DataHelper.isArrayAllZeros(X.imagData);
+    var isInputComplex = X.hasNonZeroComplexStorage();
 #if NO_COMPLEX_INPUT
     if (isInputComplex) {
         throw new Error('Complex input is not supported.');
@@ -52,13 +52,13 @@ if (isInputComplex) {
 #if OUTPUT_C_COMPLEX
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], tmp[1], outputDType), Tensor.scalar(tmp[2], 0, ${DType.INT32})];
+        return [Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim), Tensor.scalar(tmp[2], 0, ${DType.INT32}, X.ndim)];
     } else {
         return [tmp[1] === 0 ? tmp[0] : new ComplexNumber(tmp[0], tmp[1]), tmp[2]];
     }
 #else
     if (keepDims) {
-        return Tensor.scalar(tmp[0], tmp[1], outputDType);
+        return Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim);
     } else {
         return tmp[1] === 0 ? tmp[0] : new ComplexNumber(tmp[0], tmp[1]);
     }
@@ -66,12 +66,12 @@ if (isInputComplex) {
 #else
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], 0, outputDType), Tensor.scalar(tmp[1], 0, ${DType.INT32})];
+        return [Tensor.scalar(tmp[0], 0, outputDType, X.ndim), Tensor.scalar(tmp[1], 0, ${DType.INT32}, X.ndim)];
     } else {
         return [tmp[0], tmp[1]];
     }
 #else
-    return keepDims ? Tensor.scalar(tmp, 0, outputDType) : tmp;
+    return keepDims ? Tensor.scalar(tmp, 0, outputDType, X.ndim) : tmp;
 #endif
 #endif
 }
@@ -80,13 +80,13 @@ tmp = fReal(X.realData, 0, 1, X.size);
 #if OUTPUT_R_COMPLEX
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], tmp[1], outputDType), Tensor.scalar(tmp[2], 0, ${DType.INT32})];
+        return [Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim), Tensor.scalar(tmp[2], 0, ${DType.INT32}, X.ndim)];
     } else {
         return [tmp[1] === 0 ? tmp[0] : new ComplexNumber(tmp[0], tmp[1]), tmp[2]];
     }
 #else
     if (keepDims) {
-        return Tensor.scalar(tmp[0], tmp[1], outputDType);
+        return Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim);
     } else {
         return tmp[1] === 0 ? tmp[0] : new ComplexNumber(tmp[0], tmp[1]);
     }
@@ -94,12 +94,12 @@ tmp = fReal(X.realData, 0, 1, X.size);
 #else
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], 0, outputDType), Tensor.scalar(tmp[1], 0, ${DType.INT32})];
+        return [Tensor.scalar(tmp[0], 0, outputDType, X.ndim), Tensor.scalar(tmp[1], 0, ${DType.INT32}, X.ndim)];
     } else {
         return [tmp[0], tmp[1]];
     }
 #else
-    return keepDims ? Tensor.scalar(tmp, 0, outputDType) : tmp;
+    return keepDims ? Tensor.scalar(tmp, 0, outputDType, X.ndim) : tmp;
 #endif
 #endif`;
 
@@ -131,10 +131,10 @@ if (isInputComplex) {
 }
 #endif
 if (!keepDims) {
-    var squeezedShape = ShapeHelper.getSqueezedShape(shapeY);
-    Y.reshape(squeezedShape);
+    shapeY.splice(axis, 1);
+    Y.reshape(shapeY);
 #if OUTPUT_INDICES
-    Z.reshape(squeezedShape);
+    Z.reshape(shapeY);
 #endif
 }
 #if OUTPUT_INDICES
@@ -150,6 +150,7 @@ reY = Y.realData;
 Y.ensureComplexStorage();
 imY = Y.imagData;
 var doReductionRICO = function (level, offsetX, offsetY) {
+    var tmp;
     if (level === maxLevel) {
         for (var j = 0;j < shapeY[level];j++) {
             tmp = fReal(reX, offsetX, stride, n);
@@ -172,6 +173,7 @@ var doReductionRICO = function (level, offsetX, offsetY) {
 doReductionRICO(0, 0, 0);
 #else
 var doReductionRIRO = function (level, offsetX, offsetY) {
+    var tmp;
     if (level === maxLevel) {
         for (var j = 0;j < shapeY[level];j++) {
             tmp = fReal(reX, offsetX, stride, n);
@@ -204,6 +206,7 @@ imX = X.imagData;
 Y.ensureComplexStorage();
 imY = Y.imagData;
 var doReductionCICO = function (level, offsetX, offsetY) {
+    var tmp;
     if (level === maxLevel) {
         for (var j = 0;j < shapeY[level];j++) {
             tmp = fComplex(reX, imX, offsetX, stride, n);
@@ -226,6 +229,7 @@ var doReductionCICO = function (level, offsetX, offsetY) {
 doReductionCICO(0, 0, 0);
 #else
 var doReductionCIRO = function (level, offsetX, offsetY) {
+    var tmp;
     if (level === maxLevel) {
         for (var j = 0;j < shapeY[level];j++) {
             tmp = fComplex(reX, imX, offsetX, stride, n);
