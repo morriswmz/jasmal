@@ -1,8 +1,5 @@
-import { Tensor } from '../../../tensor';
 import { CMath } from '../../../complexNumber';
 import { DataBlock } from '../../../commonTypes';
-import { OutputDTypeResolver } from '../../../dtype';
-import { DataHelper } from "../../../helper/dataHelper";
 
 /**
  * LUP decomposition.
@@ -266,7 +263,7 @@ export class LU {
      */
     public static _luSolveColumn(n: number, reLU: ArrayLike<number>, reB: DataBlock): void {
         let idxNz = -1;
-        let acc: number, idxPermuted: number;
+        let acc: number;
         // L^-1 P^T b
         for (let i = 0; i < n; i++) {
             acc = reB[i];
@@ -306,7 +303,7 @@ export class LU {
     public static _cluSolveColumn(n: number, reLU: ArrayLike<number>, imLU: ArrayLike<number>,
                                   reB: DataBlock, imB: DataBlock): void {
         let idxNz = -1;
-        let accRe: number, accIm: number, idxPermuted: number;
+        let accRe: number, accIm: number;
         // L^-1 P^T b
         for (let i = 0; i < n; i++) {
             accRe = reB[i];

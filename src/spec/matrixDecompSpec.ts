@@ -68,7 +68,7 @@ function validateEVD(A: Tensor, E: Tensor, V: Tensor, hermitian: boolean, eps: n
 }
 
 function validateQR(A: Tensor, Q: Tensor, R: Tensor, P: Tensor, eps: number = 1e-12): void {
-    let [m, n] = A.shape;
+    let [m, ] = A.shape;
     // Since A may contain large elements, we scale the tolerance factor
     // according to A.
     let tolA = eps * Math.max(maxAbs(A.realData), A.hasComplexStorage() ? maxAbs(A.imagData) : 0);

@@ -1,7 +1,6 @@
 import { ILogicComparisonOpProvider } from './definition';
-import { NOT_IMPLEMENTED } from '../../constant';
 import { ElementWiseOpGenerator } from '../generator';
-import { DType, OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../dtype';
 import { OpInput } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 import { DataHelper } from '../../helper/dataHelper';

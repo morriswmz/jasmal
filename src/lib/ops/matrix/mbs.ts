@@ -28,7 +28,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
             opB = 1;
         }
         if (dims[1] === 1) {
-            this._mmul_vv(dims, opB, A, B, C);
+            this._mmul_vv(dims, A, B, C);
         } else if (dims[0] === 1) {
             this._mmul_vm(dims, opB, A, B, C);
         } else {
@@ -36,7 +36,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
         }
     }
 
-    private _mmul_vv(dims: [number, number, number], opB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
+    private _mmul_vv(dims: [number, number, number], A: DataBlock, B: DataBlock, C: DataBlock): void {
         let m = dims[0], p = dims[2];
         for (let i = 0;i < m;i++) {
             for (let j = 0;j < p;j++) {

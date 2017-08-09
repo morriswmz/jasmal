@@ -1,14 +1,19 @@
 import { ElementWiseOpGenerator } from '../generator';
 import { OpOutput, OpInput } from '../../commonTypes';
 import { OutputDTypeResolver, DType } from '../../dtype';
-import { CMath } from '../../complexNumber';
 import { Tensor } from '../../tensor';
 import { DataHelper } from '../../helper/dataHelper';
 
 export interface IPowerMathOpSet {
 
+    /**
+     * Computes the square root for each element in the input.
+     */
     sqrt(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Raises `x` to the powers from `y` element by element.
+     */
     pow(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
 
 }
@@ -59,15 +64,15 @@ export class PowerMathOpSetFactory {
             let infoY = Tensor.analyzeOpInput(y);
             let Z: OpOutput;
             if (infoX.isComplex || infoY.isComplex) {
-                Z = opPowCC(infoX, infoY);
+                Z = opPowCC(infoX, infoY, inPlace);
             } else {
                 if ((infoX.re < 0 || DataHelper.anyNegative(infoX.reArr)) && infoY.originalDType === DType.FLOAT64) {
                     // When x has negative elements, it is possible to produce
                     // complex results when y is not an integer.
-                    Z = opPowCC(infoX, infoY);
+                    Z = opPowCC(infoX, infoY, inPlace);
                 } else {
                     // x and y are both real and nonnegative
-                    Z = opPowR(infoX, infoY);
+                    Z = opPowR(infoX, infoY, inPlace);
                 }
             }
             if (Z instanceof Tensor && Z.hasComplexStorage()) {

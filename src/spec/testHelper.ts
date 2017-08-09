@@ -2,7 +2,6 @@ import { ComplexNumber } from '../lib/complexNumber';
 import { Tensor } from '../lib/tensor';
 import { ShapeHelper } from '../lib/helper/shapeHelper';
 import { DTypeHelper } from '../lib/dtype';
-import { DataBlock } from '../lib/commonTypes';
 
 export function maxAbs(x: ArrayLike<number>): number {
     let max = -Infinity;

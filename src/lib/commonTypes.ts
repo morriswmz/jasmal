@@ -104,6 +104,10 @@ export interface OpInputInfo {
      * The data type (of each element) of the original input.
      */
     originalDType: DType;
+    /**
+     * Stores the original input.
+     */
+    originalInput: any;
 }
 
 // Internal Usage

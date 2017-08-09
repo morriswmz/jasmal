@@ -9,6 +9,7 @@ describe('Advanced indexing', () => {
         let A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
         let ACopy = A.copy(true);
         let B = T.fromArray([[1, 2, 3], [4, 5, 6]], [[-1, -2, -3], [-4, -5, -6]]);
+        let BCopy = B.copy(true);
 
         it('should set all elements to 1', () => {
             let X = T.zeros([3, 4]);
@@ -21,6 +22,53 @@ describe('Advanced indexing', () => {
             X.set(mask, 7);
             checkTensor(X, T.fromArray([[7, 7, 3], [4, 7, 7]]));
             checkTensor(A, ACopy); // should not change A
+        });
+        it('should set the first 4 elements to 4 when indices are stored in an array', () => {
+            let X = T.zeros([3, 3]);
+            X.set([0, 1, 2, 3], 4);
+            checkTensor(X, T.fromArray([[4, 4, 4], [4, 0, 0], [0, 0, 0]]));
+        });
+        it('should set the last 4 elements to 4 when indices are stored in an array', () => {
+            let X = T.zeros([3, 3]);
+            X.set([-1, -2, -3, -4], 4);
+            checkTensor(X, T.fromArray([[0, 0, 0], [0, 0, 4], [4, 4, 4]]));
+        });
+        it('should set the first 4 elements to 4 when indices are stored in a nested array', () => {
+            let X = T.zeros([3, 3]);
+            X.set([[0, 1], [2, 3]], 4);
+            checkTensor(X, T.fromArray([[4, 4, 4], [4, 0, 0], [0, 0, 0]]));
+        });
+        it('should set the last 4 elements to 4 when indices are stored in a nested array', () => {
+            let X = T.zeros([3, 3]);
+            X.set([[-1], [-2], [-3], [-4]], 4);
+            checkTensor(X, T.fromArray([[0, 0, 0], [0, 0, 4], [4, 4, 4]]));
+        });
+        it('should set the first 4 elements correspondingly when indices and values are stored in nested arrays', () => {
+            let X = T.zeros([3, 3]);
+            X.set([[0, 1], [2, 3]], [[4, 3, 2, 1]]);
+            checkTensor(X, T.fromArray([[4, 3, 2], [1, 0, 0], [0, 0, 0]]));
+        });
+        it('should set the first two and the last two elements to 1+2j via tensor indexing', () => {
+            let X = T.zeros([2, 2, 2]);
+            let I = T.fromArray([[0, -1], [1, -2]]);
+            X.set(I, T.complexNumber(1, 2));
+            checkTensor(X, T.fromArray(
+                [[[1, 1], [0, 0]], [[0, 0], [1, 1]]],
+                [[[2, 2], [0, 0]], [[0, 0], [2, 2]]]
+            ));
+        });
+        it('should set the first two and the last two elements correspondingly via tensor indexing', () => {
+            let X = T.zeros([2, 2, 2]);
+            let V = T.fromArray([[1], [2], [3], [4]], [[-1], [-2], [-3], [-4]]);
+            let I = T.fromArray([[0, -1], [1, -2]]);
+            let ICopy = I.copy(true);
+            X.set(I, V);
+            checkTensor(X, T.fromArray(
+                [[[1, 3], [0, 0]], [[0, 0], [4, 2]]],
+                [[[-1, -3], [0, 0]], [[0, 0], [-4, -2]]]
+            ));
+            // should not change I
+            checkTensor(I, ICopy);
         });
         it('should set all elements at even indices to 1', () => {
             let X = T.zeros([3, 3]);
@@ -36,15 +84,49 @@ describe('Advanced indexing', () => {
             let X = A.copy();
             X.set(0, ':', 10);
             checkTensor(X, T.fromArray([[10, 10, 10], [4, 5, 6]]));
+            // should not change A            
+            checkTensor(A, ACopy);
         });
-        it('should set all elements that are greater than 2 to -1', () => {
+        it('should set all the elements that are greater than 2 to -1', () => {
             let X = A.copy();
             X.set(x => x > 2, -1);
             checkTensor(X, T.fromArray([[1, 2, -1], [-1, -1, -1]]));
             // should not change A            
             checkTensor(A, ACopy);
         });
+        it('should set all the elements whose imaginary part is less than -2 to 8+9j', () => {
+            let X = B.copy();
+            X.set((_re, im) => im < -2, T.complexNumber(8, 9));
+            let expected = T.fromArray([[1, 2, 8], [8, 8, 8]], [[-1, -2, 9], [9, 9, 9]]);
+            checkTensor(X, expected);
+            // should not change B            
+            checkTensor(B, BCopy);
+        });
+        it('should use the latest value if there are repeats in the index array', () => {
+            let X = T.zeros([2, 2]);
+            X.set([0, 1, 1, 0], [1, 2, 3, 4]);
+            checkTensor(X, T.fromArray([[4, 3], [0, 0]]));
+        });
+        it('should throw when indices are not an integer', () => {
+            let X = A.copy(true);
+            // non-integer in direct indexing
+            let case1 = () => { X.set(0, 1.2, -1); };
+            // non-integer in an array of indices
+            let case2 = () => { X.set([0, -2.2], -1); };
+            // non-integer in a tensor of indices
+            let case3 = () => { X.set(T.fromArray([[0, 1], [2, 1.5]]), -1); };
+            // non-integer in a string
+            let case4 = () => { X.set('0.1:', -1); };
+            let case5 = () => { X.set('::0.5', -1); };
+            let case6 = () => { X.set('-1:0.1:-1', -1); };
 
+            expect(case1).toThrow();
+            expect(case2).toThrow();
+            expect(case3).toThrow();
+            expect(case4).toThrow();
+            expect(case5).toThrow();
+            expect(case6).toThrow();
+        });
     });
     describe('get()', () => {
         let A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
@@ -101,6 +183,7 @@ describe('Advanced indexing', () => {
                  [[10, 12],
                   [7, 9]]],
             );
+            checkTensor(actual, expected);
         });
         it('should return four corners using masked indexing', () => {
             let actual = A.get(T.fromArray([1, 1], [], T.LOGIC), T.fromArray([1, 0, 1], [], T.LOGIC));

@@ -125,7 +125,7 @@ export class NormFunction {
             colSum = 0;
             for (let i = 0;i < m;i++) {
                 elRe = reX[i * n + j];
-                elIm = reX[i * n + j];
+                elIm = imX[i * n + j];
                 if (isNaN(elRe) || isNaN(elIm)) {
                     return NaN;
                 }
@@ -176,7 +176,7 @@ export class NormFunction {
             rowSum = 0;
             for (let j = 0;j < n;j++) {
                 elRe = reX[i * n + j];
-                elIm = reX[i * n + j];
+                elIm = imX[i * n + j];
                 if (isNaN(elRe) || isNaN(elIm)) {
                     return NaN;
                 }

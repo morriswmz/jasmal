@@ -4,7 +4,7 @@ import { ComplexNumber } from './complexNumber';
 import { Scalar, OpInputInfo, OpInputType, OpInput, TypedArray, DataBlock } from './commonTypes';
 import { ShapeHelper } from './helper/shapeHelper';
 import { DataHelper } from './helper/dataHelper';
-import { ObjectHelper } from "./helper/objHelper";
+import { ObjectHelper } from './helper/objHelper';
 
 type OffsetCalculator = (indices: ArrayLike<number>, strides: number[]) => number;
 
@@ -100,7 +100,7 @@ export class Tensor {
     }
 
     /**
-     * Creates a tensor from JavaScript n-d arrays.
+     * Creates a tensor from JavaScript arrays.
      * @param re Real part.
      * @param im (Optional) Imaginary part.
      * @param dtype (Optional) Data type. Default value is DType.FLOAT64.
@@ -123,7 +123,6 @@ export class Tensor {
         Tensor._validateArrayShape(re, shape, 0);
         if (isComplex) Tensor._validateArrayShape(<any[] | TypedArray>im, shape, 0);
         // copies the data
-        let size = ShapeHelper.getSizeFromShape(shape);
         let reStorage = TensorStorage.fromArray(re, shape, dtype);
         let imStorage = isComplex ? TensorStorage.fromArray(<any[] | TypedArray>im, shape, dtype) : TensorStorage.Empty;
         return new Tensor(reStorage, imStorage, shape);
@@ -404,7 +403,8 @@ export class Tensor {
             imArr: imArr,
             originalShape: originalShape,
             originalType: originalType,
-            originalDType: originalDType
+            originalDType: originalDType,
+            originalInput: value
         };
     }
 
@@ -502,17 +502,19 @@ export class Tensor {
      * 1. set(indices, value)
      *      Here the type of `indices` can be one of the following: number,
      *      number[], string, Tensor. The type of `value` can be one of the
-     *      following: number, ComplexNumber, number[], Tensor. If `value` is
-     *      not a 1D tensor, its flattened version will be used. 
+     *      following: number, ComplexNumber, nested array, Tensor. If `indices`
+     *      is a nested array or a tensor with more than one dimensions, its
+     *      flattened version will be used. The same applies for `value`.
      *      If `value` is a scalar, all elements specified by `indices` will
      *      be set to `value`.
-     *      If `value` is not a scalar, it must have the same size as `indices`,
-     *      and the element at `indices[i]` will be set to `value[i]`.
+     *      If `value` is not a scalar, it must have the same number of elements
+     *      as `indices`, and the element at `indices[i]` will be set to
+     *      `value[i]`.
      * 
      * 2. set(mask, value)
      *      Here `mask` must be a logic tensor with the same shape of this
      *      tensor. The type of `value` can be one of the following: number,
-     *      ComplexNumber, number[], Tensor. `value` can be either a scalar,
+     *      ComplexNumber, nested array, Tensor. `value` can be either a scalar,
      *      or an array/Tensor whose size is equal to the number of true values
      *      in `mask`.
      * 
@@ -730,7 +732,6 @@ export class Tensor {
                     this._im.data[offsetX + <number>ind.index * finalStride + trailingOffset] = newIm;
                     break;
                 case IndexIterationType.Range:
-                    let idx;
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
                             this._re.data[offsetX + i * finalStride + trailingOffset] = newRe;
@@ -953,7 +954,7 @@ export class Tensor {
      * 
      * 1. gets(indices, keepDims = false)
      *      Here the type of `indices` can be one of the following: number,
-     *      n-d array, Tensor. If `indices` is a scalar, this function is
+     *      nested array, Tensor. If `indices` is a scalar, this function is
      *      equivalent to {@link Tensor#getEl}. Otherwise, this function will
      *      attempt to construct a Tensor of the same shape according with the
      *      (i,j,...)-th element specified by `indices[i,j,...]`.
@@ -1020,7 +1021,6 @@ export class Tensor {
     }
 
     private _getSubTensor(subIndices: IndexIterationDefinition[], keepDims: boolean): Tensor | Scalar {
-        let ndim: number;
         let stridesX: number[];
         // determine the shape of the sub tensor
         let [shapeSub, sizeSub] = Tensor._getShapeFromSubIndices(subIndices);
@@ -1029,13 +1029,11 @@ export class Tensor {
         }
         let maxLevel = subIndices.length - 1;
         if (subIndices.length === 1) {
-            ndim = 1;
             stridesX = [this.size];
         } else {
-            ndim = this.ndim;
             stridesX = this._strides;
         }
-        if (!keepDims && ShapeHelper.isScalarShape(shapeSub)) {
+        if (ShapeHelper.isScalarShape(shapeSub)) {
             // The result is a scalar.
             let offset = 0;
             for (let i = 0;i < shapeSub.length;i++) {
@@ -1055,7 +1053,11 @@ export class Tensor {
             }
             let re = this._re.data[offset];
             let im = this.hasComplexStorage() ? this._im.data[offset] : 0;
-            return im === 0 ? re : new ComplexNumber(re, im);
+            if (keepDims) {
+                return Tensor.scalar(re, im, this.dtype, shapeSub.length);
+            } else {
+                return im === 0 ? re : new ComplexNumber(re, im);
+            }
         } else {
             // The result is a Tensor
             // Note: squeezing does not alter element ordering.
@@ -1284,6 +1286,7 @@ export class Tensor {
                     subIndices.push(this._parseSignedIndices(ind.realData, i));
                 }
             } else if (Array.isArray(ind)) {
+                // no nested arrays allowed here
                 subIndices.push(this._parseSignedIndices(<ArrayLike<number>>ind, i));
             } else if (typeof ind === 'string') {
                 subIndices.push(this._parseSlicingString(ind, i));
@@ -1316,7 +1319,7 @@ export class Tensor {
      */
     private _parseSlicingString(str: string, dim?: number): IndexIterationDefinition {
         // we adapt the syntax of Python
-        let splits = str.split(':');
+        let splits = str.trim().split(':');
         let start: number, stop: number, step: number;
         let max = dim == undefined ? this.size : this._shape[dim];
         switch (splits.length) {
@@ -1362,6 +1365,17 @@ export class Tensor {
                     if (stop < 0 || stop > max) {
                         throw new Error(`Index ${stop} is out of bounds for dimension ${dim}.`);
                     }
+                }
+                // stop cannot be equal to start
+                if (stop === start) {
+                    throw new Error('The stop index cannot be equal to the start index');
+                }
+                // consistency check
+                if (start < stop && step < 0) {
+                    throw new Error('The start index must be greater than the stop index when step is negative.');
+                }
+                if (start > stop && step > 0) {
+                    throw new Error('The start index must be less than the stop index when step is positive.');
                 }
                 return {
                     type: IndexIterationType.Range,
@@ -1444,6 +1458,9 @@ export class Tensor {
                 default:
                     throw new Error('Should never reach here.');
             }
+            if (size === 0) {
+                throw new Error('Specified indices result in a empty tensor.');
+            }
         }
         return [shape, size];
     }
@@ -1470,6 +1487,9 @@ export class Tensor {
                             indices: DataHelper.findReal(arg0.realData)
                         }, args[1]);
                     } else {
+                        // Because masked locations can be arbitrary, we cannot
+                        // preserver the original shape and have to return a 
+                        // 1D vector.
                         return this._getBatch({
                             type: IndexIterationType.List,
                             indices: DataHelper.findReal(arg0.realData)
@@ -1481,9 +1501,8 @@ export class Tensor {
                         throw new Error('Complex tensor cannot be used for indexing.');
                     }
                     if (doSet) {
-                        if (arg0.ndim !== 1) {
-                            throw new Error('1D tensor expected.');
-                        }
+                        // For tensors, we access it flattened version by directly
+                        // reading realData.
                         this._setBatch(this._parseSignedIndices(arg0.realData), args[1]);
                     } else {
                         if (arg0.ndim === 1 || arg0.isScalar()) {
@@ -1502,13 +1521,22 @@ export class Tensor {
             } else if (Array.isArray(arg0)) {
                 // Case 1 where indices are specified by an Array
                 if (doSet) {
-                    this._setBatch(this._parseSignedIndices(arg0), args[1]);
+                    if (Array.isArray(arg0)) {
+                        // nested array detected, flatten it first and then
+                        // index
+                        originalShape = Tensor._getShapeFromArray(arg0);
+                        Tensor._validateArrayShape(arg0, originalShape, 0);
+                        this._setBatch(this._parseSignedNestedIndexArray(arg0, originalShape), args[1]);
+                    } else {
+                        this._setBatch(this._parseSignedIndices(arg0), args[1]);
+                    }
                 } else {
                     if (Array.isArray(arg0[0])) {
                         // nested array detected
                         originalShape = Tensor._getShapeFromArray(arg0);
                         Tensor._validateArrayShape(arg0, originalShape, 0);
                         tmp = this._getBatch(this._parseSignedNestedIndexArray(arg0, originalShape), keepDims);
+                        // we want to preserve the original shape here
                         if (tmp instanceof Tensor) {
                             tmp._shape = originalShape;
                             tmp._updateStridesAndCalculator();
@@ -1576,6 +1604,7 @@ export class Tensor {
                 }
             }
         } else {
+            // (i1, i2, ...)
             if (doSet) {
                 this._setSubTensor(this._parseSubIndices(
                     Array.prototype.slice.call(args, 0, args.length - 1)), args[args.length - 1]);
@@ -1917,7 +1946,6 @@ export class Tensor {
         const MAX_C = 3;
         const MAX_R = 4;
         let str: string;
-        let i1: number, i2: number, j1: number, j2: number;
         switch (this.ndim) {
             case 1:
                 str = `[${this._elementsToString(0, this.size, 1, MAX_C)}]`;

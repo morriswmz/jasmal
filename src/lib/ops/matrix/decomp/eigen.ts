@@ -671,7 +671,7 @@ export class Eigen {
      */
     public static eltran(n: number, low: number, igh: number, a: ArrayLike<number>,
                          int: ArrayLike<number>, z: DataBlock): void {
-        let i: number, j: number, kl: number, mm: number, mp: number, mp1: number;
+        let i: number, j: number, kl: number, mp: number, mp1: number;
         // initialize z to identity matrix
         for (i = 0;i < n;i++) {
             for (j = 0;j < n;j++) {
@@ -718,8 +718,8 @@ export class Eigen {
      */
     public static hqr2(n: number, low: number, igh: number, h: DataBlock,
                        wr: DataBlock, wi: DataBlock, z: DataBlock): void {
-        let i: number, j: number, k: number, l: number, m: number, en: number, ii: number;
-        let jj: number, mm: number, na: number = 0, nn: number, itn: number, its: number = 0;
+        let i: number, j: number, k: number, l: number, m: number, en: number;
+        let na: number = 0, itn: number, its: number = 0;
         let mp2: number, enm2: number = 0;
         let p: number = 0, q: number = 0, r: number = 0, s: number = 0, t: number, w: number;
         let x: number, y: number, ra: number, sa: number, vi: number, vr: number;

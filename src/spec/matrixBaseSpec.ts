@@ -218,6 +218,10 @@ describe('kron()', () => {
     });
 });
 
+describe('norm()', () => {
+    
+});
+
 describe('inv()', () => {
     it('should computes the inverse for real matrices', () => {
         let A = T.fromArray([[1,2], [3,4]]);

@@ -10,7 +10,6 @@ import { SVD } from './decomp/svd';
 import { Eigen } from './decomp/eigen';
 import { Cholesky } from './decomp/chol';
 import { QR } from './decomp/qr';
-import { DataHelper } from '../../helper/dataHelper';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
 
@@ -186,7 +185,7 @@ export class MatrixOpProviderFactory {
             }
         };
 
-        const matMulOutputTypeResolver = (t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean): DType | undefined => {
+        const matMulOutputTypeResolver = (t1: DType, _isComplex1: boolean, t2: DType, _isComplex2: boolean): DType | undefined => {
             // integer stays integer, otherwise promote to floats
             switch (t1) {
                 case DType.LOGIC:
@@ -429,7 +428,7 @@ export class MatrixOpProviderFactory {
         function opLu(x: OpInput, compact: true): [Tensor, number[]];
         function opLu(x: OpInput, compact: false): [Tensor, Tensor, Tensor];
         function opLu(x: OpInput, compact: boolean = false): [Tensor, number[]] | [Tensor, Tensor, Tensor] {
-            let [X, p, sign] = doCompactLU(x);            
+            let [X, p, ] = doCompactLU(x);            
             if (compact) {
                 return [X, p];
             } else {
@@ -450,7 +449,7 @@ export class MatrixOpProviderFactory {
         }
 
         function opInv(x: OpInput): Tensor {
-            let [X, p, sign] = doCompactLU(x);
+            let [X, p, ] = doCompactLU(x);
             let m = X.shape[0];
             let B = opEye(m);
             if (X.hasComplexStorage()) {
@@ -463,7 +462,7 @@ export class MatrixOpProviderFactory {
         }
 
         function opDet(x: OpInput): Scalar {
-            let [X, p, sign] = doCompactLU(x);
+            let [X, , sign] = doCompactLU(x);
             let m = X.shape[0];
             if (X.hasComplexStorage()) {
                 let c = <ComplexNumber>X.getEl(0);

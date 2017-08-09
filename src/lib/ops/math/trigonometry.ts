@@ -1,8 +1,6 @@
 import { ElementWiseOpGenerator } from '../generator';
 import { OpOutput, OpInput } from '../../commonTypes';
 import { OutputDTypeResolver } from '../../dtype';
-import { NOT_IMPLEMENTED } from '../../constant';
-import { CMath } from '../../complexNumber';
 
 export interface ITrigMathOpSet {
 
@@ -127,7 +125,7 @@ export class TrigMathOpSetFactory {
             acos: opAcos,
             atan: opAtan,
             acot: opAcot,
-            sinh: opSin,
+            sinh: opSinh,
             cosh: opCosh,
             tanh: opTanh,
             coth: opCoth

@@ -7,6 +7,8 @@ import { OpInputType } from '../../../commonTypes';
 
 export const UNARY_OP_TEMPLATE =
 `'use strict';
+var Tensor = __dep__.Tensor;
+var ComplexNumber = __dep__.ComplexNumber;
 var CMath = __dep__.CMath;
 $InlineFunctions
 #if HAS_PARAM
@@ -16,7 +18,13 @@ return function(x, inPlace) {
 #endif
     inPlace = inPlace || false;
     // we accept OpInputInfo as an input 
-    var infoX = x['originalType'] != undefined ? x : __dep__.Tensor.analyzeOpInput(x);
+    var infoX;
+    if (x['originalType'] != undefined) {
+        infoX = x;
+        x = infoX.originalInput;
+    } else {
+        infoX = Tensor.analyzeOpInput(x)
+    }
     if (infoX.originalType === ${OpInputType.Unknown}) {
         throw new Error('Unsupported input type.');
     }
@@ -45,7 +53,7 @@ return function(x, inPlace) {
         var reXScalar = infoX.re, imXScalar = infoX.im;
         var reYScalar = 0, imYScalar = 0;
         $SBlock
-        return imYScalar === 0 ? reYScalar : new __dep__.ComplexNumber(reYScalar, imYScalar);
+        return imYScalar === 0 ? reYScalar : new ComplexNumber(reYScalar, imYScalar);
     } else {
         if (inPlace) {
             if (__dep__.isWiderType(dtypeX, dtypeY)) {
@@ -54,7 +62,7 @@ return function(x, inPlace) {
             y = x;
             y.ensureUnsharedLocalStorage();
         } else {
-            y = __dep__.Tensor.zeros(infoX.originalShape, dtypeY);
+            y = Tensor.zeros(infoX.originalShape, dtypeY);
         }
         $TBlock
         return y;

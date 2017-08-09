@@ -47,37 +47,32 @@ export class OutputDTypeResolver {
     /**
      * Returns the same data type as that of the input.
      * @param t Data type of the input.
-     * @param isComplex 
      */
-    public static uNoChange(t: DType, isComplex: boolean): DType {
+    public static uNoChange(t: DType): DType {
         return t;
     }
 
     /**
      * Always returns LOGIC.
-     * @param t 
-     * @param isComplex 
      */
-    public static uToLogic(t: DType, isComplex: boolean): DType {
+    public static uToLogic(): DType {
         return DType.LOGIC;
     }
 
     /**
      * Returns FLOAT64.
-     * @param t 
-     * @param isComplex 
      */
-    public static uToFloat(t: DType, isComplex: boolean): DType {
+    public static uToFloat(): DType {
         return DType.FLOAT64;
     }
 
     /**
      * Always returns LOGIC if the input is real.
      * Otherwise undefined is returned.
-     * @param t 
+     * @param _t 
      * @param isComplex 
      */
-    public static uToLogicRealOnly(t: DType, isComplex: boolean): DType | undefined {
+    public static uToLogicRealOnly(_t: DType, isComplex: boolean): DType | undefined {
         return isComplex ? undefined : DType.LOGIC;
     }
 
@@ -85,31 +80,31 @@ export class OutputDTypeResolver {
      * Returns FLOAT64 only when the input type is LOGIC.
      * Otherwise returns the input's data type.
      * @param t 
-     * @param isComplex 
+     * @param _isComplex 
      */
-    public static uOnlyLogicToFloat(t: DType, isComplex: boolean): DType {
+    public static uOnlyLogicToFloat(t: DType, _isComplex: boolean): DType {
         return t === DType.LOGIC ? DType.FLOAT64 : t;
     }
 
     /**
      * Returns the wider data type between the two inputs.
      * @param t1 
-     * @param isComplex1 
+     * @param _isComplex1 
      * @param t2 
-     * @param isComplex2 
+     * @param _isComplex2 
      */
-    public static bWider(t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean): DType {
+    public static bWider(t1: DType, _isComplex1: boolean, t2: DType, _isComplex2: boolean): DType {
         return DTypeHelper.getWiderType(t1, t2);
     }
 
     /**
      * Converts LOGIC to INT32 first, and then returns the wider type. 
      * @param t1 
-     * @param isComplex1 
+     * @param _isComplex1 
      * @param t2 
-     * @param isComplex2 
+     * @param _isComplex2 
      */
-    public static bWiderWithLogicToInt(t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean): DType {
+    public static bWiderWithLogicToInt(t1: DType, _isComplex1: boolean, t2: DType, _isComplex2: boolean): DType {
         return DTypeHelper.getWiderType(
             t1 === DType.LOGIC ? DType.INT32 : t1,
             t2 === DType.LOGIC ? DType.INT32 : t2);
@@ -117,35 +112,27 @@ export class OutputDTypeResolver {
 
     /**
      * Returns FLOAT64.
-     * @param t1 
-     * @param isComplex1 
-     * @param t2 
-     * @param isComplex2 
      */
-    public static bToFloat(t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean): DType | undefined {
+    public static bToFloat(): DType | undefined {
         return DType.FLOAT64;
     }
 
     /**
      * Always returns LOGIC.
-     * @param t1 
-     * @param isComplex1 
-     * @param t2 
-     * @param isComplex2 
      */
-    public static bToLogic(t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean): DType {
+    public static bToLogic(): DType {
         return DType.LOGIC;
     }
 
     /**
      * Always returns LOGIC when both inputs are real.
      * Returns undefined when any of the inputs is complex.
-     * @param t1 
+     * @param _t1 
      * @param isComplex1 
-     * @param t2 
+     * @param _t2 
      * @param isComplex2 
      */
-    public static bToLogicRealOnly(t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean): DType | undefined {
+    public static bToLogicRealOnly(_t1: DType, isComplex1: boolean, _t2: DType, isComplex2: boolean): DType | undefined {
         return (isComplex1 || isComplex2) ? undefined : DType.LOGIC;
     }
 

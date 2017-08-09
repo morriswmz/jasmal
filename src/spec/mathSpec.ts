@@ -48,6 +48,7 @@ describe('sqrt()', () => {
     it('should return the square roots for negative numbers', () => {
         let actual = T.sqrt(T.fromArray([1, -1, -Infinity, -2]));
         let expected = T.fromArray([1, 0, 0, 0], [0, 1, Infinity, Math.sqrt(2)]);
+        checkTensor(actual, expected);
     });
     it('should return the square roots for complex numbers', () => {
         let x = T.fromArray(
@@ -182,6 +183,11 @@ describe('pow2', () => {
         let expected = T.fromArray([1, Math.pow(2, -1.2), Math.pow(3.3, 4.4), 1/9]);
         checkTensor(actual, expected, EPSILON);
     });
+    it('should compute the power of real numbers in place', () => {
+        let actual = T.pow(T.fromArray([1, 2, 3, 4]), 2, true);
+        let expected = T.fromArray([1, 4, 9, 16]);
+        checkTensor(actual, expected);
+    });
     it('should compute the power for real numbers with possible complex output', () => {
         let x = T.fromArray([2, -2, -2]);
         let y = T.fromArray([10, -6, 3.3]);
@@ -214,5 +220,11 @@ describe('pow2', () => {
              -14.970265377417148]
         );
         checkTensor(actual, expected, 1e-14);
+    });
+    it('should compute the power of complex numbers in place', () => {
+        let x = T.fromArray([1, -1], [-2, 4]);
+        let actual = T.pow(x, 2, true);
+        let expected = T.fromArray([-3, -15], [-4, -8]);
+        checkTensor(actual, expected, EPSILON * 10);
     });
 });

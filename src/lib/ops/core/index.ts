@@ -2,7 +2,7 @@ import { ICoreOpProvider } from './definition';
 import { Tensor } from '../../tensor';
 import { ShapeHelper } from '../../helper/shapeHelper';
 import { DataHelper } from '../../helper/dataHelper';
-import { DType, OutputDTypeResolver, DTypeHelper } from '../../dtype';
+import { OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { OpInput, DataBlock } from '../../commonTypes';
 import { ElementWiseOpGenerator } from '../generator';
 

@@ -190,7 +190,6 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
             : ['$reX', '$imX', '$reY', '$imY', '$tmp1', '$tmp2', '$tmp3', '$tmp4'];
         let opRSymbols = this._checkUsedSymbols(opTemplate.opR, opRSymbolSet);
         let opCSymbols = realInputOnly ? [] : this._checkUsedSymbols(<string>opTemplate.opC, opCSymbolSet);
-        let tBlockTemplate: string;
         if (opRSymbols.indexOf('$imY') >= 0) {
             templateConfig['OUTPUT_R_COMPLEX'] = true;
         }

@@ -1,24 +1,49 @@
-import { CMath } from '../../complexNumber';
 import { ElementWiseOpGenerator } from '../generator';
 import { DType, OutputDTypeResolver } from '../../dtype';
 import { OpInput, OpOutput } from '../../commonTypes';
 
 export interface IBasicMathOpSet {
 
+    /**
+     * Computes the absolute value for real numbers, and magnitude for complex
+     * numbers.
+     */
     abs(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Sign function. For real numbers, sign(x) returns 1 if x > 0, 0 if x = 0,
+     * and -1 if x < 0. For non-zero complex numbers, sign(x) = x / abs(x).
+     */
     sign(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Computes element-wise minimum between two compatible inputs.
+     */
     min2(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
     
+    /**
+     * Computes element-wise maximum between two compatible inputs.
+     */
     max2(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Evaluates complex conjugate for each element in the input.
+     */
     conj(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Computes the phase angle for each element in the input.
+     */
     angle(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Converts angles from radians to degrees.
+     */
     rad2deg(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Converts angles from degrees to radians.
+     */
     deg2rad(x: OpInput, inPlace?: boolean): OpOutput;
     
 }

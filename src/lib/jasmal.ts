@@ -24,6 +24,10 @@ export interface JasmalOptions {
     rngEngine?: string | IRandomEngine;
 }
 
+/**
+ * JASMAL is exported as an interface.
+ * This means you can replace any of its functions I you want to.
+ */
 export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
     IRandomOpProvider, IArithmeticOpProvider, IMathOpProvider,
     ILogicComparisonOpProvider, IDataOpProvider {
@@ -32,24 +36,79 @@ export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
      * Logic data type.
      */
     readonly LOGIC: DType;
+    /**
+     * 32-bit signed integer type.
+     */
     readonly INT32: DType;
+    /**
+     * Double type.
+     */
     readonly FLOAT64: DType;
 
+    /**
+     * No modifier will be applied.
+     */
     readonly MM_NONE: MatrixModifier;
+    /**
+     * Matrix should be transposed before performing the operation.
+     */
     readonly MM_TRANSPOSED: MatrixModifier;
+    /**
+     * Matrix should be Hermitian transposed before performing the operation.
+     */
     readonly MM_HERMITIAN: MatrixModifier;
 
+    /**
+     * Same as `Math.PI`.
+     */
     readonly PI: number;
+    /**
+     * Imaginary unit.
+     */
     readonly J: ComplexNumber;
 
+    /**
+     * Creates a complex number.
+     */
     complexNumber(re: number, im?: number): ComplexNumber;
+    /**
+     * Checks if the input is an instance of ComplexNumber.
+     */
     isComplexNumber(x: any): boolean;
+    /**
+     * Checks if the input is an instance of Tensor.
+     */
     isTensor(x: any): boolean;
 
+    /**
+     * Creates a tensor of the specified shape filled with zeros.
+     * @param shape The shape of the tensor.
+     * @param dtype (Optional) Data type. Default value is FLOAT64.
+     */
     zeros(shape: number[], dtype?: DType): Tensor;
+    /**
+     * Creates a tensor of the specified shape filled with ones.
+     * @param shape The shape of the tensor.
+     * @param dtype (Optional) Data type. Default value is FLOAT64.
+     */
     ones(shape: number[], dtype?: DType): Tensor;
+    /**
+     * Creates a tensor from JavaScript arrays (can be nested arrays or typed
+     * arrays).
+     * @param re Real part.
+     * @param im (Optional) Imaginary part. Set this to [] if there is no
+     *           imaginary part. Otherwise its structure must match that of the
+     *           real part. Default value is [].
+     * @param dtype (Optional) Data type. Default value is FLOAT64. If the data
+     *              type is set to LOGIC, `im` must be set to [].
+     */
     fromArray(re: any[] | TypedArray, im?: any[] | TypedArray, dtype?: DType): Tensor;
-    complex(x: Tensor, y: Tensor): Tensor;
+    /**
+     * Combines two real tensors of the same shape into a complex tensor.
+     * @param re Real part.
+     * @param im Imaginary part.
+     */
+    complex(re: Tensor, im: Tensor): Tensor;
 
 }
 

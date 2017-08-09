@@ -1,4 +1,3 @@
-import { DType } from '../../../dtype';
 import { OpInputType } from '../../../commonTypes';
 
 /**
@@ -34,14 +33,27 @@ import { OpInputType } from '../../../commonTypes';
  */
 export const BIN_EL_OP_TEMPLATE =
 `'use strict';
+var Tensor = __dep__.Tensor;
+var ComplexNumber = __dep__.ComplexNumber;
 var CMath = __dep__.CMath;
 $InlineFunctions
 return function (x, y, inPlace) {
     // process inputs
     inPlace = inPlace || false;
     // init common variables
-    var infoX = x['originalType'] != undefined ? x : __dep__.Tensor.analyzeOpInput(x);
-    var infoY = y['originalType'] != undefined ? y : __dep__.Tensor.analyzeOpInput(y);
+    var infoX, infoY;
+    if (x['originalType'] != undefined) {
+        infoX = x;
+        x = infoX.originalInput;
+    } else {
+        infoX = Tensor.analyzeOpInput(x);
+    }
+    if (y['originalType'] != undefined) {
+        infoY = y;
+        y = infoY.originalInput;
+    } else {
+        infoY = Tensor.analyzeOpInput(y);
+    }
     if (infoX.originalType === ${OpInputType.Unknown} || infoY.originalType === ${OpInputType.Unknown}) {
         throw new Error('Unsupported input type.');
     }
@@ -128,7 +140,7 @@ if (infoX.isComplex) {
     }
 }
 #endif
-z = imZScalar === 0 ? reZScalar : new __dep__.ComplexNumber(reZScalar, imZScalar);`;
+z = imZScalar === 0 ? reZScalar : new ComplexNumber(reZScalar, imZScalar);`;
 
 /**
  * Template for the block of codes that handles op(Scalar, Tensor). This
@@ -148,7 +160,7 @@ if (inPlace) {
     throw new Error('In-place operation cannot be performed because the output shape is different from that of the first operand.')
 }
 #endif
-z = __dep__.Tensor.zeros(infoY.originalShape, dtypeZ);
+z = Tensor.zeros(infoY.originalShape, dtypeZ);
 reZ = z.realData;
 #if NO_COMPLEX_INPUT
 #if OUTPUT_RR_COMPLEX
@@ -216,13 +228,13 @@ if (infoX.isComplex) {
 export const TS_BLOCK_TEMPLATE =
 `// reX, imX, reY, imY have already been set when processing inputs
 #if NO_IN_PLACE
-z = __dep__.Tensor.zeros(infoX.originalShape, dtypeZ);
+z = Tensor.zeros(infoX.originalShape, dtypeZ);
 #else
 if (inPlace) {
     z = x;
     z.ensureUnsharedLocalStorage();
 } else {
-    z = __dep__.Tensor.zeros(infoX.originalShape, dtypeZ);
+    z = Tensor.zeros(infoX.originalShape, dtypeZ);
 }
 #endif
 reZ = z.realData;
@@ -296,19 +308,19 @@ shapeY = results.shapeY;
 shapeZ = results.shapeZ;
 if (results.exact) {
 #if NO_IN_PLACE
-    z = __dep__.Tensor.zeros(shapeZ, dtypeZ);
+    z = Tensor.zeros(shapeZ, dtypeZ);
 #else
     if (inPlace) {
         z = x;
         z.ensureUnsharedLocalStorage();
     } else {
-        z = __dep__.Tensor.zeros(shapeZ, dtypeZ);
+        z = Tensor.zeros(shapeZ, dtypeZ);
     }
 #endif
     $TTNormalBlock
 } else {
 #if NO_IN_PLACE
-    z = __dep__.Tensor.zeros(shapeZ, dtypeZ);
+    z = Tensor.zeros(shapeZ, dtypeZ);
 #else
     if (inPlace) {
         if (!__dep__.compareShape(shapeX, shapeZ)) {
@@ -317,7 +329,7 @@ if (results.exact) {
         z = x;
         z.ensureUnsharedLocalStorage();
     } else {
-        z = __dep__.Tensor.zeros(shapeZ, dtypeZ);
+        z = Tensor.zeros(shapeZ, dtypeZ);
     }
 #endif
     $TTBroadcastBlock

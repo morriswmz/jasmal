@@ -3,19 +3,18 @@ import { OpInput, OpOutput } from '../../commonTypes';
 import { OutputDTypeResolver } from '../../dtype';
 import { Tensor } from '../../tensor';
 import { DataHelper } from '../../helper/dataHelper';
-import { CMath } from '../../complexNumber';
 
 export interface ILogExpMathOpSet {
 
     /**
-     * Computes element-wise natural logarithm.
+     * Computes the natural logarithm of each element in the input.
      * @param x
      * @param inPlace
      */
     log(x: OpInput, inPlace?: boolean): OpOutput;
 
     /**
-     * Computes element-wise exponentiation.
+     * Computes the exponential of each element in the input.
      * @param x
      * @param inPlace
      */

@@ -203,7 +203,7 @@ export class QR {
                          d: ArrayLike<number>, ind: ArrayLike<number>,
                          b: DataBlock, x: DataBlock): number {
         let i: number, j: number, k: number, l: number;
-        let f: number, g: number, h: number, r: number, s: number, t: number;
+        let g: number, h: number, r: number, s: number, t: number;
         let tol: number;
         // determine the rank of a
         // Here we just test if the diagonal element in R is sufficiently small
@@ -526,7 +526,7 @@ export class QR {
                           phr: ArrayLike<number>, phi: ArrayLike<number>,
                           br: DataBlock, bi: DataBlock, xr: DataBlock, xi: DataBlock): number {
         let i: number, j: number, k: number, l: number;
-        let f: number, g: number, h: number, r: number, si: number, sr: number, t: number;
+        let g: number, h: number, r: number, si: number, sr: number, t: number;
         let tol: number;
         // determine the rank of a
         // Here we just test if the diagonal element in R is sufficiently small

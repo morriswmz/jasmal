@@ -1,11 +1,8 @@
 import { IDataOpProvider } from './definition';
 import { Tensor } from '../../tensor';
-import { NOT_IMPLEMENTED } from '../../constant';
-import { OpInput, OpOutput, OpOutputWithIndex, DataBlock } from '../../commonTypes';
+import { OpInput, DataBlock } from '../../commonTypes';
 import { DataFunction } from './datafun';
-import { ComplexNumber } from '../../complexNumber';
-import { ShapeHelper } from '../../helper/shapeHelper';
-import { DType, OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../dtype';
 import { DataHelper } from '../../helper/dataHelper';
 import { ICoreOpProvider } from '../core/definition';
 import { ReductionOpGenerator } from '../generator';

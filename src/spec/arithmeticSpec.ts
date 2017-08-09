@@ -1,5 +1,4 @@
 import { JasmalEngine } from '..';
-import { Tensor } from '../lib/tensor';
 import { checkTensor, checkComplex } from './testHelper';
 import { ComplexNumber } from '../lib/complexNumber';
 import { EPSILON } from '../lib/constant';

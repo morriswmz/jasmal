@@ -136,7 +136,7 @@ export class MT19937Engine implements IRandomEngine {
  */
 export class NativeEngine implements IRandomEngine {
 
-    public seed(x: number): IRandomEngine {
+    public seed(_x: number): IRandomEngine {
         // we cannot specify the seed for Math.random().
         throw new Error('Seeding is not supported with the native random engine.')
     }

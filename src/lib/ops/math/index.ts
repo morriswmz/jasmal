@@ -11,10 +11,6 @@ export class MathOpProviderFactory {
 
     public static create(generator: ElementWiseOpGenerator): IMathOpProvider {
         
-        const notImplemented = () => {
-            throw new Error('Not implemented.');
-        };
-
         const basicOps = BasicMathOpSetFactory.create(generator);
         const trigOps = TrigMathOpSetFactory.create(generator);
         const powerOps = PowerMathOpSetFactory.create(generator);

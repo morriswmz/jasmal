@@ -21,6 +21,9 @@ export interface IDataOpProvider {
      */
     min(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
 
+    /**
+     * Finds the maximum elements and their indices along the specified axis.
+     */
     max(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
 
     /**
@@ -28,19 +31,48 @@ export interface IDataOpProvider {
      */
     sum(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
+    /**
+     * Computes the products the elements along the specified axis.
+     */
     prod(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
+    /**
+     * Computes the cumulative sum of the elements along the specified axis. 
+     */
     cumsum(x: OpInput, axis?: number): Tensor;
 
+    /**
+     * Computes the mean of the elements along the specified axis.
+     */
     mean(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
+    /**
+     * Computes the median of the elements along the specified axis.
+     */
     median(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
+    /**
+     * Computes the sample variance (divided by N - 1) of the elements along the
+     * specified axis.
+     */
     var(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
+    /**
+     * Computes the standard deviation (divided by N - 1) of the elements along
+     * the specified axis.
+     */
     std(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
+    /**
+     * Sorts the elements in the (flattened) input in the specified order and
+     * return the result as a new tensor.
+     */
     sort(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
+    /**
+     * Sorts the elements in the (flattened) input in the specified order and
+     * return the result as a new tensor y as well as the index map i such
+     * that x[i] = y.
+     */
     sort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
 
     /**
@@ -49,7 +81,7 @@ export interface IDataOpProvider {
     unique(x: OpInput, outputIndices: false): Tensor;
     /**
      * Obtains the unique elements in the (flattened) input.
-     * Returns a tensor tuple [y, iy, ix] such that y = x(iy) and ix[j]
+     * Returns a tensor tuple [y, iy, ix] such that y = x[iy] and ix[j]
      * contains the indices in x such that all elements in x[ix[j]] equal to
      * y[j].
      */
