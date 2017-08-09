@@ -64,6 +64,26 @@ describe('sqrt()', () => {
     });
 });
 
+describe('square()', () => {
+    it('should return the squares of real numbers', () => {
+        let actual = T.square([-1, 1.5, 3]);
+        let expected = T.fromArray([1, 1.5*1.5, 9]);
+        checkTensor(actual, expected);
+    });
+    it('should compute the squares of real numbers in place', () => {
+        let x = T.fromArray([-2, Infinity, 0.5]);
+        T.square(x, true);
+        let expected = T.fromArray([4, Infinity, 0.5*0.5]);
+        checkTensor(x, expected);
+    });
+    it('should return the squares of complex numbers', () => {
+        let x = T.fromArray([-1, 5], [2.5, 3]);
+        let actual = T.square(x);
+        let expected = T.fromArray([-5.25, 16], [-5, 30]);
+        checkTensor(actual, expected);
+    });
+});
+
 describe('exp()', () => {
     it('should compute the exponentiation of real numbers', () => {
         let actual = T.exp([0, -2, 3.3, -Infinity, Infinity]);

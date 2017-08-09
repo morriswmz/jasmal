@@ -12,6 +12,11 @@ export interface IPowerMathOpSet {
     sqrt(x: OpInput, inPlace?: boolean): OpOutput;
 
     /**
+     * Computes the square for each element in the input.
+     */
+    square(x: OpInput, inPlace?: boolean): OpOutput;
+
+    /**
      * Raises `x` to the powers from `y` element by element.
      */
     pow(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
@@ -43,6 +48,13 @@ export class PowerMathOpSetFactory {
                 return opSqrtP(infoX, inPlace);
             }
         };
+
+        const opSquare = generator.makeUnaryOp({
+            opR: '$reY = $reX * $reX;',
+            opC: '$reY = $reX * $reX - $imX * $imX; $tmp1 = $reX * $imX; $imY = $tmp1 + $tmp1;'
+        }, {
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+        });
 
         const opPowR = generator.makeBinaryOp({
             opRR: '$reZ = Math.pow($reX, $reY);'
@@ -85,6 +97,7 @@ export class PowerMathOpSetFactory {
 
         return {
             sqrt: opSqrt,
+            square: opSquare,
             pow: opPow
         };
 
