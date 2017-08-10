@@ -1,7 +1,8 @@
 import { JasmalEngine } from '../';
-import { checkTensor } from './testHelper';
+import { checkTensor, checkNumber, checkComplex } from './testHelper';
 import { Tensor } from '../lib/tensor';
 import { ComplexNumber } from '../lib/complexNumber';
+import { EPSILON } from '../lib/constant';
 const T = JasmalEngine.createInstance();
 
 describe('tril()/triu()', () => {
@@ -196,6 +197,46 @@ describe('matmul()', () => {
         checkTensor(actual, expected);
     });
 
+    let A10 = T.fromArray(
+        [[10, 10,  1,  1, 4,  7,  3,  3,  9,  1],
+         [ 2, 10,  9,  3, 8,  7,  6,  9,  6,  6],
+         [10,  5, 10,  1, 8,  2,  7,  3,  6,  8],
+         [ 7,  9,  7,  1, 2,  2,  9, 10, 10, 10],
+         [ 1,  2,  8,  9, 5,  5, 10,  4,  3,  2],
+         [ 3,  5,  8,  7, 5, 10,  6,  2,  8,  6],
+         [ 6, 10,  4,  4, 7,  4,  2,  3,  8,  5],
+         [10,  8,  7, 10, 8,  6,  2,  7,  4,  1],
+         [10, 10,  2,  1, 8,  3,  3,  5,  6,  4],
+         [ 2,  7,  8,  5, 3,  8,  9,  4,  1,  2]]
+    );
+    let B10 = T.fromArray(
+        [[ 3, -4,  5,  5,  2, -4, -1, -1, -2,  3],
+         [-1, -2, -4, -3, -1,  5, -2,  4,  3,  0],
+         [ 1,  5,  3, -2,  1,  5,  0, -4, -3,  0],
+         [-3, -3,  4, -3,  0,  0, -4, -4,  2,  0],
+         [ 2,  4,  4, -3, -4,  0, -3, -3, -3, -1],
+         [-2,  1, -4,  4, -2, -1,  5,  2, -1,  1],
+         [ 2,  5, -1,  1, -3,  5,  5,  3,  2,  1],
+         [ 2, -4, -2,  1, -3, -1,  1,  2,  3,  4],
+         [ 3,  0,  4, -3, -2, -3, -4,  0, -4,  3],
+         [ 0, -3,  0,  4,  0,  3, -2,  1,  5,  2]]
+    );
+    let C10 = T.fromArray(
+        [[51, -35, 32,  14,  -55,  -4, -31,  40, -26,  77],
+         [46,  23, 13, -22, -100, 101, -20,  22,  19,  77],
+         [82,  30, 99,  20,  -53,  71, -40, -19, -20,  77],
+         [84, -29, 35,  22,  -77,  85, -30,  52,  44, 120],
+         [19,  58, 51, -26,  -70,  84,   7, -26,   8,  42],
+         [21,  31, 49,  -4,  -71,  65, -18, -10, -10,  64],
+         [40, -21, 54, -24,  -61,  40, -72,   6,  -5,  63],
+         [33, -34, 87, -17,  -60,  23, -61, -37, -13,  72],
+         [63, -35, 51,   7,  -62,  21, -55,  23,  -4,  74],
+         [11,  46, -7,  -1,  -64, 103,  36,  18,  22,  43]]
+    );
+    it('should perform matrix multiplication between two 10x10 real matrices', () => {
+        let actual = T.matmul(A10, B10);
+        checkTensor(actual, C10);
+    });
 });
 
 describe('kron()', () => {
@@ -219,7 +260,109 @@ describe('kron()', () => {
 });
 
 describe('norm()', () => {
-    
+    // vector norms
+    it('should calculate the 0-norm for a real vector', () => {
+        expect(T.norm([0, -1, 2, 0, Infinity], 0)).toEqual(3);
+    });
+    it('should calculate the 0-norm for a complex vector', () => {
+        let x = T.fromArray([3.3, 0, 0, 0, 0], [0, 0, -1, 2.2, 0]);
+        expect(T.norm(x, 0)).toEqual(3);
+    });
+    let v1 = T.fromArray([0, 1, 2, -2.2, 7]);
+    let v2 = T.fromArray([3, 4, -2, 0.5], [5, 7, -2.2, 4.2]);
+    it('should calculate the 1-norm for a real vector', () => {
+        checkNumber(T.norm(v1, 1), 12.2, EPSILON);
+    });
+    it('should calculate the 1-norm for a complex vector', () => {
+        checkNumber(T.norm(v2, 1), 21.096080589118870, EPSILON);
+    });
+    it('should calculate the 2-norm for a real vector', () => {
+        checkNumber(T.norm(v1, 2), 7.6707235643060425, EPSILON);
+    });
+    it('should calculate the 2-norm for a complex vector', () => {
+        checkNumber(T.norm(v2, 2), 11.212938954618455, EPSILON);
+    });
+    it('should calculate the inf-norm for a real vector', () => {
+        checkNumber(T.norm(v1, Infinity), 7, EPSILON);
+    });
+    it('should calculate the inf-norm for a complex vector', () => {
+        checkNumber(T.norm(v2, Infinity), 8.0622577482985491, EPSILON);
+    });
+    it('should calculate the p-norm for a real vector when p = 0.5', () => {
+        checkNumber(T.norm(v1, 0.5), 42.813526056081564, 100 * EPSILON);
+    });
+    it('should calculate the p-norm for a complex vector when p = 0.5', () => {
+        checkNumber(T.norm(v2, 0.5), 81.632343580332119, 100 * EPSILON);
+    });
+    it('should calculate the p-norm for a real vector when p = 4', () => {
+        checkNumber(T.norm(v1, 4), 7.0292804929079091, 10 * EPSILON);
+    });
+    it('should calculate the p-norm for a complex vector when p = 4', () => {
+        checkNumber(T.norm(v2, 4), 8.7190042200424944, 10 * EPSILON);
+    });
+    // matrix norms
+    let A = T.fromArray(
+        [[ 8, 5,  3, -5, 10],
+         [-3, 1,  8,  8,  5],
+         [ 4, 0,  7, -9,  1],
+         [-6, 9,  2,  0,  0],
+         [-9, 3, -6, -6, -8]]
+    );
+    let ACopy = A.copy(true);
+    let B = T.fromArray(
+        [[ 1, -1, -2,  9,  1],
+         [-1, -9, -6, -8,  9],
+         [ 4, 10,  0,  5, -1],
+         [ 3, -6, -3, -4, 10],
+         [-4, -7, 10, -1, -3]],
+        [[5, -6,  2,  0, -2],
+         [4, -7,  8, 10, -6],
+         [1, 10,  4, -6, -1],
+         [4, -6, -6,  8,  0],
+         [4, -9, -2,  3, -7]]
+    );
+    let BCopy = B.copy(true);
+    it('should calculate the 1-norm for a real matrix', () => {
+        checkNumber(T.norm(A, 1), 30, EPSILON);
+    });
+    it('should calculate the 1-norm for a complex matrix', () => {
+        checkNumber(T.norm(B, 1), 51.513688030250499, 1e-14);
+    });
+    it('should calculate the 2-norm for a real matrix', () => {
+        checkNumber(T.norm(A, 2), 20.367050601556127, 1e-13);
+        // should not change A
+        checkTensor(A, ACopy);
+    });
+    it('should calculate the 2-norm for a complex matrix', () => {
+        checkNumber(T.norm(B, 2), 31.465936386976061, 1e-13);
+        // should not change B
+        checkTensor(B, BCopy);
+    });
+    it('should calculate the inf-norm for a real matrix', () => {
+        checkNumber(T.norm(A, Infinity), 32, EPSILON);
+    });
+    it('should calculate the inf-norm for a complex matrix', () => {
+        checkNumber(T.norm(B, Infinity), 49.14776217786671, 10 * EPSILON);
+    });
+    it('should calculate the Frobenius norm for a real matrix', () => {
+        checkNumber(T.norm(A, 'fro'), 29.664793948382652, 10 * EPSILON);
+    });
+    it('should calculate the Frobenius norm for a complex matrix', () => {
+        checkNumber(T.norm(B, 'fro'), 40.459856648287818, 10 * EPSILON);
+    });
+    // error handling
+    it('should throw errors when input is invalid', () => {
+        // ndim > 2
+        let case1 = () => { T.norm([[[1]]], 2); };
+        let case2 = () => { T.norm(T.ones([3, 2, 3]), 1); };
+        // invalid p
+        let case3 = () => { T.norm(v1, -2.5); };
+        let case4 = () => { T.norm(A, 1.5); };
+        expect(case1).toThrow();
+        expect(case2).toThrow();
+        expect(case3).toThrow();
+        expect(case4).toThrow();
+    });
 });
 
 describe('inv()', () => {
@@ -253,7 +396,7 @@ describe('det()', () => {
             [[0.5529, 0.2107, 0.1157],
              [0.2050, 0.3213, 0.1193],
              [0.0322, 0.1498, 0.0621]]);
-        expect(Math.abs(<number>T.det(A) - 1.6340056809999999e-3) < 1e-10).toBeTruthy();
+        checkNumber(T.det(A), 1.6340056809999999e-3, 1e-14);
     });
     it('should return the determinant for a complex matrix', () => {
         let A = T.fromArray(
@@ -264,8 +407,18 @@ describe('det()', () => {
              [-5, 4.5, 2],
              [9, 7, -13]]);
         let actual = <ComplexNumber>T.det(A);
-        expect(actual.re).toBeCloseTo(-345, 1e-12);
-        expect(actual.im).toBeCloseTo(-549, 1e-12);
+        checkComplex(actual, new ComplexNumber(-345, -549), 1e-12);
+    });
+    it('should return the determinant for a diagonal complex matrix', () => {
+        let A = T.fromArray(
+            [[2, 0, 0],
+             [0, 1, 0],
+             [0, 0, 1]],
+            [[0, 0, 0],
+             [0, 1, 0],
+             [0, 0, -1]]
+        );
+        checkNumber(T.det(A), 4, EPSILON);
     });
 });
 

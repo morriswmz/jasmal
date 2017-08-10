@@ -356,6 +356,9 @@ export class MatrixOpProviderFactory {
                 if (typeof(p) !== 'number') {
                     throw new Error('For vectors, p must be nonnegative.');
                 }
+                if (p < 0) {
+                    throw new Error('p must be nonnegative.');
+                }
                 switch (p) {
                     case 0:
                         return X.hasComplexStorage()
@@ -391,9 +394,19 @@ export class MatrixOpProviderFactory {
                                 ? NormFunction.cmat1Norm(shape[0], shape[1], X.realData, X.imagData)
                                 : NormFunction.mat1Norm(shape[0], shape[1], X.realData);
                         case 2:
-                            return X.hasComplexStorage()
-                                ? NormFunction.cmat2Norm(shape[0], shape[1], X.realData, X.imagData)
-                                : NormFunction.mat2Norm(shape[0], shape[1], X.realData);
+                            // we use svd to compute matrix 2-norm here
+                            let s = new Array(shape[1]);
+                            if (X === x) {
+                                // we need to make a copy because svd overwrites
+                                // the input
+                                X = x.asType(DType.FLOAT64, true);
+                            }
+                            if (X.hasNonZeroComplexStorage()) {
+                                SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
+                            } else {
+                                SVD.svd(shape[0], shape[1], false, X.realData, s, []);
+                            }
+                            return s[0];
                         case Infinity:
                             return X.hasComplexStorage()
                                 ? NormFunction.cmatInfNorm(shape[0], shape[1], X.realData, X.imagData)
@@ -464,18 +477,26 @@ export class MatrixOpProviderFactory {
         function opDet(x: OpInput): Scalar {
             let [X, , sign] = doCompactLU(x);
             let m = X.shape[0];
+            let reX = X.realData;
+            let accRe = 1;
+            let tmp: number;
             if (X.hasComplexStorage()) {
-                let c = <ComplexNumber>X.getEl(0);
-                for (let i = 1;i < m;i++) {
-                    c = c.mulc(<ComplexNumber>X.getEl(i, i));
+                let imX = X.imagData;
+                let accIm = 0;
+                for (let i = 0;i < m;i++) {
+                    tmp = accRe;
+                    accRe = accRe * reX[i * m + i] - accIm * imX[i * m + i];
+                    accIm = tmp * imX[i * m + i] + accIm * reX[i * m + i];
                 }
-                return c.mulr(sign);
+                accRe *= sign;
+                accIm *= sign;
+                return accIm === 0 ? accRe : new ComplexNumber(accRe, accIm);
             } else {
-                let c = <number>X.getEl(0);
-                for (let i = 1;i < m;i++) {
-                    c = c * <number>X.getEl(i, i);
+                for (let i = 0;i < m;i++) {
+                    accRe *= reX[i * m + i];
                 }
-                return c * sign;
+                accRe *= sign;
+                return accRe;
             }
         }
 

@@ -14,6 +14,26 @@ export function maxAbs(x: ArrayLike<number>): number {
     return max;
 }
 
+export function checkNumber(actual: any, expected: number, tolerance: number = 0): void {
+    if (actual === expect) {
+        return;
+    }
+    if (typeof actual !== 'number') {
+        fail(`Expecting a number got "O=${Object.prototype.toString.call(actual)}".`);
+    }
+    if (isNaN(expected)) {
+        if (!isNaN(actual)) {
+            fail(`Expecting a NaN, got ${actual}.`);
+        }
+    } else {
+        if (isNaN(actual)) {
+            fail('Expecting a valid number, got a NaN.');
+        } else if (Math.abs(actual - expected) > tolerance) {
+            fail(`Expecting ${expected} ± ${tolerance}, got ${actual}.`);
+        }
+    }
+}
+
 export function checkArrayLike<T>(actual: ArrayLike<T>, expected: ArrayLike<T>): void {
     if (actual.length !== expected.length) {
         fail(`Expected an array with length ${expected.length}, but got an array with length ${actual.length}.`);

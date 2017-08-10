@@ -1,4 +1,3 @@
-import { SVD } from './decomp/svd';
 import { CMath } from '../../complexNumber';
 
 export class NormFunction {
@@ -136,20 +135,6 @@ export class NormFunction {
             }
         }
         return norm;
-    }
-
-    public static mat2Norm(m: number, n: number, reX: ArrayLike<number>): number {
-        let s = new Array(n);
-        // we temporarily use svd here
-        SVD.svd(m, n, false, reX, s, []);
-        return s[0];
-    }
-
-    public static cmat2Norm(m: number, n: number, reX: ArrayLike<number>, imX: ArrayLike<number>): number {
-        let s = new Array(n);
-        // we temporarily use svd here
-        SVD.csvd(m, n, false, reX, imX, s, [], []);
-        return s[0];
     }
 
     public static matInfNorm(m: number, n: number, reX: ArrayLike<number>): number {
