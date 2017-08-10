@@ -98,10 +98,12 @@ return function (x, y, inPlace) {
             $STBlock
         }
     } else {
+#ifnot NO_IN_PLACE
         if (inPlace && __dep__.isWiderType(dtypeX, dtypeZ)) {
             throw new Error('Cannot downcast from ' + __dep__.dTypeToString(dtypeY) + ' to ' +
                 __dep__.dTypeToString(dtypeX) + ' when performing in-place operation.');
         }
+#endif
         if (isYScalar) {
             $TSBlock
         } else {
@@ -258,6 +260,13 @@ if (infoY.isComplex) {
             // reX[], imX[], reY, imY -> reZ[], imZ[]?
             $CCBlock
         }
+#if !NO_IN_PLACE && !OUTPUT_CC_COMPLEX
+        if (inPlace) {
+            for (i = 0;i < imX.length;i++) {
+                imX[i] = 0;
+            }
+        }
+#endif
     } else {
 #if OUTPUT_RC_COMPLEX
         z.ensureComplexStorage();
@@ -278,6 +287,13 @@ if (infoY.isComplex) {
             // reX[], imX[], reY -> reZ[], imZ[]?
             $CRBlock
         }
+#if !NO_IN_PLACE && !OUTPUT_CR_COMPLEX
+        if (inPlace) {
+            for (i = 0;i < imX.length;i++) {
+                imX[i] = 0;
+            }
+        }
+#endif
     } else {
 #if OUTPUT_RR_COMPLEX
         z.ensureComplexStorage();
@@ -379,6 +395,13 @@ if (infoX.isComplex) {
             $CRBlock
         }
     }
+#if !NO_IN_PLACE && (!OUTPUT_CC_COMPLEX || !OUTPUT_CR_COMPLEX)
+    if (inPlace) {
+        for (i = 0;i < imX.length;i++) {
+            imX[i] = 0;
+        }
+    }
+#endif
 } else {
     if (infoY.isComplex) {
 #if OUTPUT_RC_COMPLEX
@@ -440,6 +463,13 @@ if (infoX.isComplex) {
 #endif
         $CRBlock
     }
+#if !NO_IN_PLACE && (!OUTPUT_CC_COMPLEX || !OUTPUT_CR_COMPLEX)
+    if (inPlace) {
+        for (i = 0;i < imX.length;i++) {
+            imX[i] = 0;
+        }
+    }
+#endif
 } else {
     if (infoY.isComplex) {
 #if OUTPUT_RC_COMPLEX

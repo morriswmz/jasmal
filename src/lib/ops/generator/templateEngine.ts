@@ -33,7 +33,7 @@ export class TemplateEngine {
     }
 
     public createFunction(template: string): TemplateFunction {
-        let condReg = /^[ \t]*#(if|endif|else|elseif|ifnot)([ \t]+(\w+)[ \t]*)?$/gm;
+        let condReg = /^[ \t]*#(if(?:not)?|endif|else(?:if)?)([ \t]+.*)?$/gm;
         let tokens: Token[] = [];
         let idx = 0;
         // tokenize
@@ -48,16 +48,16 @@ export class TemplateEngine {
                 }
                 switch (match[1]) {
                     case 'if':
-                        if (!match[3]) {
+                        if (!match[2]) {
                             throw new Error('Missing condition after if.');
                         }
                         tokens.push({
                             type: TokenType.IF,
-                            value: match[3]
+                            value: match[2].trim()
                         });
                         break;
                     case 'else':
-                        if (match[3]) {
+                        if (match[2]) {
                             throw new Error('Unexpected condition after else.');
                         }
                         tokens.push({
@@ -66,25 +66,25 @@ export class TemplateEngine {
                         });
                         break;
                     case 'elseif':
-                            if (!match[3]) {
+                            if (!match[2]) {
                             throw new Error('Missing condition after elseif.');
                         }
                         tokens.push({
                             type: TokenType.ELSEIF,
-                            value: match[3]
+                            value: match[2].trim()
                         });
                         break;
                     case 'ifnot':
-                        if (!match[3]) {
+                        if (!match[2]) {
                             throw new Error('Missing condition after ifnot.');
                         }
                         tokens.push({
                             type: TokenType.IFNOT,
-                            value: match[3]
+                            value: match[2].trim()
                         });
                         break;
                     case 'endif':
-                        if (match[3]) {
+                        if (match[2]) {
                             throw new Error('Unexpected condition after endif.');
                         }
                         tokens.push({
@@ -118,18 +118,18 @@ export class TemplateEngine {
                     funcBody += `result += '${tokens[i].value}';\n`;
                     break;
                 case TokenType.IF:
-                    funcBody += `if (config.${tokens[i].value}) {\n`;
+                    funcBody += `if (${TemplateEngine._expandConditions(tokens[i].value)}) {\n`;
                     balanceCounter++;
                     break;
                 case TokenType.IFNOT:
-                    funcBody += `if (!config.${tokens[i].value}) {\n`;
+                    funcBody += `if (!(${TemplateEngine._expandConditions(tokens[i].value)})) {\n`;
                     balanceCounter++;
                     break;
                 case TokenType.ELSE:
                     funcBody += `} else {\n`;
                     break;
                 case TokenType.ELSEIF:
-                    funcBody += `} else if (config.${tokens[i].value}) {\n`
+                    funcBody += `} else if (${TemplateEngine._expandConditions(tokens[i].value)}) {\n`
                     break;
                 case TokenType.ENDIF:
                     funcBody += '}\n';
@@ -150,6 +150,10 @@ export class TemplateEngine {
                 symbolMap
             );
         };
+    }
+
+    private static _expandConditions(str: string): string {
+        return str.replace(/\w+/g, m => `config.${m}`);
     }
 
     private static _sanitize(str: string): string {

@@ -104,6 +104,15 @@ if (infoX.isComplex) {
     for (i = 0;i < reY.length;i++) {
         $CBlock
     }
+#ifnot OUTPUT_C_COMPLEX
+    // in place operation for a complex tensor but output is real
+    // we need set imaginary part to 0
+    if (inPlace && y.hasComplexStorage()) {
+        for (i = 0;i < imX.length;i++) {
+            imX[i] = 0;
+        }
+    } 
+#endif
 } else {
     reY = y.realData;
 #if OUTPUT_R_COMPLEX

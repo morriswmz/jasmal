@@ -34,7 +34,7 @@ export class PowerMathOpSetFactory {
         });
 
         const opSqrtA = generator.makeUnaryOp({
-            opR: 'if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $reY = 0; $imY = Math.sqrt(-$reX); }',
+            opR: 'if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $imY = Math.sqrt(-$reX); $reY = 0; }',
             opC: '$tmp1 = CMath.csqrt($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat            
