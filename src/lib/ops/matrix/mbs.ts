@@ -86,6 +86,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
                     let offset = i * n;
                     let acc = A[offset] * columnCache[0];
                     let k = 1;
+                    // Note: further loop unrolling does not help
                     for (;k < n - 1;k += 2) {
                         acc += A[offset + k] * columnCache[k] + 
                                A[offset + k + 1] * columnCache[k + 1];

@@ -534,7 +534,7 @@ export class Tensor {
      *      Here `i1`, ..., `iD` selects a sub-tensor of shape
      *      S = [length(i1), ..., length(iD)], where length(ik) is defined as
      *      follows:
-     *          1) If ik is a scalar, length(ik) = 1.
+     *          1) If ik is a number, length(ik) = 1.
      *          2) If ik is a logic tensor, length(ik) is the length of
      *             find(ik).
      *          3) If ik is a string describing a slicing operation (which
@@ -978,7 +978,7 @@ export class Tensor {
      *      Here `i1`, ..., `iD` selects a sub-tensor of shape
      *      S = [length(i1), ..., length(iD)], where length(ik) is defined as
      *      follows:
-     *          1) If ik is a scalar, length(ik) = 1.
+     *          1) If ik is a number, length(ik) = 1.
      *          2) If ik is a logic tensor, length(ik) is the length of
      *             find(ik).
      *          3) If ik is a string describing a slicing operation (which
@@ -987,7 +987,7 @@ export class Tensor {
      *             length(ik) is 2.
      *          4) Otherwise, length(ik) is the number of elements in ik.
      *     `value` must be either a scalar or a tensor of shape S.
-     * 
+     * TODO: should only remove the singleton dimension k when ik is a number
      * By default, singleton dimension will be removed from the returned sub-
      * tensor. This in most cases will save many ugly squeeze() calls. However,
      * if you wish to prevent this behavior, set `keepDims` to false.

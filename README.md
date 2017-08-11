@@ -40,7 +40,7 @@ let [reC, imC] = C.toArray(false); // convert both real and imaginary parts
 ```
 
 Note that during the conversions the data are **always copied** because JASMAL
-cannot be sure whether you will modify the array element in the future.
+cannot be sure whether you will modify the array elements in the future.
 
 JASMAL also includes a built-in [ComplexNumber](src/lib/complexNumber.ts)
 type to support complex scalars. Complex numbers can be created with the
@@ -240,9 +240,9 @@ var sums = T.sum(A, 1, true);
 
 Unfortunately, JavaScript is slow for numerical computations. Therefore,
 multiply two 1000 x 1000 matrices or performing the singular value decomposition
-of a 500 x 500 matrix take seconds in the browser.
+of a 500 x 500 matrix may take several seconds in the browser.
 
-Element-wise indexing can also be slow with JASMAL because of the overhead
+Element by element indexing can also be slow with JASMAL because of the overhead
 needed for implementing the flexible indexing schemes. For instance, if you
 want to set all the elements in a matrix to zero, `M.set(':', 0)` is much much
 faster than the following code:
@@ -279,10 +279,11 @@ im[0] = -1;
 
 # License
 
-JASMAL is released under the [MIT](LICENSE.md) license.
+JASMAL itself is released under the [MIT](LICENSE.md) license.
+
 [eigen.ts](src/lib/ops/matrix/decomp/eigen.ts)
 contains several subroutines ported from the pristine Fortran code
 [EISPACK](http://www.netlib.org/eispack/),
 which are distributed using the Modified BSD or MIT license
 ([source](http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg01379.html)).
-All rights reserved by the authors of EISPACK. 
+For these subroutines, all rights reserved by the authors of EISPACK. 

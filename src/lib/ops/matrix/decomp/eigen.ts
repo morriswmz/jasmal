@@ -4,8 +4,8 @@
  * All rights reserved by the authors of EISPACK.
  * http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg01379.html
  */
-import { DataBlock } from "../../../commonTypes";
-import { CMath } from "../../../complexNumber";
+import { DataBlock } from '../../../commonTypes';
+import { CMath } from '../../../complexNumber';
 
 export class Eigen {
 

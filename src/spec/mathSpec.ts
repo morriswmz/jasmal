@@ -24,6 +24,26 @@ describe('abs()', () => {
         let expected = T.fromArray([Math.sqrt(2), 1, Infinity]);
         checkTensor(actual, expected, EPSILON);
     });
+    it('should calculate the absolute values of real numbers in place', () => {
+        let x = T.fromArray([-7, 2, 0], [], T.INT32);
+        T.abs(x, true);
+        let expected = T.fromArray([7, 2, 0], [], T.INT32);
+        checkTensor(x, expected);
+    });
+    it('should calculate the absolute values of complex numbers in place', () => {
+        let x = T.fromArray([-1, 0, 1], [0, -4, 1]);
+        T.abs(x, true);
+        let expected = T.fromArray([1, 4, Math.sqrt(2)], [0, 0, 0]);
+        checkTensor(x, expected);
+    });
+    it('should throw if in place calculation is not possible', () => {
+        // input is a scalar
+        let case1 = () => { T.abs(1, true); };
+        // input is a array
+        let case2 = () => { T.abs([-1, 1], true); };
+        expect(case1).toThrow();
+        expect(case2).toThrow();
+    });
 });
 
 describe('conj()', () => {
@@ -61,6 +81,12 @@ describe('sqrt()', () => {
             [0, 0.455089860562227, Math.sqrt(2), -1, 1, 0, Infinity, Infinity, Infinity, -Infinity]
         );
         checkTensor(actual, expected, 1e-14);
+    });
+    it('should calculate the square roots in place for real numbers', () => {
+        let x = T.fromArray([-1, 2, -3]);
+        T.sqrt(x, true);
+        let expected = T.fromArray([0, Math.sqrt(2), 0], [1, 0, Math.sqrt(3)]);
+        checkTensor(x, expected);
     });
 });
 
