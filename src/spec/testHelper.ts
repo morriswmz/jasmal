@@ -65,7 +65,7 @@ export function checkTensor(actual: any, expected: Tensor, tolerance: number = 0
     }
     if (!ShapeHelper.compareShape(actual.shape, expected.shape)) {
         fail(`Expected shape: ${ShapeHelper.shapeToString(expected.shape)}, ` +
-            `actual shaped: ${ShapeHelper.shapeToString(actual.shape)}.`);
+            `actual shape: ${ShapeHelper.shapeToString(actual.shape)}.`);
     }
     if (actual.dtype !== expected.dtype) {
         fail(`Expected dtype is ${DTypeHelper.dTypeToString(expected.dtype)}, ` +

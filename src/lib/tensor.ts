@@ -30,7 +30,7 @@ class OffsetCalculatorFactory {
 /**
  * Describes the type of iteration along some axis.
  */
-const enum IndexIterationType {
+const enum IndexIteratorType {
     Constant,
     Range,
     List
@@ -39,13 +39,21 @@ const enum IndexIterationType {
 /**
  * Defines an iteration along some axis.
  */
-interface IndexIterationDefinition {
-    type: IndexIterationType;
+interface IndexIteratorDefinition {
+    type: IndexIteratorType;
     start?: number; // available only when type is IndexIterationType.Range
     stop?: number; // available only when type is IndexIterationType.Range
     step?: number; // available only when type is IndexIterationType.Range
     indices?: ArrayLike<number>; // available only when type is IndexIterationType.List
     index?: number; // available only when type is IndexIterationType.Constant
+}
+
+/**
+ * Wraps information for indexing.
+ */
+interface IndexIteratorInfo {
+    definitions: IndexIteratorDefinition[],
+    areAllConstantType: boolean;
 }
 
 export class Tensor {
@@ -564,24 +572,28 @@ export class Tensor {
         this._handleSetGet(arguments, true);
     }
 
-    private _setBatch(indices: IndexIterationDefinition, value: number | ComplexNumber | number[] | Tensor): void {
+    private _setBatch(iterDef: IndexIteratorDefinition, value: number | ComplexNumber | number[] | Tensor): void {
         // _setBatch can be implemented by first flatten this tensor, and then
         // call _setSubTensor
-        this._setSubTensor([indices], value);
+        this._setSubTensor({
+            definitions: [iterDef],
+            areAllConstantType: false
+        }, value);
     }
     
-    private _setSubTensor(indices: IndexIterationDefinition[], value: number | ComplexNumber | any[] | Tensor): void {
+    private _setSubTensor(iterInfo: IndexIteratorInfo, value: number | ComplexNumber | any[] | Tensor): void {
+        let iterDefs = iterInfo.definitions;
         let ndim: number;
         let strides: number[];
         let trailingOffset: number = 0;
         let finalStride: number = 1;
         // determine the shape of the sub tensor
-        let [shapeSub, sizeSub] = Tensor._getShapeFromSubIndices(indices);
+        let [shapeSub, sizeSub] = Tensor._inferShapeFromIterDefs(iterDefs);
         if (sizeSub === 0) {
             throw new Error('The number of indices cannot be zero. No elements to update.')
         }
-        let maxLevel = indices.length - 1;
-        if (indices.length === 1) {
+        let maxLevel = iterDefs.length - 1;
+        if (iterDefs.length === 1) {
             ndim = 1;
             strides = [this.size];
         } else {
@@ -599,15 +611,15 @@ export class Tensor {
             maxLevel = i;
             trailingOffset = 0;
             for (let k = i + 1;k < shapeSub.length;k++) {
-                switch (indices[k].type) {
-                    case IndexIterationType.Constant:
-                        trailingOffset += strides[k] * <number>indices[k].index;
+                switch (iterDefs[k].type) {
+                    case IndexIteratorType.Constant:
+                        trailingOffset += strides[k] * <number>iterDefs[k].index;
                         break;
-                    case IndexIterationType.List:
-                        trailingOffset += strides[k] * (<ArrayLike<number>>indices[k].indices)[0];
+                    case IndexIteratorType.List:
+                        trailingOffset += strides[k] * (<ArrayLike<number>>iterDefs[k].indices)[0];
                         break;
-                    case IndexIterationType.Range:
-                        trailingOffset += strides[k] * <number>indices[k].start;
+                    case IndexIteratorType.Range:
+                        trailingOffset += strides[k] * <number>iterDefs[k].start;
                         break;
                     default:
                         throw new Error('Should never reach here.');
@@ -625,10 +637,10 @@ export class Tensor {
             if (v.isComplex) {
                 // one complex value
                 this.ensureComplexStorage();
-                this._setSubTensorC1(indices, newRe, newIm, maxLevel, strides,
+                this._setSubTensorC1(iterDefs, newRe, newIm, maxLevel, strides,
                     finalStride, trailingOffset, 0, 0);
             } else {
-                this._setSubTensorR1(indices, newRe, maxLevel, strides,
+                this._setSubTensorR1(iterDefs, newRe, maxLevel, strides,
                     finalStride, trailingOffset, 0, 0);
             }
         } else {
@@ -646,26 +658,26 @@ export class Tensor {
             let stridesSub = ShapeHelper.computeStrides(shapeSub);
             if (v.isComplex) {
                 this.ensureComplexStorage();
-                this._setSubTensorCN(indices, newRe, newIm, maxLevel, strides,
+                this._setSubTensorCN(iterDefs, newRe, newIm, maxLevel, strides,
                     stridesSub, finalStride, trailingOffset, 0, 0, 0);
             } else {
-                this._setSubTensorRN(indices, newRe, maxLevel, strides,
+                this._setSubTensorRN(iterDefs, newRe, maxLevel, strides,
                     stridesSub, finalStride, trailingOffset, 0, 0, 0);
             }
         }
     }
 
-    private _setSubTensorR1(indices: IndexIterationDefinition[], newRe: number,
+    private _setSubTensorR1(iterDefs: IndexIteratorDefinition[], newRe: number,
                             maxLevel: number, strides: number[], finalStride:number,
                             trailingOffset: number, level: number, offsetX: number): void {
-        let ind = indices[level];
+        let ind = iterDefs[level];
         if (level === maxLevel) {
             // last level
             switch (ind.type) {
-                case IndexIterationType.Constant:
+                case IndexIteratorType.Constant:
                     this._re.data[offsetX + <number>ind.index * finalStride + trailingOffset] = newRe;
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
                             this._re.data[offsetX + i * finalStride + trailingOffset] = newRe;
@@ -676,7 +688,7 @@ export class Tensor {
                         }
                     }
                     break;                                
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
                         this._re.data[offsetX + (<ArrayLike<number>>ind.indices)[i] * finalStride + trailingOffset] = newRe;
                     }
@@ -686,29 +698,29 @@ export class Tensor {
             }
         } else {
             switch (ind.type) {
-                case IndexIterationType.Constant:
-                    this._setSubTensorR1(indices, newRe, maxLevel, strides,
+                case IndexIteratorType.Constant:
+                    this._setSubTensorR1(iterDefs, newRe, maxLevel, strides,
                         finalStride, trailingOffset, level + 1,
                         offsetX + strides[level] * <number>ind.index);
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorR1(indices, newRe, maxLevel, strides,
+                            this._setSubTensorR1(iterDefs, newRe, maxLevel, strides,
                                 finalStride, trailingOffset, level + 1,
                                 offsetX + strides[level] * i);
                         }
                     } else {
                         for (let i = <number>ind.start;i > (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorR1(indices, newRe, maxLevel, strides,
+                            this._setSubTensorR1(iterDefs, newRe, maxLevel, strides,
                                 finalStride, trailingOffset, level + 1,
                                 offsetX + strides[level] * i);
                         }
                     }
                     break;
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
-                        this._setSubTensorR1(indices, newRe, maxLevel, strides,
+                        this._setSubTensorR1(iterDefs, newRe, maxLevel, strides,
                                 finalStride, trailingOffset, level + 1,
                                 offsetX + strides[level] * (<ArrayLike<number>>ind.indices)[i]);
                     }
@@ -719,19 +731,19 @@ export class Tensor {
         }
     }
 
-    private _setSubTensorC1(indices: IndexIterationDefinition[],
+    private _setSubTensorC1(iterDefs: IndexIteratorDefinition[],
                             newRe: number, newIm: number, maxLevel: number,      
                             strides: number[], finalStride: number,
                             trailingOffset: number, level: number, offsetX: number): void {
-        let ind = indices[level];
+        let ind = iterDefs[level];
         if (level === maxLevel) {
             // last level
             switch (ind.type) {
-                case IndexIterationType.Constant:
+                case IndexIteratorType.Constant:
                     this._re.data[offsetX + <number>ind.index * finalStride + trailingOffset] = newRe;
                     this._im.data[offsetX + <number>ind.index * finalStride + trailingOffset] = newIm;
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
                             this._re.data[offsetX + i * finalStride + trailingOffset] = newRe;
@@ -744,7 +756,7 @@ export class Tensor {
                         }
                     }
                     break;                                
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
                         this._re.data[offsetX + (<ArrayLike<number>>ind.indices)[i] * finalStride + trailingOffset] = newRe;
                         this._im.data[offsetX + (<ArrayLike<number>>ind.indices)[i] * finalStride + trailingOffset] = newIm;
@@ -755,29 +767,29 @@ export class Tensor {
             }
         } else {
             switch (ind.type) {
-                case IndexIterationType.Constant:
-                    this._setSubTensorC1(indices, newRe, newIm, maxLevel,
+                case IndexIteratorType.Constant:
+                    this._setSubTensorC1(iterDefs, newRe, newIm, maxLevel,
                         strides, finalStride, trailingOffset, level + 1,
                         offsetX + strides[level] * <number>ind.index);
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorC1(indices, newRe, newIm, maxLevel,
+                            this._setSubTensorC1(iterDefs, newRe, newIm, maxLevel,
                                 strides, finalStride, trailingOffset,
                                 level + 1, offsetX + strides[level] * i);
                         }
                     } else {
                         for (let i = <number>ind.start;i > (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorC1(indices, newRe, newIm, maxLevel,
+                            this._setSubTensorC1(iterDefs, newRe, newIm, maxLevel,
                                 strides, finalStride, trailingOffset,
                                 level + 1, offsetX + strides[level] * i);
                         }
                     }
                     break;
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
-                        this._setSubTensorC1(indices, newRe, newIm, maxLevel,
+                        this._setSubTensorC1(iterDefs, newRe, newIm, maxLevel,
                             strides, finalStride, trailingOffset,
                             level + 1, offsetX + strides[level] * (<ArrayLike<number>>ind.indices)[i]);
                     }
@@ -788,21 +800,21 @@ export class Tensor {
         }
     };
 
-    private _setSubTensorRN(indices: IndexIterationDefinition[],
+    private _setSubTensorRN(iterDefs: IndexIteratorDefinition[],
                             newRe: ArrayLike<number>, maxLevel: number,
                             strides: number[], stridesSub: number[],
                             finalStride: number, trailingOffset: number, level: number,
                             offsetX: number, offsetY: number): void {
-        let ind = indices[level];
+        let ind = iterDefs[level];
         if (level === maxLevel) {
             // last level
             let j;
             switch (ind.type) {
-                case IndexIterationType.Constant:
+                case IndexIteratorType.Constant:
                     this._re.data[offsetX + <number>ind.index * finalStride + trailingOffset] = 
                         newRe[offsetY + <number>ind.index];
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     j = 0;
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
@@ -816,7 +828,7 @@ export class Tensor {
                         }
                     }
                     break;                                
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     j = 0;
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
                         this._re.data[offsetX + (<ArrayLike<number>>ind.indices)[i] * finalStride + trailingOffset] =
@@ -829,31 +841,31 @@ export class Tensor {
             }
         } else {
             switch (ind.type) {
-                case IndexIterationType.Constant:
-                    this._setSubTensorRN(indices, newRe, maxLevel, strides,
+                case IndexIteratorType.Constant:
+                    this._setSubTensorRN(iterDefs, newRe, maxLevel, strides,
                         stridesSub, finalStride, trailingOffset, level + 1,
                         offsetX + strides[level] * <number>ind.index, offsetY);
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorRN(indices, newRe, maxLevel, strides,
+                            this._setSubTensorRN(iterDefs, newRe, maxLevel, strides,
                                 stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + strides[level] * i, offsetY);
                             offsetY += stridesSub[level];
                         }
                     } else {
                         for (let i = <number>ind.start;i > (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorRN(indices, newRe, maxLevel, strides,
+                            this._setSubTensorRN(iterDefs, newRe, maxLevel, strides,
                                 stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + strides[level] * i, offsetY);
                             offsetY += stridesSub[level];
                         }
                     }
                     break;
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
-                        this._setSubTensorRN(indices, newRe, maxLevel, strides,
+                        this._setSubTensorRN(iterDefs, newRe, maxLevel, strides,
                             stridesSub, finalStride, trailingOffset, level + 1,
                             offsetX + strides[level] * (<ArrayLike<number>>ind.indices)[i], offsetY);
                         offsetY += stridesSub[level];
@@ -865,23 +877,23 @@ export class Tensor {
         }
     }
 
-    private _setSubTensorCN(indices: IndexIterationDefinition[],
+    private _setSubTensorCN(iterDefs: IndexIteratorDefinition[],
                             newRe: ArrayLike<number>, newIm: ArrayLike<number>,
                             maxLevel: number, strides: number[], stridesSub: number[],
                             finalStride: number, trailingOffset: number, level: number,
                             offsetX: number, offsetY: number): void {
-        let ind = indices[level];
+        let ind = iterDefs[level];
         if (level === maxLevel) {
             // last level
             let j;
             switch (ind.type) {
-                case IndexIterationType.Constant:
+                case IndexIteratorType.Constant:
                     this._re.data[offsetX + <number>ind.index * finalStride + trailingOffset] = 
                         newRe[offsetY + <number>ind.index];
                     this._im.data[offsetX + <number>ind.index * finalStride + trailingOffset] = 
                         newIm[offsetY + <number>ind.index];
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     j = 0;
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
@@ -897,7 +909,7 @@ export class Tensor {
                         }
                     }
                     break;                                
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     j = 0;
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
                         this._re.data[offsetX + (<ArrayLike<number>>ind.indices)[i] * finalStride + trailingOffset] =
@@ -912,31 +924,31 @@ export class Tensor {
             }
         } else {
             switch (ind.type) {
-                case IndexIterationType.Constant:
-                    this._setSubTensorCN(indices, newRe, newIm, maxLevel,
+                case IndexIteratorType.Constant:
+                    this._setSubTensorCN(iterDefs, newRe, newIm, maxLevel,
                         strides, stridesSub, finalStride, trailingOffset, level + 1,
                         offsetX + strides[level] * <number>ind.index, offsetY);
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorCN(indices, newRe, newIm, maxLevel,
+                            this._setSubTensorCN(iterDefs, newRe, newIm, maxLevel,
                                 strides, stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + strides[level] * i, offsetY);
                             offsetY += stridesSub[level];
                         }
                     } else {
                         for (let i = <number>ind.start;i > (<number>ind.stop);i += <number>ind.step) {
-                            this._setSubTensorCN(indices, newRe, newIm, maxLevel,
+                            this._setSubTensorCN(iterDefs, newRe, newIm, maxLevel,
                                 strides, stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + strides[level] * i, offsetY);
                             offsetY += stridesSub[level];
                         }
                     }
                     break;
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
-                        this._setSubTensorCN(indices, newRe, newIm, maxLevel,
+                        this._setSubTensorCN(iterDefs, newRe, newIm, maxLevel,
                             strides, stridesSub, finalStride, trailingOffset, level + 1,
                             offsetX + strides[level] * (<ArrayLike<number>>ind.indices)[i], offsetY);
                         offsetY += stridesSub[level];
@@ -987,7 +999,6 @@ export class Tensor {
      *             length(ik) is 2.
      *          4) Otherwise, length(ik) is the number of elements in ik.
      *     `value` must be either a scalar or a tensor of shape S.
-     * TODO: should only remove the singleton dimension k when ik is a number
      * By default, singleton dimension will be removed from the returned sub-
      * tensor. This in most cases will save many ugly squeeze() calls. However,
      * if you wish to prevent this behavior, set `keepDims` to false.
@@ -1016,36 +1027,41 @@ export class Tensor {
             false, keepDims);
     }
 
-    private _getBatch(indices: IndexIterationDefinition, keepDims: boolean): Tensor | Scalar {
-        return this._getSubTensor([indices], keepDims);
+    private _getBatch(iterDefs: IndexIteratorDefinition, keepDims: boolean): Tensor | Scalar {
+        return this._getSubTensor({
+            definitions: [iterDefs],
+            areAllConstantType: false
+        }, keepDims);
     }
 
-    private _getSubTensor(subIndices: IndexIterationDefinition[], keepDims: boolean): Tensor | Scalar {
+    private _getSubTensor(iterInfo: IndexIteratorInfo, keepDims: boolean): Tensor | Scalar {
+        let iterDefs = iterInfo.definitions;
         let stridesX: number[];
         // determine the shape of the sub tensor
-        let [shapeSub, sizeSub] = Tensor._getShapeFromSubIndices(subIndices);
+        let [shapeSub, sizeSub] = Tensor._inferShapeFromIterDefs(iterDefs);
         if (sizeSub === 0) {
             throw new Error('The number of indices cannot be zero. No elements to retrieve.')
         }
-        let maxLevel = subIndices.length - 1;
-        if (subIndices.length === 1) {
+        let maxLevel = iterDefs.length - 1;
+        if (iterDefs.length === 1) {
             stridesX = [this.size];
         } else {
             stridesX = this._strides;
         }
-        if (ShapeHelper.isScalarShape(shapeSub)) {
-            // The result is a scalar.
+        if (iterInfo.areAllConstantType) {
+            // ik are numbers for all k.
+            // Result is a scalar if keepDims = false.
             let offset = 0;
             for (let i = 0;i < shapeSub.length;i++) {
-                switch (subIndices[i].type) {
-                    case IndexIterationType.Constant:
-                        offset += stridesX[i] * <number>subIndices[i].index;
+                switch (iterDefs[i].type) {
+                    case IndexIteratorType.Constant:
+                        offset += stridesX[i] * <number>iterDefs[i].index;
                         break;
-                    case IndexIterationType.Range:
-                        offset += stridesX[i] * <number>subIndices[i].start;
+                    case IndexIteratorType.Range:
+                        offset += stridesX[i] * <number>iterDefs[i].start;
                         break;
-                    case IndexIterationType.List:
-                        offset += stridesX[i] * (<ArrayLike<number>>subIndices[i].indices)[0];
+                    case IndexIteratorType.List:
+                        offset += stridesX[i] * (<ArrayLike<number>>iterDefs[i].indices)[0];
                         break;
                     default:
                         throw new Error('Should never reach here.');
@@ -1060,9 +1076,7 @@ export class Tensor {
             }
         } else {
             // The result is a Tensor
-            // Note: squeezing does not alter element ordering.
-            let squeezedShape = ShapeHelper.getSqueezedShape(shapeSub);
-            let result = Tensor.zeros(squeezedShape, this.dtype);
+            let result = Tensor.zeros(shapeSub, this.dtype);
             let newRe = result._re.data;
             // determine trailingOffset
             let i = shapeSub.length - 1;
@@ -1075,15 +1089,15 @@ export class Tensor {
             maxLevel = i;
             trailingOffset = 0;
             for (let k = i + 1;k < shapeSub.length;k++) {
-                switch (subIndices[k].type) {
-                    case IndexIterationType.Constant:
-                        trailingOffset += stridesX[k] * <number>subIndices[k].index;
+                switch (iterDefs[k].type) {
+                    case IndexIteratorType.Constant:
+                        trailingOffset += stridesX[k] * <number>iterDefs[k].index;
                         break;
-                    case IndexIterationType.List:
-                        trailingOffset += stridesX[k] * (<ArrayLike<number>>subIndices[k].indices)[0];
+                    case IndexIteratorType.List:
+                        trailingOffset += stridesX[k] * (<ArrayLike<number>>iterDefs[k].indices)[0];
                         break;
-                    case IndexIterationType.Range:
-                        trailingOffset += stridesX[k] * <number>subIndices[k].start;
+                    case IndexIteratorType.Range:
+                        trailingOffset += stridesX[k] * <number>iterDefs[k].start;
                         break;
                     default:
                         throw new Error('Should never reach here.');
@@ -1093,14 +1107,21 @@ export class Tensor {
             if (this.hasComplexStorage()) {
                 result.ensureComplexStorage();
                 let newIm = result._im.data;
-                this._getSubTensorC(subIndices, newRe, newIm, maxLevel, stridesX,
+                this._getSubTensorC(iterDefs, newRe, newIm, maxLevel, stridesX,
                     stridesSub, finalStride, trailingOffset, 0, 0, 0);
             } else {
-                this._getSubTensorR(subIndices, newRe, maxLevel, stridesX,
+                this._getSubTensorR(iterDefs, newRe, maxLevel, stridesX,
                     stridesSub, finalStride, trailingOffset, 0, 0, 0);
             }
-            // restore singleton dimensions
-            if (keepDims && shapeSub.length !== squeezedShape.length) {
+            if (!keepDims) {
+                // remove singleton dimensions along the axis where
+                // IndexIterationType is Constant
+                for (let i = 0, j = 0;i < shapeSub.length;i++, j++) {
+                    if (iterDefs[j].type === IndexIteratorType.Constant) {
+                        shapeSub.splice(i, 1);
+                        i--;
+                    }
+                }
                 result._shape = shapeSub;
                 result._updateStridesAndCalculator();
             }
@@ -1108,20 +1129,20 @@ export class Tensor {
         }
     }
 
-    private _getSubTensorR(indices: IndexIterationDefinition[],
+    private _getSubTensorR(iterDefs: IndexIteratorDefinition[],
                            newRe: DataBlock, maxLevel: number,
                            stridesX: number[], stridesSub: number[],
                            finalStride: number, trailingOffset: number, level: number,
                            offsetX: number, offsetSub: number): void {
-        let ind = indices[level];
+        let ind = iterDefs[level];
         if (level === maxLevel) {
             // last level
             let j = 0;
             switch (ind.type) {
-                case IndexIterationType.Constant:
+                case IndexIteratorType.Constant:
                     newRe[offsetSub] = this._re.data[offsetX + <number>ind.index * finalStride + trailingOffset];
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
                             newRe[offsetSub + j] = this._re.data[offsetX + i * finalStride + trailingOffset];
@@ -1134,7 +1155,7 @@ export class Tensor {
                         }
                     }
                     break;                                
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
                         newRe[offsetSub + j] =
                             this._re.data[offsetX + (<ArrayLike<number>>ind.indices)[i] * finalStride + trailingOffset];
@@ -1146,31 +1167,31 @@ export class Tensor {
             }
         } else {
             switch (ind.type) {
-                case IndexIterationType.Constant:
-                    this._getSubTensorR(indices, newRe, maxLevel, stridesX,
+                case IndexIteratorType.Constant:
+                    this._getSubTensorR(iterDefs, newRe, maxLevel, stridesX,
                         stridesSub, finalStride, trailingOffset, level + 1,
                         offsetX + stridesX[level] * <number>ind.index, offsetSub);
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
-                            this._getSubTensorR(indices, newRe, maxLevel, stridesX,
+                            this._getSubTensorR(iterDefs, newRe, maxLevel, stridesX,
                                 stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + stridesX[level] * i, offsetSub);
                             offsetSub += stridesSub[level];
                         }
                     } else {
                         for (let i = <number>ind.start;i > (<number>ind.stop);i += <number>ind.step) {
-                            this._getSubTensorR(indices, newRe, maxLevel, stridesX,
+                            this._getSubTensorR(iterDefs, newRe, maxLevel, stridesX,
                                 stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + stridesX[level] * i, offsetSub);
                             offsetSub += stridesSub[level];
                         }
                     }
                     break;
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
-                        this._getSubTensorR(indices, newRe, maxLevel, stridesX,
+                        this._getSubTensorR(iterDefs, newRe, maxLevel, stridesX,
                             stridesSub, finalStride, trailingOffset, level + 1,
                             offsetX + stridesX[level] * (<ArrayLike<number>>ind.indices)[i],
                             offsetSub);
@@ -1183,21 +1204,21 @@ export class Tensor {
         }
     }
 
-    private _getSubTensorC(indices: IndexIterationDefinition[],
+    private _getSubTensorC(iterDefs: IndexIteratorDefinition[],
                            newRe: DataBlock, newIm: DataBlock, maxLevel: number,
                            stridesX: number[], stridesSub: number[],
                            finalStride: number, trailingOffset: number, level: number,
                            offsetX: number, offsetSub: number): void {
-        let ind = indices[level];
+        let ind = iterDefs[level];
         if (level === maxLevel) {
             // last level
             let j = 0;
             switch (ind.type) {
-                case IndexIterationType.Constant:
+                case IndexIteratorType.Constant:
                     newRe[offsetSub] = this._re.data[offsetX + <number>ind.index * finalStride + trailingOffset];
                     newIm[offsetSub] = this._im.data[offsetX + <number>ind.index * finalStride + trailingOffset];
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
                             newRe[offsetSub + j] = this._re.data[offsetX + i * finalStride + trailingOffset];
@@ -1212,7 +1233,7 @@ export class Tensor {
                         }
                     }
                     break;                                
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
                         newRe[offsetSub + j] =
                             this._re.data[offsetX + (<ArrayLike<number>>ind.indices)[i] * finalStride + trailingOffset];
@@ -1226,31 +1247,31 @@ export class Tensor {
             }
         } else {
             switch (ind.type) {
-                case IndexIterationType.Constant:
-                    this._getSubTensorC(indices, newRe, newIm, maxLevel,
+                case IndexIteratorType.Constant:
+                    this._getSubTensorC(iterDefs, newRe, newIm, maxLevel,
                         stridesX, stridesSub, finalStride, trailingOffset, level + 1,
                         offsetX + stridesX[level] * <number>ind.index, offsetSub);
                     break;
-                case IndexIterationType.Range:
+                case IndexIteratorType.Range:
                     if (<number>ind.step > 0) {
                         for (let i = <number>ind.start;i < (<number>ind.stop);i += <number>ind.step) {
-                            this._getSubTensorC(indices, newRe, newIm, maxLevel,
+                            this._getSubTensorC(iterDefs, newRe, newIm, maxLevel,
                                 stridesX, stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + stridesX[level] * i, offsetSub);
                             offsetSub += stridesSub[level];
                         }
                     } else {
                         for (let i = <number>ind.start;i > (<number>ind.stop);i += <number>ind.step) {
-                            this._getSubTensorC(indices, newRe, newIm, maxLevel,
+                            this._getSubTensorC(iterDefs, newRe, newIm, maxLevel,
                                 stridesX, stridesSub, finalStride, trailingOffset, level + 1,
                                 offsetX + stridesX[level] * i, offsetSub);
                             offsetSub += stridesSub[level];
                         }
                     }
                     break;
-                case IndexIterationType.List:
+                case IndexIteratorType.List:
                     for (let i = 0;i < (<ArrayLike<number>>ind.indices).length;i++) {
-                        this._getSubTensorC(indices, newRe, newIm, maxLevel,
+                        this._getSubTensorC(iterDefs, newRe, newIm, maxLevel,
                             stridesX, stridesSub, finalStride, trailingOffset, level + 1,
                             offsetX + stridesX[level] * (<ArrayLike<number>>ind.indices)[i],
                             offsetSub);
@@ -1264,8 +1285,9 @@ export class Tensor {
     }
 
     
-    private _parseSubIndices(args: ArrayLike<any>): IndexIterationDefinition[] {
-        let subIndices: IndexIterationDefinition[] = [];
+    private _parseIndexIterDefs(args: ArrayLike<any>): IndexIteratorInfo {
+        let iterDefs: IndexIteratorDefinition[] = [];
+        let allAreConstantType = true;
         for (let i = 0;i < args.length;i++) {
             // ik can be a integer, string, array/tensor of indices, logic
             // tensor as a mask. We unify them into list of index iterators.
@@ -1278,18 +1300,21 @@ export class Tensor {
                     if (ind.ndim !== 1 || ind.size !== this._shape[i]) {
                         throw new Error(`1D logic tensor of size ${this._shape[i]} expected for dimension ${i+1}.`);
                     }
-                    subIndices.push({
-                        type: IndexIterationType.List,
+                    iterDefs.push({
+                        type: IndexIteratorType.List,
                         indices: DataHelper.findReal(ind.realData)
                     });
                 } else {
-                    subIndices.push(this._parseSignedIndices(ind.realData, i));
+                    iterDefs.push(this._parseSignedIndices(ind.realData, i));
                 }
+                allAreConstantType = false;
             } else if (Array.isArray(ind)) {
                 // no nested arrays allowed here
-                subIndices.push(this._parseSignedIndices(<ArrayLike<number>>ind, i));
+                iterDefs.push(this._parseSignedIndices(<ArrayLike<number>>ind, i));
+                allAreConstantType = false;
             } else if (typeof ind === 'string') {
-                subIndices.push(this._parseSlicingString(ind, i));
+                iterDefs.push(this._parseSlicingString(ind, i));
+                allAreConstantType = false;
             } else {
                 if (ind < 0) {
                     // convert negative index to positive before further checks
@@ -1301,13 +1326,13 @@ export class Tensor {
                 if (ind >= this._shape[i]) {
                     throw new Error(`The index for dimension ${i+1} is out of bounds.`);
                 }
-                subIndices.push({
-                    type: IndexIterationType.Constant,
+                iterDefs.push({
+                    type: IndexIteratorType.Constant,
                     index: <number>ind
                 });
             }
         }
-        return subIndices;
+        return { definitions: iterDefs, areAllConstantType: allAreConstantType };
     }
 
     /**
@@ -1317,7 +1342,7 @@ export class Tensor {
      *  format: 'start:stop:step', where 'step' is optional.
      * @param dim The dimension to which slicing operation is applied.
      */
-    private _parseSlicingString(str: string, dim?: number): IndexIterationDefinition {
+    private _parseSlicingString(str: string, dim?: number): IndexIteratorDefinition {
         // we adapt the syntax of Python
         let splits = str.trim().split(':');
         let start: number, stop: number, step: number;
@@ -1328,7 +1353,7 @@ export class Tensor {
                 if (start < 0) start += max;
                 this._checkIndex(start, dim);
                 return {
-                    type: IndexIterationType.Constant,
+                    type: IndexIteratorType.Constant,
                     index: start
                 }
             case 2:
@@ -1378,7 +1403,7 @@ export class Tensor {
                     throw new Error('The start index must be less than the stop index when step is positive.');
                 }
                 return {
-                    type: IndexIterationType.Range,
+                    type: IndexIteratorType.Range,
                     start: start,
                     stop: stop,
                     step: step
@@ -1395,7 +1420,7 @@ export class Tensor {
      * @param dim (Optional) If specified, the given indices are for the
      *  specified dimension. Otherwise, the given indices are for flat indexing.
      */
-    private _parseSignedIndices(indices: ArrayLike<number>, dim?: number): IndexIterationDefinition {
+    private _parseSignedIndices(indices: ArrayLike<number>, dim?: number): IndexIteratorDefinition {
         let ret: number[] | undefined = undefined;
         let i: number, cur: number;
         let max = dim == undefined ? this.size : this._shape[dim];
@@ -1416,7 +1441,7 @@ export class Tensor {
             (<number[]>ret)[i] = cur;
         }
         return {
-            type: IndexIterationType.List,
+            type: IndexIteratorType.List,
             indices: ret || indices
         };
     }
@@ -1438,21 +1463,21 @@ export class Tensor {
         }
     }
 
-    private static _getShapeFromSubIndices(subIndices: IndexIterationDefinition[]): [number[], number] {
-        let shape: number[] = new Array(subIndices.length);
+    private static _inferShapeFromIterDefs(iterDefs: IndexIteratorDefinition[]): [number[], number] {
+        let shape: number[] = new Array(iterDefs.length);
         let size = 1;
-        for (let i = 0;i < subIndices.length;i++) {
-            switch (subIndices[i].type) {
-                case IndexIterationType.Constant:
+        for (let i = 0;i < iterDefs.length;i++) {
+            switch (iterDefs[i].type) {
+                case IndexIteratorType.Constant:
                     shape[i] = 1;
                     break;
-                case IndexIterationType.List:
-                    shape[i] = (<ArrayLike<number>>subIndices[i].indices).length;
+                case IndexIteratorType.List:
+                    shape[i] = (<ArrayLike<number>>iterDefs[i].indices).length;
                     size *= shape[i];
                     break;
-                case IndexIterationType.Range:
-                    let r = Math.abs(<number>subIndices[i].stop - <number>subIndices[i].start) - 1;
-                    shape[i] = Math.max(0, Math.floor(r / Math.abs(<number>subIndices[i].step))) + 1;
+                case IndexIteratorType.Range:
+                    let r = Math.abs(<number>iterDefs[i].stop - <number>iterDefs[i].start) - 1;
+                    shape[i] = Math.max(0, Math.floor(r / Math.abs(<number>iterDefs[i].step))) + 1;
                     size *= shape[i];
                     break;
                 default:
@@ -1483,7 +1508,7 @@ export class Tensor {
                     // no need to check indices here
                     if (doSet) {
                         this._setBatch({
-                            type: IndexIterationType.List,
+                            type: IndexIteratorType.List,
                             indices: DataHelper.findReal(arg0.realData)
                         }, args[1]);
                     } else {
@@ -1491,7 +1516,7 @@ export class Tensor {
                         // preserver the original shape and have to return a 
                         // 1D vector.
                         return this._getBatch({
-                            type: IndexIterationType.List,
+                            type: IndexIteratorType.List,
                             indices: DataHelper.findReal(arg0.realData)
                         }, keepDims);
                     }
@@ -1554,12 +1579,12 @@ export class Tensor {
                 // no need to check indices here
                 if (doSet) {
                     this._setBatch({
-                        type: IndexIterationType.List,
+                        type: IndexIteratorType.List,
                         indices: indices
                     }, args[1]);
                 } else {
                     return this._getBatch({
-                        type: IndexIterationType.List,
+                        type: IndexIteratorType.List,
                         indices: indices
                     }, keepDims);
                 }
@@ -1606,15 +1631,15 @@ export class Tensor {
         } else {
             // (i1, i2, ...)
             if (doSet) {
-                this._setSubTensor(this._parseSubIndices(
+                this._setSubTensor(this._parseIndexIterDefs(
                     Array.prototype.slice.call(args, 0, args.length - 1)), args[args.length - 1]);
             } else {
-                return this._getSubTensor(this._parseSubIndices(args), keepDims);
+                return this._getSubTensor(this._parseIndexIterDefs(args), keepDims);
             }
         }
     }
 
-    private _parseSignedNestedIndexArray(arr: any[], shape: number[]): IndexIterationDefinition {
+    private _parseSignedNestedIndexArray(arr: any[], shape: number[]): IndexIteratorDefinition {
         let indices = new Array(ShapeHelper.getSizeFromShape(shape));
         let strides = ShapeHelper.computeStrides(shape);
         let _doParse = (arr: any[], level: number, offset: number): void => {
@@ -1634,7 +1659,7 @@ export class Tensor {
         };
         _doParse(arr, 0, 0);
         return {
-            type: IndexIterationType.List,
+            type: IndexIteratorType.List,
             indices: indices
         };
     }

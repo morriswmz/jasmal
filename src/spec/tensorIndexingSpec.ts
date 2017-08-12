@@ -154,6 +154,26 @@ describe('Advanced indexing', () => {
         it('should get a single complex element using (i,j) indexing with negative indices', () => {
             expect((<ComplexNumber>C.get(-1, 0)).equals(new ComplexNumber(4, -4))).toBeTruthy();
         });
+        it('should remove a singleton dimension if only that dimension is indexed by a number [case 1]', () => {
+            let actual = A.get(0, '0:1');
+            let expected = T.fromArray([1]);
+            checkTensor(actual, expected);
+        });
+        it('should remove a singleton dimension if only that dimension is indexed by a number [case 2]', () => {
+            let actual = A.get('0:1', [2]);
+            let expected = T.fromArray([[3]]);
+            checkTensor(actual, expected);
+        });
+        it('should not remove any singleton dimensions if keepDims is set to true [case 1]', () => {
+            let actual = A.get(1, 2, true);
+            let expected = T.fromArray([[6]]);
+            checkTensor(actual, expected);
+        });
+        it('should not remove any singleton dimensions if keepDims is set to true [case 2]', () => {
+            let actual = A.get(1, ':', true);
+            let expected = T.fromArray([[4, 5, 6]]);
+            checkTensor(actual, expected);
+        });
         it('should return a tensor with all the elements reversed', () => {
             let actual = <Tensor>A.get('::-1');
             let expected = T.fromArray([6, 5, 4, 3, 2, 1]);
