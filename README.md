@@ -3,7 +3,7 @@
 **JASMAL** stands for **J**ust **A**nother Java**S**cript **MA**trix **L**ibrary,
 or **JA**va**S**cript **MA**trix **L**ibrary. This is a **work-in-progress**
 library I used to create interactive simulations on my
-[blog](research.wmz.ninja/articles/2017/07/music-in-the-browser.html).
+[blog](http://research.wmz.ninja/articles/2017/07/music-in-the-browser.html).
 
 Despite its name, JASMAL can actually handle multi-dimensional arrays. It also has
 
@@ -18,7 +18,7 @@ Despite its name, JASMAL can actually handle multi-dimensional arrays. It also h
 
 # Basic Usage
 
-To access the JASMAL engine, simply use `var T = require('jasmal').JasmalEngine.createInstance()`.
+To access the JASMAL engine, simply use `const T = require('jasmal').JasmalEngine.createInstance()`.
 
 ## Type Basics
 
@@ -84,17 +84,17 @@ object? In JASMAL, unless otherwise specified, the following rules applies:
 
 ``` JavaScript
 // Creates a 3 x 3 zero matrix.
-var Z = T.zeros([3, 3]);
+let Z = T.zeros([3, 3]);
 // Creates a 3 x 3 identity matrix.
-var I = T.eye([3, 3]);
+let I = T.eye([3, 3]);
 // Creates a 3 x 4 x 3 array whose elements are all ones with data type INT32.
-var X = T.ones([3, 4, 3], T.INT32);
+let X = T.ones([3, 4, 3], T.INT32);
 
 ```
 
 ## Indexing
 ``` JavaScript
-var A = T.eye([3, 3]);
+let A = T.eye([3, 3]);
 A.set(0, 10); // sets the first element to 10
 A.set(':', 1); // sets all the elements to 1
 A.set(-1, 10); // sets the last element to 10
@@ -117,58 +117,66 @@ A.get([0, 1, 1, 2, 0, 1], ':'); // sample rows
 ## Matrix/Tensor manipulation
 
 ``` JavaScript
-var A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
+let A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
 // Reshaping.
-var B = T.reshape(A, [3, 2]);
+let B = T.reshape(A, [3, 2]);
 // The following is equivalent to the above, where we use -1 to indicate that
 // the length of this dimension need to be calculated automatically. At most one
 // -1 can be used in the new shape.
-var B1 = T.reshape(A, [-1, 2]);
+let B1 = T.reshape(A, [-1, 2]);
 // Flattening
-var a = T.flatten(A); // should have shape [6]
+let a = T.flatten(A); // should have shape [6]
 // Vectorizing
-var v = T.vec(A); // should have shape [6, 1]
+let v = T.vec(A); // should have shape [6, 1]
 // Remove singleton dimensions.
-var S = T.ones([1, 2, 1, 3]);
+let S = T.ones([1, 2, 1, 3]);
 T.squeeze(S); // should have shape [2, 3]
 // Concatenating at the specified dimension.
-var X1 = T.ones([2, 4, 3]);
-var X2 = T.zeros([2, 2, 3]);
-var X3 = T.ones([2, 1, 3]);
-var Z = T.concat([X1, X2, X3], 1); // should have shape [2, 7, 3]
+let X1 = T.ones([2, 4, 3]);
+let X2 = T.zeros([2, 2, 3]);
+let X3 = T.ones([2, 1, 3]);
+let Z = T.concat([X1, X2, X3], 1); // should have a shape of [2, 7, 3]
 /* Tiling. C should be
  *  [[1, 2, 1, 2],
  *   [3, 4, 3, 4],
  *   [1, 2, 1, 2],
  *   [3, 4, 3, 4]] */
-var C = T.tile([[1, 2], [3, 4]], [2, 2]);
+let C = T.tile([[1, 2], [3, 4]], [2, 2]);
+// Permute axis.
+let D1 = T.rand([2, 3, 4]);
+let D2 = T.permuteAxis(D1, [2, 1, 0]); // D2 has a shape of [4, 3, 2]
 ```
 
 ## Arithmetic operations
 
+JASMAL supports basic arithmetic operations between tensors of compatible shapes,
+including `add()`, `sub()`, `mul()`, `div()`, `neg()`, `reciprocal()`, and
+`rem()`. For binary operations, broadcasting is supported.
+
 ``` JavaScript
 // Only when both operands are scalar, a scalar is returned.
-var s = T.add(1, 2); // returns 3
+let s = T.add(1, 2); // returns 3
 
-var A = T.ones(3);
+let A = T.ones(3);
 // Subtract one from matrix A and return the result as a new matrix.
-var B = T.sub(A, 1);
+let B = T.sub(A, 1);
 // Subtract one from matrix A but do it in-place.
 T.sub(A, 1, true);
 
 // Broadcasting
-var X = T.rand([3, 3]);
-var C = T.mul([[1], [2], [3]], X);
+let X = T.rand([3, 3]);
+let C = T.mul([[1], [2], [3]], X);
 // The above operation is equivalent to the following one:
-var C1 = T.matmul(T.diag([1, 2, 3]), X);
+let C1 = T.matmul(T.diag([1, 2, 3]), X);
 // or the following one:
-var C2 = T.mul(T.tile([[1], [2], [3]], [1, 3]), X);
+let C2 = T.mul(T.tile([[1], [2], [3]], [1, 3]), X);
 ```
 
 ## Math functions
 
 JASMAL supports various math functions. Many of them also accepts complex
 inputs.
+
 ``` JavaScript
 // Absolute value
 T.abs([[1, 2], [-3, 4]]);
@@ -176,6 +184,8 @@ T.abs([[1, 2], [-3, 4]]);
 T.sin(T.linspace(0, Math.PI*2, 100));
 // Square root
 T.sqrt(-1);
+// Element-wise minimum.
+T.min2([1, 2], -1);
 ```
 
 ## Random number generation
@@ -187,53 +197,72 @@ engine by default to generate random numbers.
 // Specify the seed.
 T.seed(42);
 // Retrieves an double within (0,1) with 53-bit precision.
-var x = T.rand(); 
+let x = T.rand(); 
 // Creates a 3x4x5 tensor whose elements sampled from the normal distribution.
-var N = T.randn([3, 4, 5]);
+let N = T.randn([3, 4, 5]);
 // Generate 10 random integers within [0, 10].
-var Z = T.randi(0, 10, [10]);
+let Z = T.randi(0, 10, [10]);
 ``` 
 
+You can configure JASMAL to use the JavaScript's `Math.random()` using the
+following code when creating the JASMAL instance:
+
+```
+const T = require('jasmal').JasmalEngine.createInstance({
+  rngEngine: 'native'
+});
+```
+
 ## Matrix operations
+
+JASMAL supports various matrix operations. For details, see the definitions
+[here](src/lib/ops/matrix/definition.ts).
+
 ``` JavaScript
-var A = T.rand([3, 3]), B = T.rand([3, 3]);
+let A = T.rand([3, 3]), B = T.rand([3, 3]);
 // Construct a complex matrix by combining real and imaginary parts.
-var C = T.complex(A, B);
+let C = T.complex(A, B);
 // Matrix multiplication
-var AB = T.matmul(A, B);
+let AB = T.matmul(A, B);
 // You can specify a modifier for B
-var ABt = T.matmul(A, B, T.MM_TRANSPOSED);
+let ABt = T.matmul(A, B, T.MM_TRANSPOSED);
 // Extract diagonal elements.
-var d = T.diag(A);
+let d = T.diag(A);
 // Construct a diagonal matrix.
-var D = diag(d);
+let D = diag(d);
 // Matrix transpose/Hermitian.
-var At = T.transpose(A);
-var Ch = T.hermitian(C);
+let At = T.transpose(A);
+let Ch = T.hermitian(C);
 // Kronecker product.
-var K = T.kron(A, B);
+let K = T.kron(A, B);
 // Inverse (JASMAL uses LUP decomposition to compute the inverse)
-var Ainv = T.inv(A);
+let Ainv = T.inv(A);
 // Determinant (JASMAL uses LUP decomposition to compute the determinant)
-var detA = T.det(A);
+let detA = T.det(A);
 // SVD
-var [U1, S1, V1] = T.svd(A);
+let [U1, S1, V1] = T.svd(A);
 // SVD also works for complex matrices.
-var [U2, S2, V2] = T.svd(C);
+let [U2, S2, V2] = T.svd(C);
 // Eigendecomposition for general square matrices.
-var [E1, L1] = T.eig(A);
+let [E1, L1] = T.eig(A);
 // Eigendecomposition also works for general complex square matrices.
-var [E2, L2] = T.eig(C);
+let [E2, L2] = T.eig(C);
 ```
 
 ## Data functions
 
+JASMAL also includes several functions for data processing. For details, see
+the definitions [here](src/lib/ops/data/definition.ts).
+
 ``` JavaScript
-var A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
+let A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
 // Gets the sum of all the elements.
-var sum = T.sum(A);
-// Sum each row and returns a column vector. We specify keepDims = true here.
-var sums = T.sum(A, 1, true);
+let sum = T.sum(A);
+// Sums each row and returns a column vector. We specify keepDims = true here.
+let sums = T.sum(A, 1, true);
+// Sorts all the elements in A in descending order and return the indices I
+// such that As is given by `A.get(I)`.
+let [As, I] = T.sort(A, 'desc', true);
 ```
 
 # Performance
@@ -264,9 +293,9 @@ directly access the underlying storage and manipulate them:
 // If you want to write to the underlying storage directly, ensure that it is
 // not shared.
 A.ensureUnsharedLocalStorage();
-var re = A.realData;
+let re = A.realData;
 re[0] = 1;
-var im;
+let im;
 // If a matrix does not have complex data storage, accessing its imaginary data
 // storage will result in an error.
 if (!A.hasComplexStorage()) {
