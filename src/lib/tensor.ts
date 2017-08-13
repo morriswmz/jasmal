@@ -1856,6 +1856,9 @@ export class Tensor {
         let idxM1 = -1,
             ns = 1;
         for (let i = 0;i < newShape.length;i++) {
+            if ((newShape[i] | 0) !== newShape[i]) {
+                throw new Error('Expecting a 32-bit integer.');
+            }
             if (newShape[i] === -1) {
                 if (idxM1 >= 0) {
                     throw new Error('Shape can only contain one unknown dimension.');

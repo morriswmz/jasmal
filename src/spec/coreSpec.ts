@@ -3,6 +3,48 @@ import { ComplexNumber } from '../lib/complexNumber';
 import { checkTensor, checkArrayLike } from './testHelper';
 const T = JasmalEngine.createInstance();
 
+describe('reshape()', () => {
+    it('should reshape a tensor without altering its data', () => {
+        let M = T.fromArray(
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            [0, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11]
+        );
+        let N = T.reshape(M, [2, 3, 2]);
+        expect(N.shape).toEqual([2, 3, 2]);
+        // reference copy expected
+        expect(N.realData).toBe(M.realData);
+        expect(N.imagData).toBe(M.imagData);
+    });
+    it('should accept a nested array as its input', () => {
+        let arr = [[0, 1, 2], [3, 4, 5]];
+        let actual = T.reshape(arr, [3, 2]);
+        let expected = T.fromArray([[0, 1], [2, 3], [4, 5]]);
+        checkTensor(actual, expected);
+        // should not change arr
+        expect(arr).toEqual([[0, 1, 2], [3, 4, 5]]);
+    });
+    it('should automatic calculate the new shape when there is a -1 in the specified new shape', () => {
+        let M = T.ones([3, 4, 6]);
+        let N = T.reshape(M, [2, -1, 3]);
+        expect(N.shape).toEqual([2, 12, 3]);
+    });
+    it('should throw if the new shape is invalid', () => {
+        let M = T.ones([2, 3, 4]);
+        // number of elements changed
+        let case1 = () => { T.reshape(M, [2, 3, 2]); };
+        // more than one -1
+        let case2 = () => { T.reshape(M, [2, -1, 2, -1]); };
+        // indivisible -1
+        let case3 = () => { T.reshape(M, [-1, 5, 2]); };
+        // non integers
+        let case4 = () => { T.reshape(M, [1, 0.5, -1]); };
+        expect(case1).toThrow();
+        expect(case2).toThrow();
+        expect(case3).toThrow();
+        expect(case4).toThrow();
+    });
+});
+
 describe('tile()', () => {
     it('should repeat a scalar', () => {
         checkTensor(T.tile(1, [2, 3, 4, 2]), T.ones([2, 3, 4, 2]));
