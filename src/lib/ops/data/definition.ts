@@ -52,6 +52,11 @@ export interface IDataOpProvider {
     median(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
     /**
+     * Computes the mode of the elements along the specified axis.
+     */
+    mode(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
+
+    /**
      * Computes the sample variance (divided by N - 1) of the elements along the
      * specified axis.
      */

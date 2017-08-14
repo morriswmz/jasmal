@@ -1,3 +1,5 @@
+import { ComparisonHelper } from '../../helper/comparisonHelper';
+
 export class DataFunction {
     
     /**
@@ -146,7 +148,7 @@ export class DataFunction {
         for (let i = 0;i < n;i++) {
             arr[i] = reX[offset + i * stride];
         }
-        arr.sort();
+        arr.sort(ComparisonHelper.compareNumber);
         // check for NaNs
         if (isNaN(arr[n - 1])) {
             return NaN;
@@ -158,6 +160,60 @@ export class DataFunction {
             // odd number of elements
             return arr[(n - 1) / 2];
         }
+    }
+
+    /**
+     * Returns the smallest most occurring element.
+     * NaNs are ignored.
+     * @param reX 
+     */
+    public static mode(reX: ArrayLike<number>);
+    public static mode(reX: ArrayLike<number>, offset: number, stride: number, n: number): number;
+    public static mode(reX: ArrayLike<number>, offset: number = 0, stride: number = 1, n: number = -1): number {
+        let ub: number;
+        [n, ub] = DataFunction._processArgs(reX.length, offset, stride, n);
+        if (n === 1) {
+            return reX[offset];
+        }
+        let arr = new Array(n);
+        for (let i = 0;i < n;i++) {
+            arr[i] = reX[offset + i * stride];
+        }
+        arr.sort(ComparisonHelper.compareNumber);
+        // check for NaNs
+        let nMax = n - 1;
+        while (nMax >= 0 && isNaN(arr[nMax])) {
+            nMax--;
+        }
+        if (nMax < 0) {
+            // all elements are NaNs
+            return NaN;
+        }
+        let cur = arr[0];
+        let result = cur;
+        let freq = 1;
+        let maxFreq = 1;
+        for (let i = 1;i <= nMax;i++) {
+            if (arr[i] === cur) {
+                freq++;
+            } else {
+                // different element encountered
+                if (freq > maxFreq) {
+                    // record
+                    maxFreq = freq;
+                    result = cur;
+                }
+                // reset counter
+                cur = arr[i];
+                freq = 1;
+            }
+        }
+        // last check
+        if (freq > maxFreq) {
+            maxFreq = freq;
+            result = cur;
+        }
+        return result;
     }
 
     private static _processArgs(arrLength: number, offset: number, stride: number, n: number): [number, number] {

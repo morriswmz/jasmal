@@ -6,6 +6,7 @@ import { OutputDTypeResolver } from '../../dtype';
 import { DataHelper } from '../../helper/dataHelper';
 import { ICoreOpProvider } from '../core/definition';
 import { ReductionOpGenerator } from '../generator';
+import { ComparisonHelper } from '../../helper/comparisonHelper';
 
 export class DataOpProviderFactory {
 
@@ -37,6 +38,9 @@ export class DataOpProviderFactory {
 
         const opMedian = reductionOpGen.makeRealOnlyOp(
             DataFunction.median, { outputDTypeResolver: OutputDTypeResolver.uToFloat });
+        
+        const opMode = reductionOpGen.makeRealOnlyOp(
+            DataFunction.mode, { outputDTypeResolver: OutputDTypeResolver.uNoChange });
 
         const opVar = reductionOpGen.makeOp(
             DataFunction.var, DataFunction.cvar, false,
@@ -104,24 +108,6 @@ export class DataOpProviderFactory {
             return X;
         };
 
-        function compareWithIndex(a: number, b: number, ia: number, ib: number): number {
-            // NaN is treated as the largest number
-            if (isNaN(a)) {
-                return isNaN(b) ? (ia > ib ? 1 : -1) : 1;
-            } else {
-                if (isNaN(b)) {
-                    return -1;
-                }
-                if (a > b) {
-                    return 1;
-                } else if (a < b) {
-                    return -1;
-                } else {
-                    return ia > ib ? 1 : -1;
-                }
-            }
-        }
-
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: boolean): Tensor | [Tensor, number[]] {
@@ -136,10 +122,11 @@ export class DataOpProviderFactory {
             // JavaScript's builtin sort is not stable. Since we want the
             // indices, we can obtain a stable sort by comparing their indices
             // when two elements are equal.
+            let comparator = ComparisonHelper.compareNumberWithIndex;
             if (dir === 'asc') {
-                indices.sort((ia, ib) => compareWithIndex(dataX[ia], dataX[ib], ia, ib));
+                indices.sort((ia, ib) => comparator(dataX[ia], dataX[ib], ia, ib));
             } else {
-                indices.sort((ia, ib) => compareWithIndex(dataX[ib], dataX[ia], ia, ib));
+                indices.sort((ia, ib) => comparator(dataX[ib], dataX[ia], ia, ib));
             }
             for (let i = 0;i < n;i++) {
                 dataY[i] = dataX[indices[i]];
@@ -179,7 +166,7 @@ export class DataOpProviderFactory {
                             reOrder = a > b ? 1 : (a === b ? 0 : -1);
                         }
                     }
-                    return reOrder !== 0 ? reOrder : compareWithIndex(dataIm[ia], dataIm[ib], ia, ib);
+                    return reOrder !== 0 ? reOrder : ComparisonHelper.compareNumberWithIndex(dataIm[ia], dataIm[ib], ia, ib);
                 });
                 // deduplicate
                 last = 0;
@@ -214,7 +201,7 @@ export class DataOpProviderFactory {
                 Y = Tensor.fromArray(uniqueRe, uniqueIm, X.dtype);
             } else {
                 // sort real numbers
-                indices.sort((ia, ib) => compareWithIndex(dataRe[ia], dataRe[ib], ia, ib));
+                indices.sort((ia, ib) => ComparisonHelper.compareNumberWithIndex(dataRe[ia], dataRe[ib], ia, ib));
                 // deduplicate
                 last = 0;
                 k = indices[0];
@@ -349,6 +336,7 @@ export class DataOpProviderFactory {
             cumsum: opCumsum,
             mean: opMean,
             median: opMedian,
+            mode: opMode,
             std: opStd,
             var: opVar,
             sort: opSort,

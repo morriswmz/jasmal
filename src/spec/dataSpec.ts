@@ -178,6 +178,9 @@ describe('cumsum()', () => {
 });
 
 describe('mean()', () => {
+    it('should return the same scalar for a scalar input', () => {
+        expect(T.mean(42)).toBe(42);
+    });
     it('should return the mean of a vector', () => {
         expect(T.mean([1, 2, 3, 4])).toEqual(2.5);
     });
@@ -193,7 +196,25 @@ describe('mean()', () => {
     });
 });
 
+describe('mode()', () => {
+    it('should return the mode of a real vector', () => {
+        expect(T.mode([1, 1, 2, 3, 5, 7])).toBe(1);
+    });
+    it('should only return the smallest most occurring element', () => {
+        expect(T.mode([[2, 3, 4, 2], [3, 2, 1, 3]])).toBe(2);
+    });
+    it('should ignore the NaNs', () => {
+        expect(T.mode([NaN, Infinity, Infinity, NaN, NaN, -1])).toBe(Infinity);
+    });
+    it('should return NaN if all the elements are NaNs', () => {
+        expect(T.mode([[NaN, NaN]])).toBeNaN();
+    });
+});
+
 describe('var()', () => {
+    it('should return zero for a scalar input', () => {
+        expect(T.var(999)).toBe(0);
+    });
     it('should return the variance of each row for a real matrix', () => {
         let A = T.fromArray(
             [[1, 1, 1, 1],
