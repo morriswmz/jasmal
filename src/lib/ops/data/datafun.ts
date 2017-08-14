@@ -148,7 +148,7 @@ export class DataFunction {
         for (let i = 0;i < n;i++) {
             arr[i] = reX[offset + i * stride];
         }
-        arr.sort(ComparisonHelper.compareNumber);
+        arr.sort(ComparisonHelper.compareNumberAsc);
         // check for NaNs
         if (isNaN(arr[n - 1])) {
             return NaN;
@@ -179,7 +179,7 @@ export class DataFunction {
         for (let i = 0;i < n;i++) {
             arr[i] = reX[offset + i * stride];
         }
-        arr.sort(ComparisonHelper.compareNumber);
+        arr.sort(ComparisonHelper.compareNumberAsc);
         // check for NaNs
         let nMax = n - 1;
         while (nMax >= 0 && isNaN(arr[nMax])) {

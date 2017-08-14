@@ -122,7 +122,7 @@ export class DataOpProviderFactory {
             // JavaScript's builtin sort is not stable. Since we want the
             // indices, we can obtain a stable sort by comparing their indices
             // when two elements are equal.
-            let comparator = ComparisonHelper.compareNumberWithIndex;
+            let comparator = ComparisonHelper.compareNumberWithIndexAsc;
             if (dir === 'asc') {
                 indices.sort((ia, ib) => comparator(dataX[ia], dataX[ib], ia, ib));
             } else {
@@ -131,6 +131,34 @@ export class DataOpProviderFactory {
             for (let i = 0;i < n;i++) {
                 dataY[i] = dataX[indices[i]];
             }
+            return outputIndices ? [Y, indices] : Y;
+        }
+
+        function opSortRows(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
+        function opSortRows(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
+        function opSortRows(x: OpInput, dir: 'asc' | 'desc', outputIndices: boolean): Tensor | [Tensor, number[]] {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            if (X.ndim !== 2) {
+                throw new Error('Matrix expected.');
+            }
+            if (X.hasNonZeroComplexStorage()) {
+                throw new Error('Cannot order complex elements.');
+            }
+            let dataX = X.realData;
+            let [m, n] = X.shape;
+            let indices = DataHelper.naturalNumbers(m);
+            let comparator = dir === 'asc' ? ComparisonHelper.compareNumberAsc : ComparisonHelper.compareNumberDesc;
+            indices.sort((ia, ib) => {
+                for (let j = 0;j < n;j++) {
+                    let cur = comparator(dataX[ia * n + j], dataX[ib * n + j]);
+                    if (cur !== 0) {
+                        return cur;
+                    }
+                }
+                // stable sort trick
+                return (ia > ib) ? 1 : -1;
+            });
+            let Y = <Tensor>X.get(indices, ':', true);
             return outputIndices ? [Y, indices] : Y;
         }
 
@@ -166,7 +194,7 @@ export class DataOpProviderFactory {
                             reOrder = a > b ? 1 : (a === b ? 0 : -1);
                         }
                     }
-                    return reOrder !== 0 ? reOrder : ComparisonHelper.compareNumberWithIndex(dataIm[ia], dataIm[ib], ia, ib);
+                    return reOrder !== 0 ? reOrder : ComparisonHelper.compareNumberWithIndexAsc(dataIm[ia], dataIm[ib], ia, ib);
                 });
                 // deduplicate
                 last = 0;
@@ -201,7 +229,7 @@ export class DataOpProviderFactory {
                 Y = Tensor.fromArray(uniqueRe, uniqueIm, X.dtype);
             } else {
                 // sort real numbers
-                indices.sort((ia, ib) => ComparisonHelper.compareNumberWithIndex(dataRe[ia], dataRe[ib], ia, ib));
+                indices.sort((ia, ib) => ComparisonHelper.compareNumberWithIndexAsc(dataRe[ia], dataRe[ib], ia, ib));
                 // deduplicate
                 last = 0;
                 k = indices[0];
@@ -340,6 +368,7 @@ export class DataOpProviderFactory {
             std: opStd,
             var: opVar,
             sort: opSort,
+            sortRows: opSortRows,
             unique: opUnique,
             hist: opHist
         };

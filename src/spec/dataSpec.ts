@@ -259,6 +259,48 @@ describe('sort()', () => {
     });
 });
 
+describe('sortRows()', () => {
+    let A = T.fromArray(
+        [[     NaN,  -6,   5,  -6],
+         [       7, NaN,  -1,  -2],
+         [       5,   8,   3,  -6],
+         [Infinity, NaN, NaN,  -5],
+         [       3,   5,   4, NaN],
+         [     NaN,  -6,   5,  -6]]
+    );
+    let ACopy = A.copy(true);
+    it('should sort the rows in ascending order', () => {
+        let actual = T.sortRows(A, 'asc', false);
+        let expected = T.fromArray(
+            [[       3,   5,   4, NaN],
+             [       5,   8,   3,  -6],
+             [       7, NaN,  -1,  -2],
+             [Infinity, NaN, NaN,  -5],
+             [     NaN,  -6,   5,  -6],
+             [     NaN,  -6,   5,  -6]]
+        );
+        checkTensor(actual, expected);
+        // should not change A
+        checkTensor(A, ACopy);
+    });
+    it('should sort the rows in descending order and return the indices', () => {
+        let [actualY, actualI] = T.sortRows(A, 'desc', true);
+        let expectedY = T.fromArray(
+            [[     NaN,  -6,   5,  -6],
+             [     NaN,  -6,   5,  -6],
+             [Infinity, NaN, NaN,  -5],
+             [       7, NaN,  -1,  -2],
+             [       5,   8,   3,  -6],
+             [       3,   5,   4, NaN]]
+        );
+        let expectedI = [0, 5, 3, 1, 2, 4];
+        checkTensor(actualY, expectedY);
+        expect(actualI).toEqual(expectedI);
+        // should not change A
+        checkTensor(A, ACopy);
+    });
+});
+
 describe('unique()', () => {
     it('should find unique real numbers', () => {
         let x = T.fromArray([3, 4, 3, 2, 3, -1, NaN, -1, Infinity, NaN]);

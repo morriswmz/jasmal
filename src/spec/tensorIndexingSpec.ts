@@ -227,5 +227,10 @@ describe('Advanced indexing', () => {
             let expected = T.fromArray([[1, 2], [2, 6]]);
             checkTensor(actual, expected);
         });
+        it('should not change the data type', () => {
+            let X = T.ones([3, 3], T.INT32);
+            expect((<Tensor>X.get(':', 1)).dtype).toEqual(T.INT32);
+            expect((<Tensor>X.get(0, 1, true)).dtype).toEqual(T.INT32);
+        });
     });
 });

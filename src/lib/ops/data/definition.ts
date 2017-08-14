@@ -1,11 +1,11 @@
 import { OpInput, OpOutputWithIndex, OpOutput } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 
-// TODO: add sortRows
 export interface IDataOpProvider {
 
     /**
      * Finds the minimum elements and their indices along the specified axis.
+     * Note: NaN is treated as the largest number (larger than Infinity).
      * @param x
      * @param axis (Optional) Specifies the axis along which the operation is
      *             performed. This value must be either -1 or a nonnegative
@@ -23,6 +23,7 @@ export interface IDataOpProvider {
 
     /**
      * Finds the maximum elements and their indices along the specified axis.
+     * Note: NaN is treated as the largest number (larger than Infinity).
      */
     max(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
 
@@ -53,6 +54,8 @@ export interface IDataOpProvider {
 
     /**
      * Computes the mode of the elements along the specified axis.
+     * Note: NaNs will be ignored when determining the mode. If there are
+     *       multiple modes, the smallest will be returned.
      */
     mode(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
@@ -71,17 +74,33 @@ export interface IDataOpProvider {
     /**
      * Sorts the elements in the (flattened) input in the specified order and
      * return the result as a new tensor.
+     * Note: NaN is treated as the largest number (larger than Infinity).
      */
     sort(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
     /**
      * Sorts the elements in the (flattened) input in the specified order and
      * return the result as a new tensor y as well as the index map i such
-     * that x[i] = y.
+     * that x.get(i) = y.
+     * Note: NaN is treated as the largest number (larger than Infinity).
      */
     sort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
 
     /**
+     * Sorts the rows in the specified order and return the result as a new
+     * tensor.
+     * Note: NaN is treated as the largest number (larger than Infinity).
+     */
+    sortRows(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
+    /**
+     * Sorts the rows in the specified order and return the result as a new
+     * tensor y as well as the index map i such that x.get(i,':') = y.
+     * Note: NaN is treated as the largest number (larger than Infinity).
+     */
+    sortRows(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
+
+    /**
      * Obtains the unique elements in the (flattened) input.
+     * Note: NaN is not equal to NaN. Therefore no NaN will be removed.
      */
     unique(x: OpInput, outputIndices: false): Tensor;
     /**
@@ -89,6 +108,7 @@ export interface IDataOpProvider {
      * Returns a tensor tuple [y, iy, ix] such that y = x[iy] and ix[j]
      * contains the indices in x such that all elements in x[ix[j]] equal to
      * y[j].
+     * Note: NaN is not equal to NaN. Therefore no NaN will be removed.
      */
     unique(x: OpInput, outputIndices: true): [Tensor, number[], number[][]];
 

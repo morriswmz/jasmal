@@ -3,7 +3,7 @@
  */
 export class ComparisonHelper {
     
-    public static compareNumber(a: number, b: number): number {
+    public static compareNumberAsc(a: number, b: number): number {
         // NaN is treated as the largest number
         if (isNaN(a)) {
             return isNaN(b) ? 0 : 1;
@@ -21,7 +21,11 @@ export class ComparisonHelper {
         }
     }
 
-    public static compareNumberWithIndex(a: number, b: number, ia: number, ib: number): number {
+    public static compareNumberDesc(a: number, b: number): number {
+        return ComparisonHelper.compareNumberAsc(b, a);
+    }
+
+    public static compareNumberWithIndexAsc(a: number, b: number, ia: number, ib: number): number {
         // NaN is treated as the largest number
         // ia and ib can never be equal
         if (isNaN(a)) {
