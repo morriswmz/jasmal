@@ -10,6 +10,8 @@ export const UNARY_OP_TEMPLATE =
 var Tensor = __dep__.Tensor;
 var ComplexNumber = __dep__.ComplexNumber;
 var CMath = __dep__.CMath;
+var ShapeHelper = __dep__.ShapeHelper;
+var DTypeHelper = __dep__.DTypeHelper;
 $InlineFunctions
 #if HAS_PARAM
 return function(x, param, inPlace) {
@@ -45,9 +47,9 @@ return function(x, inPlace) {
     var dtypeX = infoX.originalDType, dtypeY;
     var reX = infoX.reArr, imX = infoX.imArr, reY, imY, tmp1, tmp2, tmp3, tmp4, y;
     var i = 0;
-    dtypeY = __dep__.determineOutputType(dtypeX, infoX.isComplex);
+    dtypeY = __dep__.outputDTypeResolver(dtypeX, infoX.isComplex);
     if (dtypeY == undefined) {
-        throw new Error('The operation on ' + __dep__.dTypeToString(dtypeX) + ' is not available.');
+        throw new Error('The operation on ' + DTypeHelper.dTypeToString(dtypeX) + ' is not available.');
     }
     if (infoX.isInputScalar) {
         var reXScalar = infoX.re, imXScalar = infoX.im;
@@ -56,8 +58,8 @@ return function(x, inPlace) {
         return imYScalar === 0 ? reYScalar : new ComplexNumber(reYScalar, imYScalar);
     } else {
         if (inPlace) {
-            if (__dep__.isWiderType(dtypeX, dtypeY)) {
-                throw new Error('Cannot perform in-place operations for data type ' + __dep__.dTypeToString(dtypeX) + '.');
+            if (DTypeHelper.isWiderType(dtypeX, dtypeY)) {
+                throw new Error('Cannot perform in-place operations for data type ' + DTypeHelper.dTypeToString(dtypeX) + '.');
             }
             y = x;
             y.ensureUnsharedLocalStorage();

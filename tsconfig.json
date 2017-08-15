@@ -9,5 +9,8 @@
         "strictNullChecks": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true
-    }
+    },
+    "include": [
+        "src/jasmal/**/*"
+    ]
 }

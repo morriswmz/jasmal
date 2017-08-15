@@ -1,7 +1,7 @@
 import { OpGeneratorBase } from '../generatorBase';
 import { OpInputInternal, OpOutput } from '../../../commonTypes';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../../dtype';
-import { BroadcastingCheckResult, ShapeHelper } from '../../../helper/shapeHelper';
+import { ShapeHelper } from '../../../helper/shapeHelper';
 import { Tensor } from '../../../tensor';
 import { ComplexNumber, CMath } from '../../../complexNumber';
 import { UNARY_OP_TEMPLATE, S_BLOCK_TEMPLATE, T_BLOCK_TEMPLATE } from './unaryOpTemplates';
@@ -116,19 +116,16 @@ interface OpCommonDependencies {
     Tensor: Function;
     ComplexNumber: Function;
     CMath: Function;
-    computeStrides: (shape: number[]) => number[];
-    isWiderType(original: DType, newType: DType): boolean;
-    dTypeToString: (dtype: DType) => string;
+    ShapeHelper: Function;
+    DTypeHelper: Function;
 }
 
 interface BinaryOpDependencies extends OpCommonDependencies {
-    compareShape: (shape1: number[], shape2: number[]) => boolean;
-    checkBroadcastingCompatibility: (shapeX: number[], shapeY: number[]) => BroadcastingCheckResult;
-    determineOutputType: (t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean) => DType | undefined;
+    outputDTypeResolver: (t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean) => DType | undefined;
 }
 
 interface UnaryOpDependencies extends OpCommonDependencies {
-    determineOutputType: (t: DType, isComplex: boolean) => DType | undefined;
+    outputDTypeResolver: (t: DType, isComplex: boolean) => DType | undefined;
 }
 
 export class ElementWiseOpGenerator extends OpGeneratorBase {
@@ -163,11 +160,10 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
             CMath: CMath,
-            computeStrides: ShapeHelper.computeStrides,
-            determineOutputType: opConfig && opConfig.outputDTypeResolver
+            ShapeHelper: ShapeHelper,
+            DTypeHelper: DTypeHelper,
+            outputDTypeResolver: opConfig && opConfig.outputDTypeResolver
                 ? opConfig.outputDTypeResolver : OutputDTypeResolver.uNoChange,
-            isWiderType: DTypeHelper.isWiderType,
-            dTypeToString: DTypeHelper.dTypeToString
         };
     }
 
@@ -248,12 +244,9 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
             CMath: CMath,
-            computeStrides: ShapeHelper.computeStrides,
-            compareShape: ShapeHelper.compareShape,
-            determineOutputType: outputDTypeResolver,
-            checkBroadcastingCompatibility: ShapeHelper.checkBroadcastingCompatibility,
-            isWiderType: DTypeHelper.isWiderType,
-            dTypeToString: DTypeHelper.dTypeToString
+            ShapeHelper: ShapeHelper,
+            DTypeHelper: DTypeHelper,
+            outputDTypeResolver: outputDTypeResolver,
         };
         let fn = (new Function('__dep__', funcBody))(deps);
         return fn;

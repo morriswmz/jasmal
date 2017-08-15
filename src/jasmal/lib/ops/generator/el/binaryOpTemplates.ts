@@ -22,9 +22,6 @@ import { OpInputType } from '../../../commonTypes';
  *  $TSBlock - Block of codes that handles op(Tensor, Scalar)
  *  $STBlock - Block of codes that handles op(Scalar, Tensor)
  *  $SSBlock - Block of codes that handles op(Scalar, Scalar)
- * Here we require Tensor to have more than one element. Scalar tensors will be
- * treated as scalars. For instance, if x and y are both tensors with only one
- * element, $SSBlock will be used instead of $TTBlock.
  * Note that not all operations are commutative so all four blocks are required.
  * In-place operations are allowed in the following cases:
  *  x is Tensor and broadcasting does not require changing the shape of x.
@@ -36,6 +33,8 @@ export const BIN_EL_OP_TEMPLATE =
 var Tensor = __dep__.Tensor;
 var ComplexNumber = __dep__.ComplexNumber;
 var CMath = __dep__.CMath;
+var ShapeHelper = __dep__.ShapeHelper;
+var DTypeHelper = __dep__.DTypeHelper;
 $InlineFunctions
 return function (x, y, inPlace) {
     // process inputs
@@ -84,10 +83,10 @@ return function (x, y, inPlace) {
     var reZ, imZ, tmp1, tmp2, tmp3, tmp4, z, s;
     var i = 0;
     // check dtype
-    dtypeZ = __dep__.determineOutputType(dtypeX, infoX.isComplex, dtypeY, infoY.isComplex);
+    dtypeZ = __dep__.outputDTypeResolver(dtypeX, infoX.isComplex, dtypeY, infoY.isComplex);
     if (dtypeZ == undefined) {
-        throw new Error('Operation between ' + __dep__.dTypeToString(dtypeX) + ' and ' 
-            + __dep__.dTypeToString(dtypeY) + ' is not available.');
+        throw new Error('Operation between ' + DTypeHelper.dTypeToString(dtypeX) + ' and ' 
+            + DTypeHelper.dTypeToString(dtypeY) + ' is not available.');
     }
     // main procedure
     if (isXScalar) {
@@ -99,9 +98,9 @@ return function (x, y, inPlace) {
         }
     } else {
 #ifnot NO_IN_PLACE
-        if (inPlace && __dep__.isWiderType(dtypeX, dtypeZ)) {
-            throw new Error('Cannot downcast from ' + __dep__.dTypeToString(dtypeY) + ' to ' +
-                __dep__.dTypeToString(dtypeX) + ' when performing in-place operation.');
+        if (inPlace && DTypeHelper.isWiderType(dtypeX, dtypeZ)) {
+            throw new Error('Cannot downcast from ' + DTypeHelper.dTypeToString(dtypeY) + ' to ' +
+                DTypeHelper.dTypeToString(dtypeX) + ' when performing in-place operation.');
         }
 #endif
         if (isYScalar) {
@@ -318,7 +317,7 @@ if (infoY.isComplex) {
  */
 export const TT_BLOCK_TEMPLATE =
 `var results, shapeX, shapeY, shapeZ;
-results = __dep__.checkBroadcastingCompatibility(infoX.originalShape, infoY.originalShape);
+results = ShapeHelper.checkBroadcastingCompatibility(infoX.originalShape, infoY.originalShape);
 shapeX = results.shapeX;
 shapeY = results.shapeY;
 shapeZ = results.shapeZ;
@@ -339,7 +338,7 @@ if (results.exact) {
     z = Tensor.zeros(shapeZ, dtypeZ);
 #else
     if (inPlace) {
-        if (!__dep__.compareShape(shapeX, shapeZ)) {
+        if (!ShapeHelper.compareShape(shapeX, shapeZ)) {
             throw new Error('Cannot perform in-place operations when the output shape different from that of the first operand.');
         }
         z = x;
@@ -438,9 +437,9 @@ if (infoX.isComplex) {
 export const TT_BROADCAST_BLOCK_TEMPLATE =
 `// Because the number of dimensions are not fixed, we cannot use for loops here directly.
 // We will use recursion here.
-var stridesX = __dep__.computeStrides(shapeX);
-var stridesY = __dep__.computeStrides(shapeY);
-var stridesZ = __dep__.computeStrides(shapeZ);
+var stridesX = ShapeHelper.computeStrides(shapeX);
+var stridesY = ShapeHelper.computeStrides(shapeY);
+var stridesZ = ShapeHelper.computeStrides(shapeZ);
 reZ = z.realData;
 #if NO_COMPLEX_INPUT
 #if OUTPUT_RR_COMPLEX
