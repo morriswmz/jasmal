@@ -4,7 +4,7 @@
         "target": "es5",
         "declaration": true,
         "sourceMap": true,
-        "rootDir": "./src",
+        "rootDir": "./src/jasmal",
         "outDir": "./dist",
         "strictNullChecks": true,
         "noUnusedLocals": true,

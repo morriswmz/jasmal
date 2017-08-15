@@ -12,7 +12,7 @@
         "moduleResolution": "node"
     },
     "include": [
-        "src/index.ts",
-        "src/lib/**/*"
+        "src/jasmal/index.ts",
+        "src/jasmal/lib/**/*"
     ]
 }
