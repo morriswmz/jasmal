@@ -2,6 +2,13 @@ import { TemplateEngine } from './templateEngine';
 
 export abstract class OpGeneratorBase {
 
+    /**
+     * Name of the object used to inject dependencies.
+     * In the generated functions, the dependencies are accessed via
+     * `__dep__.Dependency`.
+     */
+    public readonly DEP_OBJ_NAME = '__dep__';
+
     protected _engine: TemplateEngine;
 
     protected constructor() {
@@ -33,6 +40,10 @@ export abstract class OpGeneratorBase {
         return result;
     }
 
+    /**
+     * Converts inline functions to string.
+     * @param fs Functions to be converted.
+     */
     protected _flattenInlineFunctions(fs: {[key: string]: Function}): string {
         let result = '';
         for (let key in fs) {
@@ -52,6 +63,18 @@ export abstract class OpGeneratorBase {
             }
         }
         return result;
+    }
+
+    /**
+     * Generate the code block to import dependencies.
+     * @param depNames Dependency names (accessible from depObjName).
+     * @example
+     *  _generateDependencyBlock('__dep__', ['Core', 'Utils']);
+     * // var Core = __dep__.Core;
+     * // var Utils = __dep__.Utils;
+     */
+    protected _generateDependencyBlock(depNames: string[]): string {
+        return depNames.map(x => `var ${x} = ${this.DEP_OBJ_NAME}.${x};`).join('\n');
     }
     
 }

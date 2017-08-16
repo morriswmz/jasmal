@@ -19,6 +19,7 @@ export class ExtendChain<S> {
 }
 
 export class ObjectHelper {
+
     public static isTypedArray(x: any): x is TypedArray {
         return (x instanceof Float64Array) ||
             (x instanceof Float32Array) || 
@@ -43,6 +44,16 @@ export class ObjectHelper {
 
     public static createExtendChain<S>(src: S): ExtendChain<S> {
         return new ExtendChain(src);
+    }
+
+    public static properties(obj: object): string[] {
+        let result: string[] = [];
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                result.push(prop);
+            }
+        }
+        return result;
     }
 
 }

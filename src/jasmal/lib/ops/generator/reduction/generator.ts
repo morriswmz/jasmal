@@ -7,6 +7,7 @@ import { ShapeHelper } from '../../../helper/shapeHelper';
 import { DataHelper } from '../../../helper/dataHelper';
 import { T_R_BLOCK_TEMPLATE, T_C_BLOCK_TEMPLATE, REDUCTION_OP_TEMPLATE,
          S_BLOCK_TEMPLATE, T_BLOCK_TEMPLATE } from './templates';
+import { ObjectHelper } from '../../../helper/objHelper';
 
 export type GenericReductionOp = (x: OpInput, axis?: number, keepDims?: boolean) => OpOutput;
 
@@ -17,7 +18,7 @@ export interface ReductionOpDependencies {
     ComplexNumber: Function;
     DataHelper: Function;
     ShapeHelper: Function;
-    determineOutputType: (t: DType, isComplex: boolean) => DType | undefined;
+    outputDTypeResolver: (t: DType, isComplex: boolean) => DType | undefined;
 }
 
 export interface ReductionOpConfig {
@@ -45,25 +46,27 @@ export class ReductionOpGenerator extends OpGeneratorBase {
     }
 
     public makeRealOnlyOp(fReal: RIROReducer, config: ReductionOpConfig = {}): GenericReductionOp {
+        let deps = this._getDependencies(config);
         let funcBody = this.generateOpFuncBody({
             NO_COMPLEX_INPUT: true,
             OUTPUT_INDICES: false,
             OUTPUT_R_COMPLEX: false,
             OUTPUT_C_COMPLEX: false
-        });
-        let fn = new Function('__dep__', 'fReal', funcBody);
-        return fn(this._getDependencies(config), fReal);
+        }, ObjectHelper.properties(deps));
+        let fn = new Function(this.DEP_OBJ_NAME, 'fReal', funcBody);
+        return fn(deps, fReal);
     }
 
     public makeRealOnlyOpWithIndexOutput(fReal: RIRIOReducer, config?: ReductionOpConfig): ReductionOpWithIndexOutput {
+        let deps = this._getDependencies(config);
         let funcBody = this.generateOpFuncBody({
             NO_COMPLEX_INPUT: true,
             OUTPUT_INDICES: true,
             OUTPUT_R_COMPLEX: false,
             OUTPUT_C_COMPLEX: false
-        });
-        let fn = new Function('__dep__', 'fReal', funcBody);
-        return fn(this._getDependencies(config), fReal);
+        }, ObjectHelper.properties(deps));
+        let fn = new Function(this.DEP_OBJ_NAME, 'fReal', funcBody);
+        return fn(deps, fReal);
     }
 
     public makeOp(fReal: RIROReducer, fComplex: CICOReducer,
@@ -75,22 +78,24 @@ export class ReductionOpGenerator extends OpGeneratorBase {
     public makeOp(fReal: RIROReducer, fComplex: CICOReducer | CIROReducer,
                   outputComplexWhenInputIsComplex: boolean,
                   config?: ReductionOpConfig): GenericReductionOp {
+        let deps = this._getDependencies(config);
         let funcBody = this.generateOpFuncBody({
             NO_COMPLEX_INPUT: false,
             OUTPUT_INDICES: false,
             OUTPUT_R_COMPLEX: false,
             OUTPUT_C_COMPLEX: outputComplexWhenInputIsComplex
-        });
-        let fn = new Function('__dep__', 'fReal', 'fComplex', funcBody);
-        return fn(this._getDependencies(config), fReal, fComplex);
+        }, ObjectHelper.properties(deps));
+        let fn = new Function(this.DEP_OBJ_NAME, 'fReal', 'fComplex', funcBody);
+        return fn(deps, fReal, fComplex);
     }
 
-    public generateOpFuncBody(config: {[key: string]: boolean}): string {
+    public generateOpFuncBody(config: {[key: string]: boolean}, depNames: string[]): string {
         let tBlockMap = {
             '$T_R_BLOCK': this._engine.generate(T_R_BLOCK_TEMPLATE, {}, config),
             '$T_C_BLOCK': config.NO_COMPLEX_INPUT ? '' : this._engine.generate(T_C_BLOCK_TEMPLATE, {}, config)
         }
         let mainBlockMap = {
+            '$Dependencies': this._generateDependencyBlock(depNames),
             '$S_BLOCK': this._engine.generate(S_BLOCK_TEMPLATE, {}, config),
             '$T_BLOCK': this._engine.generate(T_BLOCK_TEMPLATE, tBlockMap, config)
         };
@@ -103,7 +108,7 @@ export class ReductionOpGenerator extends OpGeneratorBase {
             ComplexNumber: ComplexNumber,
             ShapeHelper: ShapeHelper,
             DataHelper: DataHelper,
-            determineOutputType: config && config.outputDTypeResolver
+            outputDTypeResolver: config && config.outputDTypeResolver
                 ? config.outputDTypeResolver
                 : OutputDTypeResolver.uNoChange 
         };

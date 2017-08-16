@@ -30,11 +30,7 @@ import { OpInputType } from '../../../commonTypes';
  */
 export const BIN_EL_OP_TEMPLATE =
 `'use strict';
-var Tensor = __dep__.Tensor;
-var ComplexNumber = __dep__.ComplexNumber;
-var CMath = __dep__.CMath;
-var ShapeHelper = __dep__.ShapeHelper;
-var DTypeHelper = __dep__.DTypeHelper;
+$Dependencies
 $InlineFunctions
 return function (x, y, inPlace) {
     // process inputs
@@ -83,7 +79,7 @@ return function (x, y, inPlace) {
     var reZ, imZ, tmp1, tmp2, tmp3, tmp4, z, s;
     var i = 0;
     // check dtype
-    dtypeZ = __dep__.outputDTypeResolver(dtypeX, infoX.isComplex, dtypeY, infoY.isComplex);
+    dtypeZ = outputDTypeResolver(dtypeX, infoX.isComplex, dtypeY, infoY.isComplex);
     if (dtypeZ == undefined) {
         throw new Error('Operation between ' + DTypeHelper.dTypeToString(dtypeX) + ' and ' 
             + DTypeHelper.dTypeToString(dtypeY) + ' is not available.');

@@ -8,6 +8,7 @@ import { UNARY_OP_TEMPLATE, S_BLOCK_TEMPLATE, T_BLOCK_TEMPLATE } from './unaryOp
 import { BIN_EL_OP_TEMPLATE, SS_BLOCK_TEMPLATE, ST_BLOCK_TEMPLATE,
          TS_BLOCK_TEMPLATE, TT_BLOCK_TEMPLATE, TT_NORMAL_BLOCK_TEMPLATE,
          TT_BROADCAST_SUB_BLOCK_TEMPLATE, TT_BROADCAST_BLOCK_TEMPLATE } from './binaryOpTemplates';
+import { ObjectHelper } from '../../../helper/objHelper';
 
 /**
  * General rules:
@@ -31,7 +32,7 @@ export type OneParamUnaryOp = (x: OpInputInternal, p: number, inPlace?: boolean)
 /**
  * Defines the core operations.
  */
-export interface BinaryEWOpTemplate {
+export interface BinaryOpTemplate {
     /**
      * A template that defines the operation between two real operands.
      * Available symbols: $reX, $reY, $reZ, $tmp1, $tmp2, $tmp3
@@ -68,22 +69,24 @@ export interface BinaryEWOpTemplate {
     opCC?: string;
 }
 
-export interface UnaryEWOpConfig {
-    outputDTypeResolver?: (t: DType, isComplex: boolean) => DType | undefined;
+export interface CommonOpConfig {
     noInPlaceOperation?: boolean;
     inlineFunctions?: {[key: string]: Function};
+    extraDependencies?: {[key: string]: any};
 }
 
-export interface BinaryEWOpConfig {
+export interface UnaryOpConfig extends CommonOpConfig {
+    outputDTypeResolver?: (t: DType, isComplex: boolean) => DType | undefined;
+}
+
+export interface BinaryOpConfig extends CommonOpConfig {
     /**
      * Default value is OutputDTypeResolver.bWider.
      */
     outputDTypeResolver?: (t1: DType, isComplex1: boolean, t2: DType, isComplex2: boolean) => DType | undefined;
-    noInPlaceOperation?: boolean;
-    inlineFunctions?: {[key: string]: Function};
 }
 
-export interface UnaryEWOpTemplate {
+export interface UnaryOpTemplate {
     /**
      * A template that defines the operation on a real operand.
      * Available symbols: $reX, $reY, $imY, $tmp1, $tmp2, $tmp3
@@ -118,6 +121,7 @@ interface OpCommonDependencies {
     CMath: Function;
     ShapeHelper: Function;
     DTypeHelper: Function;
+    [key: string]: any;
 }
 
 interface BinaryOpDependencies extends OpCommonDependencies {
@@ -139,24 +143,24 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         return ElementWiseOpGenerator._instance;
     }
 
-    public makeUnaryOp(opTemplate: UnaryEWOpTemplate,
-                       opConfig?: UnaryEWOpConfig): GenericUnaryOp {
-        let funcBody = this.generateUnaryOpFuncBody(opTemplate, opConfig);
+    public makeUnaryOp(opTemplate: UnaryOpTemplate,
+                       opConfig?: UnaryOpConfig): GenericUnaryOp {
         let deps = this._getUnaryOpDependencies(opConfig);
-        let fn = (new Function('__dep__', funcBody))(deps);
+        let funcBody = this.generateUnaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), opConfig);
+        let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
         return fn;
     }
 
-    public makeOneParamUnaryOp(opTemplate: UnaryEWOpTemplate,
-                               opConfig?: UnaryEWOpConfig): OneParamUnaryOp {
-        let funcBody = this.generateUnaryOpFuncBody(opTemplate, opConfig, true);
+    public makeOneParamUnaryOp(opTemplate: UnaryOpTemplate,
+                               opConfig?: UnaryOpConfig): OneParamUnaryOp {
         let deps = this._getUnaryOpDependencies(opConfig);
-        let fn = (new Function( '__dep__', funcBody))(deps);
+        let funcBody = this.generateUnaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), opConfig, true);
+        let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
         return fn;
     }
 
-    private _getUnaryOpDependencies(opConfig?: UnaryEWOpConfig): UnaryOpDependencies {
-        return {
+    private _getUnaryOpDependencies(opConfig?: UnaryOpConfig): UnaryOpDependencies {
+        let base = {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
             CMath: CMath,
@@ -165,10 +169,14 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
             outputDTypeResolver: opConfig && opConfig.outputDTypeResolver
                 ? opConfig.outputDTypeResolver : OutputDTypeResolver.uNoChange,
         };
+        return opConfig && opConfig.extraDependencies
+            ? ObjectHelper.extend(base, opConfig.extraDependencies)
+            : base;
     }
 
-    public generateUnaryOpFuncBody(opTemplate: UnaryEWOpTemplate,
-                                   opConfig?: UnaryEWOpConfig,
+    public generateUnaryOpFuncBody(opTemplate: UnaryOpTemplate,
+                                   depNames: string[],
+                                   opConfig?: UnaryOpConfig,
                                    hasParam?: boolean): string {
         // check templates
         // we allow complex input by default
@@ -228,19 +236,26 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         }
         const blockMap = {
             '$InlineFunctions': this._flattenInlineFunctions(opConfig && opConfig.inlineFunctions ? opConfig.inlineFunctions : {}),
+            '$Dependencies': this._generateDependencyBlock(depNames),
             '$TBlock': this._engine.generate(T_BLOCK_TEMPLATE, blockMapTensor, templateConfig),
             '$SBlock': this._engine.generate(S_BLOCK_TEMPLATE, blockMapScalar, templateConfig)
         }
         return this._engine.generate(UNARY_OP_TEMPLATE, blockMap, templateConfig);
     }
 
-    public makeBinaryOp(opTemplate: BinaryEWOpTemplate,
-                        config?: BinaryEWOpConfig): GenericBinaryOp {
-        let funcBody = this.generateBinaryOpFuncBody(opTemplate, config);
+    public makeBinaryOp(opTemplate: BinaryOpTemplate,
+                        config?: BinaryOpConfig): GenericBinaryOp {
+        let deps = this._getBinaryOpDependencies(config);
+        let funcBody = this.generateBinaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), config);
+        let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
+        return fn;
+    }
+
+    private _getBinaryOpDependencies(config?: BinaryOpConfig): BinaryOpDependencies {
         let outputDTypeResolver = (config && config.outputDTypeResolver)
             ? config.outputDTypeResolver
             : OutputDTypeResolver.bWider;
-        let deps: BinaryOpDependencies = {
+        let base: BinaryOpDependencies = {
             Tensor: Tensor,
             ComplexNumber: ComplexNumber,
             CMath: CMath,
@@ -248,11 +263,12 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
             DTypeHelper: DTypeHelper,
             outputDTypeResolver: outputDTypeResolver,
         };
-        let fn = (new Function('__dep__', funcBody))(deps);
-        return fn;
+        return config && config.extraDependencies
+            ? ObjectHelper.extend(base, config.extraDependencies)
+            : base;
     }
 
-    public generateBinaryOpFuncBody(opTemplate: BinaryEWOpTemplate, opConfig?: BinaryEWOpConfig): string {
+    public generateBinaryOpFuncBody(opTemplate: BinaryOpTemplate, depNames: string[], opConfig?: BinaryOpConfig): string {
         let realInputOnly = false;
         if (opTemplate.opCR == undefined && opTemplate.opRC == undefined && opTemplate.opCC == undefined) {
             realInputOnly = true;
@@ -284,6 +300,7 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         }
         const blockMap = {
             '$InlineFunctions': this._flattenInlineFunctions(opConfig && opConfig.inlineFunctions ? opConfig.inlineFunctions : {}),
+            '$Dependencies': this._generateDependencyBlock(depNames),
             '$SSBlock': this._compileSSBlock(opTemplate, templateConfig),
             '$STBlock': this._compileSTBlock(opTemplate, templateConfig),
             '$TSBlock': this._compileTSBlock(opTemplate, templateConfig),
@@ -292,7 +309,7 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         return this._engine.generate(BIN_EL_OP_TEMPLATE, blockMap, templateConfig);
     }
 
-    private _compileSSBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
+    private _compileSSBlock(opTemplate: BinaryOpTemplate, templateConfig: {[key: string]: boolean}): string {
         const symbolMap = {
             '$reX': 'reXScalar',
             '$imX': 'imXScalar',
@@ -320,7 +337,7 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         return this._engine.generate(SS_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
-    private _compileSTBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
+    private _compileSTBlock(opTemplate: BinaryOpTemplate, templateConfig: {[key: string]: boolean}): string {
         const symbolMap = {
             '$reX': 'reXScalar',
             '$imX': 'imXScalar',
@@ -348,7 +365,7 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         return this._engine.generate(ST_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
-    private _compileTSBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
+    private _compileTSBlock(opTemplate: BinaryOpTemplate, templateConfig: {[key: string]: boolean}): string {
         const symbolMap = {
             '$reX': 'reX[i]',
             '$imX': 'imX[i]',
@@ -376,7 +393,7 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         return this._engine.generate(TS_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
-    private _compileTTBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
+    private _compileTTBlock(opTemplate: BinaryOpTemplate, templateConfig: {[key: string]: boolean}): string {
         const blockMap = {
             '$TTNormalBlock': this._compileTTNormalBlock(opTemplate, templateConfig),
             '$TTBroadcastBlock': this._compileTTBroadcastBlock(opTemplate, templateConfig)
@@ -384,7 +401,7 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         return this._engine.generate(TT_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
-    private _compileTTNormalBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
+    private _compileTTNormalBlock(opTemplate: BinaryOpTemplate, templateConfig: {[key: string]: boolean}): string {
         const symbolMap = {
             '$reX': 'reX[i]',
             '$imX': 'imX[i]',
@@ -412,7 +429,7 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         return this._engine.generate(TT_NORMAL_BLOCK_TEMPLATE, blockMap, templateConfig);
     }
 
-    private _compileTTBroadcastBlock(opTemplate: BinaryEWOpTemplate, templateConfig: {[key: string]: boolean}): string {
+    private _compileTTBroadcastBlock(opTemplate: BinaryOpTemplate, templateConfig: {[key: string]: boolean}): string {
         const symbolMapNormal = {
             '$reX': 'reX[offsetX + i]',
             '$imX': 'imX[offsetX + i]',

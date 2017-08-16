@@ -7,12 +7,7 @@ import { OpInputType } from '../../../commonTypes';
 
 export const UNARY_OP_TEMPLATE =
 `'use strict';
-var Tensor = __dep__.Tensor;
-var ComplexNumber = __dep__.ComplexNumber;
-var CMath = __dep__.CMath;
-var ShapeHelper = __dep__.ShapeHelper;
-var DTypeHelper = __dep__.DTypeHelper;
-$InlineFunctions
+$Dependencies
 #if HAS_PARAM
 return function(x, param, inPlace) {
 #else
@@ -47,7 +42,7 @@ return function(x, inPlace) {
     var dtypeX = infoX.originalDType, dtypeY;
     var reX = infoX.reArr, imX = infoX.imArr, reY, imY, tmp1, tmp2, tmp3, tmp4, y;
     var i = 0;
-    dtypeY = __dep__.outputDTypeResolver(dtypeX, infoX.isComplex);
+    dtypeY = outputDTypeResolver(dtypeX, infoX.isComplex);
     if (dtypeY == undefined) {
         throw new Error('The operation on ' + DTypeHelper.dTypeToString(dtypeX) + ' is not available.');
     }

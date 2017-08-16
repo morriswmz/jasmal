@@ -10,10 +10,7 @@ import { DType } from '../../../dtype';
  */
 export const REDUCTION_OP_TEMPLATE =
 `'use strict';
-var Tensor = __dep__.Tensor;
-var ComplexNumber = __dep__.ComplexNumber;
-var DataHelper = __dep__.DataHelper;
-var ShapeHelper = __dep__.ShapeHelper;
+$Dependencies
 return function(x, axis, keepDims) {
     if (axis == undefined) axis = -1;
     var keepDims = keepDims || false;
@@ -28,7 +25,7 @@ return function(x, axis, keepDims) {
     }
 #endif
     var tmp;
-    var outputDType = __dep__.determineOutputType(X.dtype, isInputComplex);
+    var outputDType = outputDTypeResolver(X.dtype, isInputComplex);
     if (outputDType == undefined) {
         throw new Error('Failed to determine the output dtype.');
     }
