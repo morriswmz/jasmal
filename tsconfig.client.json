@@ -6,7 +6,7 @@
         "declaration": false,
         "sourceMap": true,
         "rootDir": "./src",
-        "outFile": "dist/client/jasmal.js",
+        "outFile": "dist/jasmal/client/jasmal.js",
         "strictNullChecks": true,
         "removeComments": true,
         "moduleResolution": "node"

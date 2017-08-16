@@ -37,52 +37,63 @@ export class MatrixOpProviderFactory {
             return m;
         };
 
-        const opDiag = (x: OpInput): Tensor => {
+        const opDiag = (x: OpInput, k: number = 0): Tensor => {
             let X = Tensor.analyzeOpInput(x);
-            if (X.hasOnlyOneElement) {
+            if (X.isInputScalar) {
                 return Tensor.scalar(X.re, X.im);
             } else {
                 let Y: Tensor;
                 let reX = X.reArr;
                 let imX = X.imArr;
                 let reY: DataBlock, imY: DataBlock;
-                let n: number;
+                let n: number, minI: number, maxI: number;
                 if (X.originalShape.length === 1) {
                     // vector -> diagonal matrix
-                    n = reX.length;
-                    Y = Tensor.zeros([reX.length, reX.length], X.originalDType);
+                    n = reX.length + Math.abs(k);
+                    minI = k >= 0 ? 0 : -k;
+                    maxI = minI + reX.length - 1;
+                    Y = Tensor.zeros([n, n], X.originalDType);
                     reY = Y.realData;
                     if (X.isComplex) {
                         Y.ensureComplexStorage();
                         imY = Y.imagData;
-                        for (let i = 0;i < n;i++) {
-                            reY[i * n + i] = reX[i];
-                            imY[i * n + i] = imX[i];
+                        for (let i = minI;i <= maxI;i++) {
+                            reY[i * n + i + k] = reX[i - minI];
+                            imY[i * n + i + k] = imX[i - minI];
                         }
                     } else {
-                        for (let i = 0;i < n;i++) {
-                            reY[i * n + i] = reX[i];
+                        for (let i = minI;i <= maxI;i++) {
+                            reY[i * n + i + k] = reX[i - minI];
                         }
                     }
                 } else if (X.originalShape.length === 2) {
                     // extra matrix diagonals
+                    if (k <= -X.originalShape[0] || k >= X.originalShape[1]) {
+                        throw new Error('The specified diagonal does not exist.');
+                    }
                     n = Math.min(X.originalShape[0], X.originalShape[1]);
-                    Y = Tensor.zeros([n], X.originalDType);
+                    minI = k >= 0 ? 0 : -k;
+                    if (k >= 0) {
+                        maxI = Math.min(X.originalShape[1] - k - 1, n - 1);
+                    } else {
+                        maxI = Math.min(X.originalShape[0] - 1, minI + n - 1);
+                    }
+                    Y = Tensor.zeros([maxI - minI + 1], X.originalDType);
                     reY = Y.realData;
                     if (X.isComplex) {
                         Y.ensureComplexStorage();
                         imY = Y.imagData;
-                        for (let i = 0;i < n;i++) {
-                            reY[i] = reX[i * X.originalShape[1] + i];
-                            imY[i] = imX[i * X.originalShape[1] + i];
+                        for (let i = minI;i <= maxI;i++) {
+                            reY[i - minI] = reX[i * X.originalShape[1] + i + k];
+                            imY[i - minI] = imX[i * X.originalShape[1] + i + k];
                         }
                     } else {
-                        for (let i = 0;i < n;i++) {
-                            reY[i] = reX[i * X.originalShape[1] + i];
+                        for (let i = minI;i <= maxI;i++) {
+                            reY[i - minI] = reX[i * X.originalShape[1] + i + k];
                         }
                     }
                 } else {
-                    throw new Error('Matrix or vector expected.')
+                    throw new Error('Matrix, vector, or scalar expected.')
                 }
                 return Y;
             }

@@ -146,6 +146,118 @@ describe('isHermitian()', () => {
     });
 });
 
+describe('diag()', () => {
+    it('should throw when input is not a matrix/vector', () => {
+        let case1 = () => T.diag([[[1]]]);
+        expect(case1).toThrow();
+    });
+    let A1 = T.fromArray(
+        [[ 0,  1,  2,  3,  4],
+         [ 5,  6,  7,  8,  9],
+         [10, 11, 12, 13, 14]]
+    );
+    let A2 = T.fromArray(
+        [[ 0, -1,  -2],
+         [-3, -4,  -5],
+         [-5, -6,  -7],
+         [-8, -9, -10]],
+        [[0, 1,  2],
+         [3, 4,  5],
+         [5, 6,  7],
+         [8, 9, 10]]
+    );
+    it('should extract the main diagonal of a real matrix', () => {
+        let actual = T.diag(A1);
+        let expected = T.fromArray([0, 6, 12]);
+        checkTensor(actual, expected);
+    });
+    it('should extract the first upper diagonal of a real matrix', () => {
+        let actual = T.diag(A1, 1);
+        let expected = T.fromArray([1, 7, 13]);
+        checkTensor(actual, expected);
+    });
+    it('should extract the last upper diagonal of a real matrix', () => {
+        let actual = T.diag(A1, A1.shape[1] - 1);
+        let expected = T.fromArray([4]);
+        checkTensor(actual, expected);
+    });
+    it('should extract the first lower diagonal of a real matrix', () => {
+        let actual = T.diag(A1, -1);
+        let expected = T.fromArray([5, 11]);
+        checkTensor(actual, expected);
+    });
+    it('should extract the main diagonal of a complex matrix', () => {
+        let actual = T.diag(A2);
+        let expected = T.fromArray([0, -4, -7], [0, 4, 7]);
+        checkTensor(actual, expected);
+    });
+    it('should extract the first upper diagonal of a complex matrix', () => {
+        let actual = T.diag(A2, 1);
+        let expected = T.fromArray([-1, -5], [1, 5]);
+        checkTensor(actual, expected);
+    });
+    it('should extract the first lower diagonal of a complex matrix', () => {
+        let actual = T.diag(A2, -1);
+        let expected = T.fromArray([-3, -6, -10], [3, 6, 10]);
+        checkTensor(actual, expected);
+    });
+    it('should extract the last lower diagonal of a complex matrix', () => {
+        let actual = T.diag(A2, -3);
+        let expected = T.fromArray([-8], [8]);
+        checkTensor(actual, expected);
+    });
+    it('should not change the data type when extracting the diagonal elements', () => {
+        let X = T.ones([3, 3], T.INT32);
+        let x = T.diag(X);
+        expect(x.dtype).toEqual(X.dtype);
+    });
+    it('should throw if k is out of bounds', () => {
+        let case1 = () => T.diag(A1, 5);
+        let case2 = () => T.diag(A1, -6);
+        expect(case1).toThrow();
+        expect(case2).toThrow();
+    });
+
+    it('should create a real matrix with the specified vector as the main diagonal', () => {
+        let actual = T.diag([1, 2, 3]);
+        let expected = T.fromArray([[1, 0, 0], [0, 2, 0], [0, 0, 3]]);
+        checkTensor(actual, expected);
+    });
+    it('should create a real matrix with the specified vector as the 2nd upper diagonal', () => {
+        let actual = T.diag([1, 2, 3], 2);
+        let expected = T.fromArray(
+            [[0, 0, 1, 0, 0],
+             [0, 0, 0, 2, 0],
+             [0, 0, 0, 0, 3],
+             [0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0]]
+        );
+        checkTensor(actual, expected);
+    });
+    it('should create a complex matrix with the specified vector as the 2nd lower diagonal', () => {
+        let z = T.fromArray([1, 2, 3], [-1, -2, -3]);
+        let actual = T.diag(z, -2);
+        let expected = T.fromArray(
+            [[0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0],
+             [1, 0, 0, 0, 0],
+             [0, 2, 0, 0, 0],
+             [0, 0, 3, 0, 0]],
+            [[ 0,  0,  0, 0, 0],
+             [ 0,  0,  0, 0, 0],
+             [-1,  0,  0, 0, 0],
+             [ 0, -2,  0, 0, 0],
+             [ 0,  0, -3, 0, 0]]
+        );
+        checkTensor(actual, expected);
+    });
+    it('should not change the data type when creating a diagonal matrix', () => {
+        let x = T.fromArray([1, 2, 3], [], T.INT32);
+        let X = T.diag(x);
+        expect(X.dtype).toEqual(x.dtype);
+    });
+});
+
 describe('matmul()', () => {
 
     let M = T.fromArray([[8, 1, 6], [3, 5, 7], [4, 9, 2]]);

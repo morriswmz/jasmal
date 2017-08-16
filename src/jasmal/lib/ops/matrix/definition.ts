@@ -50,8 +50,11 @@ export interface IMatrixOpProvider {
      * extracted and a 1D vector of length min(m, n) containing the diagonal
      * elements will be returned.
      * @param x Matrix/vector input.
+     * @param k (Optional) If specified, will operate on the k-th diagonal.
+     *          For upper diagonals, k > 0; for lower diagonals, k < 0; for the
+     *          main diagonal, k = 0. Default value is 0.
      */
-    diag(x: OpInput): Tensor;
+    diag(x: OpInput, k?: number): Tensor;
 
     /**
      * Extracts the lower triangular part of the input matrix as a new matrix.

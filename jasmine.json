@@ -1,4 +1,4 @@
 {
-    "spec_dir": "dist/spec",
+    "spec_dir": "dist/jasmal/spec",
     "spec_files": ["**/*Spec.js"]
 }
