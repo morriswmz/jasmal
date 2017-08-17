@@ -1,4 +1,5 @@
 import { DataBlock } from '../commonTypes';
+import { ObjectHelper } from './objHelper';
 
 export class DataHelper {
 
@@ -12,6 +13,42 @@ export class DataHelper {
             s[i] = i;
         }
         return s;
+    }
+
+    /**
+     * Generates a typed array of natural numbers [0, 1, 2, ..., n].
+     * @param n 
+     */
+    public static naturalNumbersAsInt32(n: number): DataBlock {
+        if (ObjectHelper.hasTypedArraySupport()) {
+            let s = new Int32Array(n);
+            for (let i = 0;i < n;i++) {
+                s[i] = i;
+            }
+            return s;
+        } else {
+            return DataHelper.naturalNumbers(n);
+        }
+    }
+
+    public static allocateFloat64Array(size: number): DataBlock {
+        return ObjectHelper.hasTypedArraySupport()
+            ? new Float64Array(size)
+            : DataHelper.allocateJsArray(size);
+    }
+
+    public static allocateInt32Array(size: number): DataBlock {
+        return ObjectHelper.hasTypedArraySupport()
+            ? new Int32Array(size)
+            : DataHelper.allocateJsArray(size);
+    }
+
+    public static allocateJsArray(size: number): DataBlock {
+        let arr = new Array<number>(size);
+        for (let i = 0;i < size;i++) {
+            arr[i] = 0;
+        }
+        return arr;
     }
 
     public static areArraysEqual(x: ArrayLike<number>, y: ArrayLike<number>): boolean {

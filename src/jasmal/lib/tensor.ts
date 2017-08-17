@@ -116,10 +116,12 @@ export class Tensor {
     public static fromArray(re: any[] | TypedArray, im?: any[] | TypedArray, dtype: DType = DType.FLOAT64): Tensor {
         TensorStorage.ValidateDTypeSupport(dtype);
         if (re == undefined) throw new Error('Real part must be specified.');
-        if (!Array.isArray(re) && !ObjectHelper.isTypedArray(re)) {
+        let isReTypedArray = ObjectHelper.isTypedArray(re);
+        if (!Array.isArray(re) && !isReTypedArray) {
             throw new Error('Array expected.');
         }
-        if (im != undefined && !Array.isArray(im) && !ObjectHelper.isTypedArray(im)) {
+        let isImTypedArray = false;
+        if (im != undefined && !Array.isArray(im) && !(isImTypedArray = ObjectHelper.isTypedArray(im))) {
             throw new Error('Array expected.');
         }
         let isComplex = im && im.length > 0;
@@ -131,8 +133,17 @@ export class Tensor {
         Tensor._validateArrayShape(re, shape, 0);
         if (isComplex) Tensor._validateArrayShape(<any[] | TypedArray>im, shape, 0);
         // copies the data
-        let reStorage = TensorStorage.fromArray(re, shape, dtype);
-        let imStorage = isComplex ? TensorStorage.fromArray(<any[] | TypedArray>im, shape, dtype) : TensorStorage.Empty;
+        let reStorage = isReTypedArray
+            ? TensorStorage.fromTypedArray(<TypedArray>re, dtype)
+            : TensorStorage.fromArray(<any[]>re, shape, dtype);
+        let imStorage: TensorStorage;
+        if (isComplex) {
+            imStorage = isImTypedArray
+                ? TensorStorage.fromTypedArray(<TypedArray>im, dtype)
+                : TensorStorage.fromArray(<any[]>im, shape, dtype);
+        } else {
+            imStorage = TensorStorage.Empty;
+        }
         return new Tensor(reStorage, imStorage, shape);
     }
 

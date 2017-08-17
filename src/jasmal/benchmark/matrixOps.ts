@@ -15,11 +15,6 @@ const T = JasmalEngine.createInstance();
     suite.add(`Real [${dim}x${dim}] x [${dim}x${dim}] Transposed`, () => { T.matmul(A, B, T.MM_TRANSPOSED); }); 
 });
 
-[10, 50, 100, 200].forEach((dim) => {
-    let A = T.rand([dim, dim]);
-    suite.add(`SVD [${dim}x${dim}]`, () => T.svd(A));
-});
-
 suite.on('cycle', e => {
     console.log(String(e.target));
 }).run();

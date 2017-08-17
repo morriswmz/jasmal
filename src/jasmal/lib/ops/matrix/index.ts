@@ -12,6 +12,7 @@ import { Cholesky } from './decomp/chol';
 import { QR } from './decomp/qr';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
+import { DataHelper } from '../../helper/dataHelper';
 
 export class MatrixOpProviderFactory {
 
@@ -406,7 +407,7 @@ export class MatrixOpProviderFactory {
                                 : NormFunction.mat1Norm(shape[0], shape[1], X.realData);
                         case 2:
                             // we use svd to compute matrix 2-norm here
-                            let s = new Array(shape[1]);
+                            let s = DataHelper.allocateFloat64Array(shape[1]);
                             if (X === x) {
                                 // we need to make a copy because svd overwrites
                                 // the input
@@ -565,7 +566,7 @@ export class MatrixOpProviderFactory {
             // the original matrix.
             let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
             let shape = X.shape;
-            let s = new Array(shape[1]);
+            let s = DataHelper.allocateFloat64Array(shape[1]);
             if (X.hasNonZeroComplexStorage()) {
                 SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
             } else {
@@ -591,7 +592,7 @@ export class MatrixOpProviderFactory {
             // the original matrix.
             let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
             let shape = X.shape;
-            let s = new Array(shape[1]);
+            let s = DataHelper.allocateFloat64Array(shape[1]);
             if (X.hasNonZeroComplexStorage()) {
                 SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
             } else {
@@ -722,7 +723,7 @@ export class MatrixOpProviderFactory {
             let isBComplex = B.hasNonZeroComplexStorage();
             if (shapeA[0] === shapeA[1]) {
                 // use LUP for square A
-                let p = new Array(shapeA[0]);
+                let p = DataHelper.allocateInt32Array(shapeA[0]);
                 if (isAComplex) {
                     B.ensureComplexStorage();
                     LU.clu(shapeA[0], A.realData, A.imagData, p);
@@ -739,12 +740,12 @@ export class MatrixOpProviderFactory {
                 // use QR with pivoting
                 let X = Tensor.zeros([shapeA[1], shapeB[1]]);
                 let l = Math.min(shapeA[0], shapeA[1]);
-                let d = new Array(l);
-                let ind = new Array(shapeA[1]);
+                let d = DataHelper.allocateFloat64Array(l);
+                let ind = DataHelper.allocateInt32Array(shapeA[1]);
                 if (isAComplex) {
                     X.ensureComplexStorage();
-                    let phr = new Array(l);
-                    let phi = new Array(l);
+                    let phr = DataHelper.allocateFloat64Array(l);
+                    let phi = DataHelper.allocateFloat64Array(l);
                     QR.cqrp(shapeA[0], shapeA[1], A.realData, A.imagData, d, phr, phi, ind);
                     QR.cqrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, A.imagData,
                         d, ind, phr, phi, B.realData, B.imagData, X.realData, X.imagData);

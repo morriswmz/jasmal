@@ -1,6 +1,7 @@
 import { DataBlock } from '../../../commonTypes';
 import { EPSILON } from '../../../constant';
 import { CMath } from '../../../complexNumber';
+import { DataHelper } from '../../../helper/dataHelper';
 
 export class QR {
 
@@ -23,7 +24,7 @@ export class QR {
         let s: number, t: number, f: number, g: number, h: number;
         let tau = 0;
         l = Math.min(m, n);
-        let c = new Array(n);
+        let c = DataHelper.allocateFloat64Array(n);
         for (i = 0;i < l;i++) {
             d[i] = 0;
         }
@@ -151,7 +152,7 @@ export class QR {
 
     public static ind2p(n: number, ind: ArrayLike<number>, p: DataBlock): void {
         let i: number, t: number;
-        let perm = new Array(n);
+        let perm = DataHelper.naturalNumbersAsInt32(n);
         for (i = 0;i < n;i++) {
             perm[i] = i;
         }
@@ -176,8 +177,8 @@ export class QR {
      * @param p (Output) Matrix P. Must be initialized with zeros.
      */
     public static qrpf(m: number, n: number, a: DataBlock, q: DataBlock, p: DataBlock): void {
-        let d = new Array(Math.min(m, n));
-        let ind = new Array(n);
+        let d = DataHelper.allocateFloat64Array(Math.min(m, n));
+        let ind = DataHelper.allocateInt32Array(n);
         QR.qrp(m, n, a, d, ind);
         QR.qrtrans(m, n, a, d, q);
         QR.ind2p(n, ind, p);
@@ -258,10 +259,7 @@ export class QR {
         // apply permutation
         // Note that ind[] records the column swapping for a, we need to convert
         // it to row swapping records for x.
-        let ind2 = new Array(n);
-        for (i = 0;i < n;i++) {
-            ind2[i] = i;
-        }
+        let ind2 = DataHelper.naturalNumbersAsInt32(n);
         for (i = 0;i < n;i++) {
             if (ind[i] !== i) {
                 for (j = 0;j < p;j++) {
@@ -305,7 +303,7 @@ export class QR {
         let s: number, si: number, sr: number, t: number, f: number, g: number, h: number;
         let tau = 0;
         l = Math.min(m, n);
-        let c = new Array(n);
+        let c = DataHelper.allocateFloat64Array(n);
         for (i = 0;i < l;i++) {
             d[i] = 0;
             phr[i] = 1.0;
@@ -490,10 +488,10 @@ export class QR {
     public static cqrpf(m: number, n: number, ar: DataBlock, ai: DataBlock,
                         qr: DataBlock, qi: DataBlock, p: DataBlock): void {
         let l = Math.min(m, n);
-        let d = new Array(l);
-        let phr = new Array(l);
-        let phi = new Array(l);
-        let ind = new Array(n);
+        let d = DataHelper.allocateFloat64Array(l);
+        let phr = DataHelper.allocateFloat64Array(l);
+        let phi = DataHelper.allocateFloat64Array(l);
+        let ind = DataHelper.allocateInt32Array(n);
         QR.cqrp(m, n, ar, ai, d, phr, phi, ind);
         QR.cqrtrans(m, n, ar, ai, d, phr, phi, qr, qi);
         QR.ind2p(n, ind, p);
@@ -587,10 +585,7 @@ export class QR {
         // apply permutation
         // Note that ind[] records the column swapping for a, we need to convert
         // it to row swapping records for x.
-        let ind2 = new Array(n);
-        for (i = 0;i < n;i++) {
-            ind2[i] = i;
-        }
+        let ind2 = DataHelper.naturalNumbersAsInt32(n);
         for (i = 0;i < n;i++) {
             if (ind[i] !== i) {
                 for (j = 0;j < p;j++) {

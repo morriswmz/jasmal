@@ -1,5 +1,7 @@
 import { TypedArray } from '../commonTypes';
 
+const HAS_TYPED_ARRAY_SUPPORT = Float64Array && (typeof Float64Array === 'function');
+
 export class ExtendChain<S> {
 
     private _obj: S;
@@ -20,7 +22,17 @@ export class ExtendChain<S> {
 
 export class ObjectHelper {
 
+    /**
+     * Checks typed array support.
+     */
+    public static hasTypedArraySupport(): boolean {
+        return HAS_TYPED_ARRAY_SUPPORT;
+    }
+
     public static isTypedArray(x: any): x is TypedArray {
+        if (!HAS_TYPED_ARRAY_SUPPORT) {
+            return false;
+        }
         return (x instanceof Float64Array) ||
             (x instanceof Float32Array) || 
             (x instanceof Int32Array) ||

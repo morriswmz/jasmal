@@ -26,6 +26,7 @@ return function(x, axis, keepDims) {
 #endif
     var tmp;
     var outputDType = outputDTypeResolver(X.dtype, isInputComplex);
+    var indexDType = ObjectHelper.hasTypedArraySupport() ? ${DType.INT32} : ${DType.FLOAT64};
     if (outputDType == undefined) {
         throw new Error('Failed to determine the output dtype.');
     }
@@ -49,7 +50,7 @@ if (isInputComplex) {
 #if OUTPUT_C_COMPLEX
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim), Tensor.scalar(tmp[2], 0, ${DType.INT32}, X.ndim)];
+        return [Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim), Tensor.scalar(tmp[2], 0, indexDType, X.ndim)];
     } else {
         return [tmp[1] === 0 ? tmp[0] : new ComplexNumber(tmp[0], tmp[1]), tmp[2]];
     }
@@ -63,7 +64,7 @@ if (isInputComplex) {
 #else
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], 0, outputDType, X.ndim), Tensor.scalar(tmp[1], 0, ${DType.INT32}, X.ndim)];
+        return [Tensor.scalar(tmp[0], 0, outputDType, X.ndim), Tensor.scalar(tmp[1], 0, indexDType, X.ndim)];
     } else {
         return [tmp[0], tmp[1]];
     }
@@ -77,7 +78,7 @@ tmp = fReal(X.realData, 0, 1, X.size);
 #if OUTPUT_R_COMPLEX
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim), Tensor.scalar(tmp[2], 0, ${DType.INT32}, X.ndim)];
+        return [Tensor.scalar(tmp[0], tmp[1], outputDType, X.ndim), Tensor.scalar(tmp[2], 0, indexDType, X.ndim)];
     } else {
         return [tmp[1] === 0 ? tmp[0] : new ComplexNumber(tmp[0], tmp[1]), tmp[2]];
     }
@@ -91,7 +92,7 @@ tmp = fReal(X.realData, 0, 1, X.size);
 #else
 #if OUTPUT_INDICES
     if (keepDims) {
-        return [Tensor.scalar(tmp[0], 0, outputDType, X.ndim), Tensor.scalar(tmp[1], 0, ${DType.INT32}, X.ndim)];
+        return [Tensor.scalar(tmp[0], 0, outputDType, X.ndim), Tensor.scalar(tmp[1], 0, indexDType, X.ndim)];
     } else {
         return [tmp[0], tmp[1]];
     }
@@ -115,7 +116,7 @@ var stride = stridesX[axis];
 var n = shapeX[axis];
 var reX, reY, imX, imY;
 #if OUTPUT_INDICES
-var Z = Tensor.zeros(shapeY, ${DType.INT32});
+var Z = Tensor.zeros(shapeY, indexDType);
 var reZ = Z.realData;
 #endif
 #if NO_COMPLEX_INPUT

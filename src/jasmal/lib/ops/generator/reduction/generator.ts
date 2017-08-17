@@ -18,6 +18,7 @@ export interface ReductionOpDependencies {
     ComplexNumber: Function;
     DataHelper: Function;
     ShapeHelper: Function;
+    ObjectHelper: Function;
     outputDTypeResolver: (t: DType, isComplex: boolean) => DType | undefined;
 }
 
@@ -108,6 +109,7 @@ export class ReductionOpGenerator extends OpGeneratorBase {
             ComplexNumber: ComplexNumber,
             ShapeHelper: ShapeHelper,
             DataHelper: DataHelper,
+            ObjectHelper: ObjectHelper,
             outputDTypeResolver: config && config.outputDTypeResolver
                 ? config.outputDTypeResolver
                 : OutputDTypeResolver.uNoChange 

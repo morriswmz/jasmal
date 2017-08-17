@@ -55,7 +55,31 @@ describe('Tensor creation', () => {
         it('should create a logic vector', () => {
             let A = T.fromArray([-1, 0.3, 0], [], DType.LOGIC);
             expect(A.dtype).toBe(DType.LOGIC);
-            expect(checkArrayLike(A.realData, [1, 1, 0]));
+            checkArrayLike(A.realData, [1, 1, 0]);
+        });
+        it('should accept typed arrays', () => {
+            let arr = new Float64Array([1, 2, 3]);
+            let A = T.fromArray(arr);
+            expect(A.dtype).toBe(DType.FLOAT64);
+            expect(A.shape).toEqual([arr.length]);
+            checkArrayLike(A.realData, arr);
+            expect(A.hasComplexStorage()).toBeFalsy();
+            // should do copy
+            A.set(0, 100);
+            expect(arr[0]).toBe(1); 
+        });
+        it('should accept typed arrays and create a complex tensor', () => {
+            let arrRe = new Float64Array([1, 2, 3]);
+            let arrIm = new Float32Array([-1, -2, -3]);
+            let A = T.fromArray(arrRe, arrIm);
+            expect(A.dtype).toBe(DType.FLOAT64);
+            expect(A.shape).toEqual([arrRe.length]);
+            checkArrayLike(A.realData, arrRe);
+            checkArrayLike(A.imagData, arrIm);
+            // should do copy
+            A.set(0, 100);
+            expect(arrRe[0]).toBe(1); 
+            expect(arrIm[0]).toBe(-1); 
         });
         it('should throw in invalid cases', () => {
             // empty array

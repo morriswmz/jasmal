@@ -6,6 +6,7 @@
  */
 import { DataBlock } from '../../../commonTypes';
 import { CMath } from '../../../complexNumber';
+import { DataHelper } from '../../../helper/dataHelper';
 
 export class Eigen {
 
@@ -254,7 +255,7 @@ export class Eigen {
      * @param reE (Output) Eigenvectors.
      */
     public static eigSym(n: number, reA: ArrayLike<number>, lambda: DataBlock, reE: DataBlock): void {
-        let tmpArr = new Array(n);
+        let tmpArr = DataHelper.allocateFloat64Array(n);
         Eigen.tred2(n, reA, lambda, tmpArr, reE);
         Eigen.tql2(n, lambda, tmpArr, reE);
     }
@@ -448,9 +449,9 @@ export class Eigen {
      */
     public static eigHermitian(n: number, ar: DataBlock, ai: DataBlock,
                                w: DataBlock, zr: DataBlock, zi: DataBlock): void {
-        let tmpArr1 = new Array(n);
-        let tmpArr2 = new Array(n);
-        let tmpArr3 = new Array(2 * n);
+        let tmpArr1 = DataHelper.allocateFloat64Array(n);
+        let tmpArr2 = DataHelper.allocateFloat64Array(n);
+        let tmpArr3 = DataHelper.allocateFloat64Array(2 * n);
         Eigen.htridi(n, ar, ai, w, tmpArr1, tmpArr2, tmpArr3);
         for (let i = 0;i < n;i++) {
             zr[i * n + i] = 1.0;
@@ -1185,12 +1186,9 @@ export class Eigen {
     public static eigRealGeneral(n: number, a: DataBlock, wr: DataBlock,
                                  wi: DataBlock, zr: DataBlock, zi: DataBlock): void {
         let i: number, j: number;
-        let tmpArr1 = new Array(n);
+        let tmpArr1 = DataHelper.allocateFloat64Array(n);
         let [low, igh] = Eigen.balanc(n, a, tmpArr1);
-        let tmpArr2 = new Array(igh + 1);
-        for (i = 0;i <= igh;i++) {
-            tmpArr2[i] = 0;
-        }
+        let tmpArr2 = DataHelper.allocateFloat64Array(igh + 1);
         Eigen.elmhes(n, low, igh, a, tmpArr2);
         Eigen.eltran(n, low, igh, a, tmpArr2, zr);
         Eigen.hqr2(n, low, igh, a, wr, wi, zr);
@@ -1826,9 +1824,9 @@ export class Eigen {
     public static eigComplexGeneral(n: number, ar: DataBlock, ai: DataBlock,
                                     wr: DataBlock, wi: DataBlock, zr: DataBlock,
                                     zi: DataBlock): void {
-        let scale = new Array(n);
-        let ortr = new Array(n);
-        let orti = new Array(n);
+        let scale = DataHelper.allocateFloat64Array(n);
+        let ortr = DataHelper.allocateFloat64Array(n);
+        let orti = DataHelper.allocateFloat64Array(n);
         for (let i = 0;i < n;i++) {
             scale[i] = 0.0;
             ortr[i] = 0.0;

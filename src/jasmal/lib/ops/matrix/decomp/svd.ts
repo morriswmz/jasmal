@@ -1,5 +1,6 @@
 import { DataBlock } from '../../../commonTypes';
 import { CMath } from '../../../complexNumber';
+import { DataHelper } from '../../../helper/dataHelper';
 
 /**
  * Singular value decomposition.
@@ -24,7 +25,7 @@ export class SVD {
         let its: number, nm: number = 0;
         let f: number, g: number = 0, h: number, c: number;
         let x: number, y: number, z: number;
-        let rv1 = new Array(n);
+        let rv1 = DataHelper.allocateFloat64Array(n);
         // 1. Use Householder reflections to reduce A into bidiagonal form.
         let scale = 0, anorm = 0;
         let s: number = 0; // s acts a an accumulator in various places
@@ -377,11 +378,11 @@ export class SVD {
         let f: number, g: number = 0, h: number, c: number;
         let accRe: number, accIm: number;
         let x: number, y: number, z: number;
-        let rv1 = new Array(n);
-        let phaseRe = new Array(n);
-        let phaseIm = new Array(n);
-        let phase2Re = new Array(n);
-        let phase2Im = new Array(n);
+        let rv1 = DataHelper.allocateFloat64Array(n);
+        let phaseRe = DataHelper.allocateFloat64Array(n);
+        let phaseIm = DataHelper.allocateFloat64Array(n);
+        let phase2Re = DataHelper.allocateFloat64Array(n);
+        let phase2Im = DataHelper.allocateFloat64Array(n);
         for (i = 0;i < n;i++) {
             phaseRe[i] = 1;
             phaseIm[i] = 0;

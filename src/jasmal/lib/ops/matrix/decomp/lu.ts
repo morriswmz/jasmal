@@ -1,5 +1,6 @@
 import { CMath } from '../../../complexNumber';
 import { DataBlock } from '../../../commonTypes';
+import { DataHelper } from '../../../helper/dataHelper';
 
 /**
  * LUP decomposition.
@@ -17,7 +18,7 @@ export class LU {
      */
     public static lu(m: number, reX: DataBlock, p: DataBlock): number {
         LU._fillIndexVector(p);    
-        let scales = new Array<number>(m);
+        let scales = DataHelper.allocateFloat64Array(m);
         let sign = 1;
         // records scaling factor for each row
         for (let i = 0; i < m; i++) {
@@ -105,7 +106,7 @@ export class LU {
      */
     public static clu(m: number, reX: DataBlock, imX: DataBlock, p: DataBlock): number {
         LU._fillIndexVector(p);
-        let scales = new Array<number>(m);
+        let scales = DataHelper.allocateFloat64Array(m);
         let sign = 1;
         // records scaling factor for each row
         for (let i = 0; i < m; i++) {
@@ -206,7 +207,7 @@ export class LU {
         if (n === 1) {
             LU._luSolveColumn(n, reLU, reB);
         } else {
-            let columnCache: number[] = new Array(m);
+            let columnCache: DataBlock = DataHelper.allocateFloat64Array(m);
             for (let j = 0;j < n;j++) {
                 for (let i = 0;i < m;i++) {
                     columnCache[i] = reB[p[i] * n + j];
@@ -238,8 +239,8 @@ export class LU {
         if (n === 1) {
             LU._cluSolveColumn(n, reLU, imLU, reB, imB);
         } else {
-            let columnCacheRe: number[] = new Array(m);
-            let columnCacheIm: number[] = new Array(m);
+            let columnCacheRe: DataBlock = DataHelper.allocateFloat64Array(m);
+            let columnCacheIm: DataBlock = DataHelper.allocateFloat64Array(m);
             for (let j = 0;j < n;j++) {
                 for (let i = 0;i < m;i++) {
                     columnCacheRe[i] = reB[p[i] * n + j];

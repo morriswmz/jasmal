@@ -1,6 +1,8 @@
 import { ShapeHelper } from './helper/shapeHelper';
 import { DType } from './dtype';
 import { TypedArray, DataBlock } from './commonTypes';
+import { ObjectHelper } from './helper/objHelper';
+import { DataHelper } from './helper/dataHelper';
 
 export class TensorStorage {
 
@@ -29,11 +31,6 @@ export class TensorStorage {
     }
 
     /**
-     * Checks typed array support.
-     */
-    public static HasTypedArraySupport = Float64Array && (typeof Float64Array === 'function');
-
-    /**
      * A constant that represents an empty TensorStorage.
      */
     public static Empty: TensorStorage = TensorStorage.create(0, DType.LOGIC);
@@ -43,7 +40,7 @@ export class TensorStorage {
      * @param dtype Data type.
      */
     public static ValidateDTypeSupport(dtype: DType): void {
-        if (!TensorStorage.HasTypedArraySupport) {
+        if (!ObjectHelper.hasTypedArraySupport()) {
             if (!((dtype === DType.FLOAT64) || (dtype === DType.LOGIC))) {
                 throw new Error('When native typed arrays are not available, only DType.LOGIC and DType.FLOAT64 are supported.')
             }
@@ -57,7 +54,7 @@ export class TensorStorage {
      */
     public static create(size: number, dtype: DType = DType.FLOAT64): TensorStorage {
         let data: DataBlock;
-        if (TensorStorage.HasTypedArraySupport) {
+        if (ObjectHelper.hasTypedArraySupport()) {
             switch (dtype) {
                 case DType.LOGIC:
                     data = new Uint8Array(size);
@@ -73,28 +70,45 @@ export class TensorStorage {
             }
         } else {
             TensorStorage.ValidateDTypeSupport(dtype);
-            data = new Array<number>(size);
-            // remember to fill it with zeros
-            for (let i = 0;i < size;i++) {
-                data[i] = 0;
-            }
+            data = DataHelper.allocateJsArray(size);
         }
         return new TensorStorage(data, dtype);
     }
 
     /**
+     * Creates a TensorStorage from a typed array.
+     * @param arr 
+     */
+    public static fromTypedArray(arr: TypedArray, dtype: DType): TensorStorage {
+        switch (dtype) {
+            case DType.LOGIC:
+                let storage = TensorStorage.create(arr.length, dtype);
+                for (let i = 0;i < arr.length;i++) {
+                    storage.setAsLogicAtUnchecked(i, arr[i]);
+                }
+            case DType.INT32:
+                return new TensorStorage(new Int32Array(arr), DType.INT32);
+            case DType.FLOAT64:
+                return new TensorStorage(new Float64Array(arr), DType.FLOAT64);
+            default:
+                throw new Error(`Unknown dtype "${dtype}".`);
+        }
+    }
+
+    /**
      * Creates a TensorStorage from a multi-dimensional JavaScript array.
+     * This function does NOT check if the given shape is valid.
      * @param arr A multi-dimensional JavaScript array storing the tensor data.
      * @param shape Shape of the JavaScript array. This must match the actual
      *  shape of the input array.
      * @param dtype Data type.
      */
-    public static fromArray(arr: any[] | TypedArray, shape: number[], dtype: DType = DType.FLOAT64): TensorStorage {
+    public static fromArray(arr: any[], shape: number[], dtype: DType = DType.FLOAT64): TensorStorage {
         TensorStorage.ValidateDTypeSupport(dtype);
         let strides = ShapeHelper.computeStrides(shape);
         let size = strides[0] * shape[0];
         let storage = TensorStorage.create(size, dtype);
-        let copyFromArray = (arr: any[] | TypedArray, level: number, offset: number) => {
+        let copyFromArray = (arr: any[], level: number, offset: number) => {
             if (level === shape.length - 1) {
                 // final level
                 if (storage.dtype === DType.LOGIC) {
@@ -124,7 +138,7 @@ export class TensorStorage {
      */
     public dataCopy(): TensorStorage {
         let data: DataBlock;
-        if (TensorStorage.HasTypedArraySupport) {
+        if (ObjectHelper.hasTypedArraySupport()) {
             switch (this.dtype) {
                 case DType.LOGIC:
                     data = new Uint8Array(this.data);
@@ -191,7 +205,7 @@ export class TensorStorage {
      */
     public copyAsType(dtype: DType): TensorStorage {
         let data: DataBlock;
-        if (TensorStorage.HasTypedArraySupport) {
+        if (ObjectHelper.hasTypedArraySupport()) {
             switch (dtype) {
                 case DType.LOGIC:
                     data = new Uint8Array(this.data.length);
