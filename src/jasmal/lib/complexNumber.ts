@@ -3,9 +3,17 @@ export class ComplexNumber {
     private _re: number;
     private _im: number;
 
-    constructor(r: number = 0, i: number = 0) {
-        this._re = r;
-        this._im = i;
+    constructor();
+    constructor(tuple: [number, number]);
+    constructor(r: number, i: number);
+    constructor(r: number | number[] = 0, i: number = 0) {
+        if (Array.isArray(r)) {
+            this._re = r[0];
+            this._im = r[1];
+        } else {
+            this._re = r;
+            this._im = i;
+        }
     }
 
     public get re(): number {
