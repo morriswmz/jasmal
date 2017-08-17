@@ -56,8 +56,11 @@ console.log(T.isComplexNumber(c)); // true
 ```
 
 Instead of only allowing tensor objects as inputs, most of the JASMAL functions
-also allows JavaScript arrays, ComplexNumber instances, or numbers as
-inputs. Conversion to tensor objects is automatically performed internally.
+also allows JavaScript arrays (including typed arrays), ComplexNumber instances,
+or numbers as inputs. Conversion to tensor objects is automatically performed,
+and converted tensor objects will **always** have FLOAT64 as the data type.
+If you wish to control the data type, you will need to manually do the
+conversion using `fromArray()`.
 For instance, `T.add([[1], [2]], [[3, 4]])` produces the same result as the 
 following code:
 

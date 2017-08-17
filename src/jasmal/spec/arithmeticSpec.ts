@@ -176,6 +176,21 @@ describe('sub()', () => {
         checkTensor(actual, expected);
     });
 
+    it('should accept typed arrays as inputs', () => {
+        let arrX = new Int32Array([1, 2, 5]);
+        let arrY = new Float64Array([0.5, 2, 1.1]);
+        let actual = T.sub(arrX, arrY);
+        let expected = T.fromArray([0.5, 0, 3.9]);
+        checkTensor(actual, expected);
+    });
+    it('should accept typed arrays as one of the inputs and handle the data type correctly', () => {
+        let x = T.fromArray([1, 2, 3], [], T.INT32);
+        let y = new Float32Array([0.5, -2, 4.6]);
+        let actual = T.sub(x, y);
+        let expected = T.fromArray([0.5, 4, 3 - y[2]]);
+        checkTensor(actual, expected);
+    })
+
     it('should throw when in-place operation is not possible', () => {
         // first operand is not a tensor
         let case1 = () => { T.sub(1, 2, true); };

@@ -25,7 +25,7 @@ export type Scalar = number | ComplexNumber;
  * An input can be a number, a complex number, an array (possibly nested),
  * or a tensor.
  */
-export type OpInput = number | any[] | ComplexNumber | Tensor;
+export type OpInput = number | ComplexNumber | any[] | TypedArray | Tensor;
 
 /**
  * An output can be a number, a complex number, or a tensor.

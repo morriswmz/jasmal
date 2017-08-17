@@ -245,8 +245,10 @@ export class Tensor {
      * Converts compatible data to a tensor.
      * @param x A number, complex number, numerical array, or a tensor.
      */
-    public static toTensor(x: number | ComplexNumber | any[]): Tensor {
+    public static toTensor(x: number | ComplexNumber | any[] | TypedArray): Tensor {
         if (Array.isArray(x)) {
+            return Tensor.fromArray(x);
+        } else if (ObjectHelper.isTypedArray(x)) {
             return Tensor.fromArray(x);
         } else if (x instanceof ComplexNumber) {
             return Tensor.scalar(x);
@@ -387,7 +389,7 @@ export class Tensor {
                 tmp.originalType = OpInputType.Array;
                 return tmp;
             } else {
-                // plain array
+                // plain array or typed array
                 reArr = value;
                 hasOnlyOneElement = value.length === 1;
                 if (hasOnlyOneElement) {

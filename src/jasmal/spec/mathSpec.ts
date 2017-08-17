@@ -14,6 +14,12 @@ describe('abs()', () => {
         checkTensor(T.abs([[-1]]), T.fromArray([[1]]));
         checkTensor(T.abs(T.fromArray([1], [-2])), Tensor.scalar(Math.sqrt(5)));
     });
+    it('should accept typed arrays as inputs (and convert them to FLOAT64 internally)', () => {
+        let arr = new Int32Array([-3, 5]);
+        let actual = T.abs(arr);
+        let expected = T.fromArray([3, 5]);
+        checkTensor(actual, expected);
+    });
     it('should return the absolute values of real numbers', () => {
         let actual = T.abs([-1, 1, NaN, Infinity, -Infinity]);
         let expected = T.fromArray([1, 1, NaN, Infinity, Infinity]);
@@ -39,10 +45,13 @@ describe('abs()', () => {
     it('should throw if in place calculation is not possible', () => {
         // input is a scalar
         let case1 = () => { T.abs(1, true); };
-        // input is a array
+        // input is an array
         let case2 = () => { T.abs([-1, 1], true); };
+        // input is a typed array
+        let case3 = () => { T.abs(new Float32Array([1, 2]), true); }
         expect(case1).toThrow();
         expect(case2).toThrow();
+        expect(case3).toThrow();
     });
 });
 
