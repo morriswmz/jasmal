@@ -9,6 +9,7 @@ import { MatrixModifier, IMatrixOpProvider } from './ops/matrix/definition';
 import { IMathOpProvider } from './ops/math/definition';
 import { ILogicComparisonOpProvider } from './ops/logicComp/definition';
 import { IDataOpProvider } from './ops/data/definition';
+import { IPolynomialOpProvider } from './ops/poly/definition';
 import { RandomOpProviderFactory } from './ops/random';
 import { ArithmeticOpProviderFactory } from './ops/arithmetic';
 import { MathOpProviderFactory } from './ops/math';
@@ -17,6 +18,7 @@ import { CoreOpProviderFactory } from './ops/core';
 import { LogicComparisonOpProviderFactory } from './ops/logicComp';
 import { MatrixOpProviderFactory } from './ops/matrix';
 import { DataOpProviderFactory } from './ops/data';
+import { PolynomialOpProviderFactory } from './ops/poly';
 import { ObjectHelper } from './helper/objHelper';
 import { ElementWiseOpGenerator, ReductionOpGenerator } from './ops/generator';
 
@@ -30,7 +32,7 @@ export interface JasmalOptions {
  */
 export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
     IRandomOpProvider, IArithmeticOpProvider, IMathOpProvider,
-    ILogicComparisonOpProvider, IDataOpProvider {
+    ILogicComparisonOpProvider, IDataOpProvider, IPolynomialOpProvider {
 
     /**
      * Logic data type.
@@ -144,6 +146,7 @@ export class JasmalEngine {
         let mathOpProvider = MathOpProviderFactory.create(elementWiseOpGen);
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create(elementWiseOpGen);
         let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, reductionOpGen);
+        let polyOpProvider = PolynomialOpProviderFactory.create(matrixOpProvider);
         
         let jasmalCore =  {
             LOGIC: DType.LOGIC,
@@ -174,6 +177,7 @@ export class JasmalEngine {
             .extend(mathOpProvider)
             .extend(logicCompOpProvider)
             .extend(dataOpProvider)
+            .extend(polyOpProvider)
             .end();
         
     }
