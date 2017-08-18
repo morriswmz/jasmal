@@ -94,8 +94,10 @@ export interface OpInputInfo {
     /**
      * The shape of the original input. For consistency, if the input type is
      * number or ComplexNumber, the shape will be [1].
+     * Note: this array is marked as readonly. Do not modify the element in this
+     *       array-like object.
      */
-    originalShape: number[];
+    originalShape: ArrayLike<number>;
     /**
      * The type of the original input.
      */

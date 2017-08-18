@@ -87,13 +87,13 @@ export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
      * @param shape The shape of the tensor.
      * @param dtype (Optional) Data type. Default value is FLOAT64.
      */
-    zeros(shape: number[], dtype?: DType): Tensor;
+    zeros(shape: ArrayLike<number>, dtype?: DType): Tensor;
     /**
      * Creates a tensor of the specified shape filled with ones.
      * @param shape The shape of the tensor.
      * @param dtype (Optional) Data type. Default value is FLOAT64.
      */
-    ones(shape: number[], dtype?: DType): Tensor;
+    ones(shape: ArrayLike<number>, dtype?: DType): Tensor;
     /**
      * Creates a tensor from JavaScript arrays (can be nested arrays or typed
      * arrays).

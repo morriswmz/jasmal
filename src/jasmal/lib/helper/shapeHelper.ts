@@ -2,15 +2,15 @@ export interface BroadcastingCheckResult {
     /**
      * Adjusted (by prepending new axis) shape of the first operand.
      */
-    shapeX: number[];
+    shapeX: ArrayLike<number>;
     /**
      * Adjusted (by prepending new axis) shape of the second operand.
      */
-    shapeY: number[];
+    shapeY: ArrayLike<number>;
     /**
      * Shape of the resulting tensor.
      */
-    shapeZ: number[];
+    shapeZ: ArrayLike<number>;
     /**
      * True if the two operands share the exact shape.
      */
@@ -19,7 +19,7 @@ export interface BroadcastingCheckResult {
 
 export class ShapeHelper {
 
-    public static validateShape(shape: number[]): void {
+    public static validateShape(shape: ArrayLike<number>): void {
         if (shape.length === 0 || shape.length == undefined) {
             throw new Error('Shape must be a non-empty array.');
         }
@@ -33,7 +33,7 @@ export class ShapeHelper {
         }
     }
 
-    public static getSizeFromShape(shape: number[]): number {
+    public static getSizeFromShape(shape: ArrayLike<number>): number {
         let s = shape[0];
         for (let i = 1;i < shape.length;i++) {
             s *= shape[i];
@@ -41,7 +41,7 @@ export class ShapeHelper {
         return s;
     }
 
-    public static computeStrides(shape: number[]): number[] {
+    public static computeStrides(shape: ArrayLike<number>): number[] {
         let strides = [1];
         let d = 1;
         for (let i = shape.length - 1;i > 0;i--) {
@@ -51,11 +51,15 @@ export class ShapeHelper {
         return strides;
     }
 
-    public static shapeToString(shape: number[]): string {
-        return `[${shape.join('x')}]`;
+    public static shapeToString(shape: ArrayLike<number>): string {
+        if (Array.isArray(shape)) {
+            return `[${shape.join('x')}]`;
+        } else {
+            return `[${Array.prototype.join.call(shape, 'x')}]`;
+        }
     }
 
-    public static isScalarShape(shape: number[]): boolean {
+    public static isScalarShape(shape: ArrayLike<number>): boolean {
         for (let i = 0;i < shape.length;i++) {
             if (shape[i] !== 1) {
                 return false;
@@ -64,7 +68,7 @@ export class ShapeHelper {
         return true;
     }
 
-    public static getSqueezedShape(shape: number[]): number[] {
+    public static getSqueezedShape(shape: ArrayLike<number>): number[] {
         let newShape: number[] = [];
         for (let i = 0;i < shape.length;i++) {
             if (shape[i] !== 1) {
@@ -77,7 +81,7 @@ export class ShapeHelper {
         return newShape;
     }
 
-    public static compareShape(shape1: number[], shape2: number[]): boolean {
+    public static compareShape(shape1: ArrayLike<number>, shape2: ArrayLike<number>): boolean {
         if (shape1.length !== shape2.length) {
             return false;
         }
@@ -89,7 +93,7 @@ export class ShapeHelper {
         return true;
     }
 
-    public static compareSqueezedShape(shape1: number[], shape2: number[]): boolean {
+    public static compareSqueezedShape(shape1: ArrayLike<number>, shape2: ArrayLike<number>): boolean {
         return ShapeHelper.compareShape(ShapeHelper.getSqueezedShape(shape1), ShapeHelper.getSqueezedShape(shape2));
     }
 
@@ -98,14 +102,16 @@ export class ShapeHelper {
     * @param shapeX Shape of tensor X.
     * @param shapeY Shape of tensor Y.
     */
-    public static checkBroadcastingCompatibility(shapeX: number[], shapeY: number[]): BroadcastingCheckResult {
+    public static checkBroadcastingCompatibility(shapeXIn: ArrayLike<number>, shapeYIn: ArrayLike<number>): BroadcastingCheckResult {
         'use strict';
         // check shape
-        var shapeZ: number[] = [];
+        let shapeZ: number[] = [];
+        let shapeX = <number[]>(Array.isArray(shapeXIn) ? shapeXIn : Array.prototype.slice.call(shapeXIn));
+        let shapeY = <number[]>(Array.isArray(shapeYIn) ? shapeYIn : Array.prototype.slice.call(shapeYIn));
         while (shapeX.length < shapeY.length) shapeX.unshift(1);
         while (shapeY.length < shapeX.length) shapeY.unshift(1);
-        var exact = true;
-        for (var i = 0;i < shapeX.length;i++) {
+        let exact = true;
+        for (let i = 0;i < shapeX.length;i++) {
             if (shapeX[i] !== shapeY[i]) {
                 if (shapeX[i] !== 1 && shapeY[i] !== 1) {
                     throw new Error('Incompatible shape.')

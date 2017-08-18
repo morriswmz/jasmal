@@ -180,10 +180,10 @@ export class Tensor {
      * @param shape Shape of the tensor.
      * @param dtype Data type.
      */
-    public static zeros(shape: number[], dtype: DType = DType.FLOAT64): Tensor {
+    public static zeros(shape: ArrayLike<number>, dtype: DType = DType.FLOAT64): Tensor {
         ShapeHelper.validateShape(shape);
         let re = TensorStorage.create(ShapeHelper.getSizeFromShape(shape), dtype);
-        return new Tensor(re, TensorStorage.Empty, shape);
+        return new Tensor(re, TensorStorage.Empty, Array.isArray(shape) ? shape : Array.prototype.slice.call(shape));
     }
 
     /**
@@ -191,13 +191,13 @@ export class Tensor {
      * @param shape Shape of the tensor.
      * @param dtype Data type.
      */
-    public static ones(shape: number[], dtype: DType = DType.FLOAT64): Tensor {
+    public static ones(shape: ArrayLike<number>, dtype: DType = DType.FLOAT64): Tensor {
         ShapeHelper.validateShape(shape);
         let re = TensorStorage.create(ShapeHelper.getSizeFromShape(shape), dtype);
         for (let i = 0;i < re.data.length;i++) {
             re.data[i] = 1;
         }
-        return new Tensor(re, TensorStorage.Empty, shape);
+        return new Tensor(re, TensorStorage.Empty, Array.isArray(shape) ? shape : Array.prototype.slice.call(shape));
     }
 
     /**
@@ -373,7 +373,9 @@ export class Tensor {
                     isComplex = true;
                 }
             }
-            originalShape = value.shape;
+            // No need to make unnecessary copies here as originalShape is
+            // readonly.
+            originalShape = value._shape;
             originalType = OpInputType.Tensor;
             originalDType = value.dtype;
         } else if (Array.isArray(value) || ObjectHelper.isTypedArray(value)) {
@@ -438,6 +440,7 @@ export class Tensor {
 
     /**
      * Returns the shape of this tensor.
+     * Note: this always returns a copy of the actual shape array.
      */
     public get shape(): number[] {
         return this._shape.slice();
@@ -445,6 +448,7 @@ export class Tensor {
 
     /**
      * Returns the strides of this tensor.
+     * Note: this always returns a copy of the actual strides array.
      */
     public get strides(): number[] {
         return this._strides.slice();

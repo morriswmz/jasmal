@@ -123,7 +123,14 @@ export class MatrixOpProviderFactory {
             if (info.isInputScalar || info.originalShape.length > 2) {
                 throw new Error('Matrix or vector expected.');
             } else {
-                let [m, n] = info.originalShape.length === 1 ? [1, info.originalShape[0]] : info.originalShape;
+                let m: number, n: number;
+                if (info.originalShape.length === 1) {
+                    m = 1;
+                    n = info.originalShape[0];
+                } else {
+                    m = info.originalShape[0];
+                    n = info.originalShape[1];
+                }
                 let Y = Tensor.zeros(info.originalShape, info.originalDType);
                 copyLower(m, n, k, info.reArr, Y.realData);
                 if (info.isComplex) {
@@ -139,7 +146,14 @@ export class MatrixOpProviderFactory {
             if (info.isInputScalar || info.originalShape.length > 2) {
                 throw new Error('Matrix or vector expected.');
             } else {
-                let [m, n] = info.originalShape.length === 1 ? [1, info.originalShape[0]] : info.originalShape;
+                let m: number, n: number;
+                if (info.originalShape.length === 1) {
+                    m = 1;
+                    n = info.originalShape[0];
+                } else {
+                    m = info.originalShape[0];
+                    n = info.originalShape[1];
+                }
                 let Y = Tensor.zeros(info.originalShape, info.originalDType);
                 copyUpper(m, n, k, info.reArr, Y.realData);
                 if (info.isComplex) {

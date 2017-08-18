@@ -28,8 +28,8 @@ export class RandomOpProviderFactory {
         let randnNumber2 = 0;
 
         function rand(): number;
-        function rand(shape: number[]): Tensor;
-        function rand(shape?: number[]): number | Tensor {
+        function rand(shape: ArrayLike<number>): Tensor;
+        function rand(shape?: ArrayLike<number>): number | Tensor {
             if (shape) {
                 let t = Tensor.zeros(shape),
                     re = t.realData;
@@ -43,8 +43,8 @@ export class RandomOpProviderFactory {
         };
 
         function randn(): number;
-        function randn(shape: number[]): Tensor;
-        function randn(shape?: number[]): number | Tensor {
+        function randn(shape: ArrayLike<number>): Tensor;
+        function randn(shape?: ArrayLike<number>): number | Tensor {
             if (shape) {
                 let t = Tensor.zeros(shape),
                     re = t.realData;
@@ -77,8 +77,8 @@ export class RandomOpProviderFactory {
 
         function randi(high: number): number;
         function randi(low: number, high: number): number;
-        function randi(low: number, high: number, shape: number[]): Tensor;
-        function randi(low: number, high?: number, shape?: number[] | undefined): number | Tensor {
+        function randi(low: number, high: number, shape: ArrayLike<number>): Tensor;
+        function randi(low: number, high?: number, shape?: ArrayLike<number> | undefined): number | Tensor {
             if (high == undefined) {
                 high = low;
                 low = 0;
