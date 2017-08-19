@@ -270,9 +270,15 @@ let [As, I] = T.sort(A, 'desc', true);
 
 # Performance
 
-Unfortunately, JavaScript is slow for numerical computations. Therefore,
-multiply two 1000 x 1000 matrices or performing the singular value decomposition
-of a 500 x 500 matrix may take several seconds in the browser.
+Unfortunately, JavaScript is relatively slow for dense numerical computations.
+Therefore, multiply two 1000 x 1000 matrices or performing the singular value
+decomposition of a 500 x 500 matrix may take several seconds in the browser.
+
+For vectorized operations, JASMAL's performance should not deviate too far
+from that of the native JavaScript. However, for scalar operations, JASMAL can
+be slower because of the overheads. For instance, calling `T.sqrt(x)` 1000 times
+for a scalar x is slower than calling `T.sqrt(X)` where `X` is a 1000-element
+tensor object.
 
 Element by element indexing can also be slow with JASMAL because of the overhead
 needed for implementing the flexible indexing schemes. For instance, if you

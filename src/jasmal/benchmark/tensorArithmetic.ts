@@ -3,7 +3,7 @@ import { JasmalEngine } from '../';
 const suite = new BenchMark.Suite();
 const T = JasmalEngine.createInstance();
 
-let n = 50;
+let n = 10;
 
 (() => {
     let x = 1;
@@ -22,9 +22,10 @@ let n = 50;
         for (let i = 0;i < n * n;i++) {
             arrC[i] = -arrA[i]
         }
+        return arrC;
     });
     suite.add('Tensor negation', () => {
-        T.neg(A);;
+        return T.neg(A);;
     });
 })();
 
