@@ -1,4 +1,4 @@
-import { CMath } from '../../../complexNumber';
+import { CMath } from '../../../math/cmath';
 import { DataBlock } from '../../../commonTypes';
 import { DataHelper } from '../../../helper/dataHelper';
 

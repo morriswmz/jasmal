@@ -1,6 +1,6 @@
 import BenchMark = require('benchmark');
 import { JasmalEngine } from '../';
-import { CMath } from '../lib/complexNumber';
+import { CMath } from '../lib/math/cmath';
 const suite = new BenchMark.Suite();
 const T = JasmalEngine.createInstance();
 

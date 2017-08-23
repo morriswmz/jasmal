@@ -1,5 +1,5 @@
 import { DataBlock } from '../../../commonTypes';
-import { CMath } from '../../../complexNumber';
+import { CMath } from '../../../math/cmath';
 import { DataHelper } from '../../../helper/dataHelper';
 
 /**

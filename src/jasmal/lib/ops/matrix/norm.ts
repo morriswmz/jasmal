@@ -1,4 +1,4 @@
-import { CMath } from '../../complexNumber';
+import { CMath } from '../../math/cmath';
 
 export class NormFunction {
 

@@ -1,6 +1,6 @@
 import { DataBlock } from '../../../commonTypes';
 import { EPSILON } from '../../../constant';
-import { CMath } from '../../../complexNumber';
+import { CMath } from '../../../math/cmath';
 import { DataHelper } from '../../../helper/dataHelper';
 
 export class QR {

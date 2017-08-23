@@ -3,7 +3,8 @@ import { OpInputInternal, OpOutput } from '../../../commonTypes';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../../dtype';
 import { ShapeHelper } from '../../../helper/shapeHelper';
 import { Tensor } from '../../../tensor';
-import { ComplexNumber, CMath } from '../../../complexNumber';
+import { ComplexNumber } from '../../../complexNumber';
+import { CMath } from '../../../math/cmath';
 import { UNARY_OP_TEMPLATE, S_BLOCK_TEMPLATE, T_BLOCK_TEMPLATE } from './unaryOpTemplates';
 import { BIN_EL_OP_TEMPLATE, SS_BLOCK_TEMPLATE, ST_BLOCK_TEMPLATE,
          TS_BLOCK_TEMPLATE, TT_BLOCK_TEMPLATE, TT_NORMAL_BLOCK_TEMPLATE,

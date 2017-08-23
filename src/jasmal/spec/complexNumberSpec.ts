@@ -1,4 +1,4 @@
-import { CMath } from '../lib/complexNumber';
+import { CMath } from '../lib/math/cmath';
 import { ComplexNumber } from '../lib/complexNumber';
 import { checkComplex } from './testHelper';
 

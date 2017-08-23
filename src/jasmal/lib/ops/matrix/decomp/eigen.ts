@@ -5,7 +5,7 @@
  * http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg01379.html
  */
 import { DataBlock } from '../../../commonTypes';
-import { CMath } from '../../../complexNumber';
+import { CMath } from '../../../math/cmath';
 import { DataHelper } from '../../../helper/dataHelper';
 
 export class Eigen {
