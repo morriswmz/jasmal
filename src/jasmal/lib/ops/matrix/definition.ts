@@ -57,6 +57,17 @@ export interface IMatrixOpProvider {
     diag(x: OpInput, k?: number): Tensor;
 
     /**
+     * Create a Vandermonde matrix.
+     * @param x An 1D vector specifying the first column of the matrix.
+     * @param n (Optional) Number of columns in the output. Default value is
+     *          the length of x.
+     * @param increasing (Optional) If set to true, the powers increase from
+     *                   left to right. If set to false, the powers increase
+     *                   from right to left. Default value is false.
+     */
+    vander(x: OpInput, n?: number, increasing?: boolean): Tensor;
+
+    /**
      * Extracts the lower triangular part of the input matrix as a new matrix.
      * @param x Input matrix.
      * @param k (Optional) Offset. For upper diagonals, k > 0; for lower

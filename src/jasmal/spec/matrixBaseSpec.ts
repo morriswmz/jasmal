@@ -258,6 +258,55 @@ describe('diag()', () => {
     });
 });
 
+describe('vander()', () => {
+    it('should create a real square Vandermonde matrix with default options', () => {
+        let actual = T.vander([1, 2, 3, 4]);
+        let expected = T.fromArray(
+            [[1, 1, 1, 1],
+             [8, 4, 2, 1],
+             [27, 9, 3, 1],
+             [64, 16, 4, 1]]
+        );
+        checkTensor(actual, expected);
+    });
+    it('should create a real square Vandermonde matrix with increasing = true', () => {
+        let actual = T.vander([1, -2, 5], 4, true);
+        let expected = T.fromArray(
+            [[1, 1, 1, 1],
+             [1, -2, 4, -8],
+             [1, 5, 25, 125]]
+        );
+        checkTensor(actual, expected);
+    });
+    it('should create a complex square Vandermonde matrix with increasing = false', () => {
+        let actual = T.vander(T.fromArray([1, 2, 0.5], [-2, 4, 7]));
+        let expected = T.fromArray(
+            [[-3, 1, 1],
+             [-12, 2, 1],
+             [-48.75, 0.5,1]],
+            [[-4, -2, 0],
+             [16, 4, 0],
+             [7, 7, 0]]
+        );
+        checkTensor(actual, expected);
+    });
+    it('should create a complex square Vandermonde matrix with increasing = true', () => {
+        let actual = T.vander(T.fromArray([0.2, 1.5], [0.8, -2]), 2, true);
+        let expected = T.fromArray(
+            [[1, 0.2],
+             [1, 1.5]],
+            [[0, 0.8],
+             [0, -2]]
+        );
+        checkTensor(actual, expected);
+    });
+    it('should keep the data type', () => {
+        let actual = T.vander(T.fromArray([2, 3], [], T.INT32));
+        let expected = T.fromArray([[2, 1], [3, 1]], [], T.INT32);
+        checkTensor(actual, expected);
+    });
+});
+
 describe('matmul()', () => {
 
     let M = T.fromArray([[8, 1, 6], [3, 5, 7], [4, 9, 2]]);

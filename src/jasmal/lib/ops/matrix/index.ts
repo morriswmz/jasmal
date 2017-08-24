@@ -3,7 +3,7 @@ import { IArithmeticOpProvider } from '../arithmetic/definition';
 import { OpInput, OpOutput, Scalar, DataBlock } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 import { ComplexNumber } from '../../complexNumber';
-import { DType } from '../../dtype';
+import { DType, OutputDTypeResolver } from '../../dtype';
 import { IMatrixBasicSubroutines, BuiltInMBS } from './mbs';
 import { LU } from './decomp/lu';
 import { SVD } from './decomp/svd';
@@ -18,7 +18,7 @@ export class MatrixOpProviderFactory {
 
     public static create(arithmOp: IArithmeticOpProvider, mbs: IMatrixBasicSubroutines = new BuiltInMBS()): IMatrixOpProvider {
 
-        const opEye = (m: number, n?: number, dtype: DType = DType.FLOAT64) => {
+        const opEye = (m: number, n?: number, dtype: DType = DType.FLOAT64): Tensor => {
             if (n == undefined) n = m;
             let X = Tensor.zeros([m, n], dtype);
             let l = Math.min(n, m);
@@ -28,7 +28,7 @@ export class MatrixOpProviderFactory {
             return X;
         };
 
-        const opHilb = (n: number) => {
+        const opHilb = (n: number): Tensor => {
             let m = Tensor.zeros([n, n]);
             for (let i = 0;i < n;i++) {
                 for (let j = 0;j < n;j++) {
@@ -98,6 +98,64 @@ export class MatrixOpProviderFactory {
                 }
                 return Y;
             }
+        };
+
+        const opVander = (x: OpInput, n?: number, increasing: boolean = false): Tensor => {
+            let info = Tensor.analyzeOpInput(x);
+            if (info.originalShape.length > 1) {
+                throw new Error('Vector expected.');
+            }
+            if (n == undefined) {
+                n = info.originalShape[0];
+            } else {
+                if (n <= 0 || Math.floor(n) !== n) {
+                    throw new Error('n must be a positive integer.');
+                }
+            }
+            let m = info.originalShape[0];
+            let Y = Tensor.zeros([m, n], OutputDTypeResolver.uOnlyLogicToFloat(info.originalDType, info.isComplex));
+            let reX = info.isInputScalar ? [info.re] : info.reArr;
+            let reY = Y.realData;
+            if (info.isComplex) {
+                Y.ensureComplexStorage();
+                let imX = info.isInputScalar ? [info.im] : info.imArr;
+                let imY = Y.imagData;
+                for (let i = 0;i < m;i++) {
+                    let reT = reX[i];
+                    let imT = imX[i];
+                    if (increasing) {
+                        reY[i * n] = 1;
+                        imY[i * n] = 0;
+                        for (let j = 1;j < n;j++) {
+                            reY[i * n + j] = reY[i * n + j - 1] * reT - imY[i * n + j - 1] * imT;
+                            imY[i * n + j] = reY[i * n + j - 1] * imT + imY[i * n + j - 1] * reT;
+                        }
+                    } else {
+                        reY[i * n + n - 1] = 1;
+                        imY[i * n + n - 1] = 0;
+                        for (let j = n - 2;j >= 0;j--) {
+                            reY[i * n + j] = reY[i * n + j + 1] * reT - imY[i * n + j + 1] * imT;
+                            imY[i * n + j] = reY[i * n + j + 1] * imT + imY[i * n + j + 1] * reT;
+                        }
+                    }
+                }
+            } else {
+                for (let i = 0;i < m;i++) {
+                    let t = reX[i]
+                    if (increasing) {
+                        reY[i * n] = 1;
+                        for (let j = 1;j < n;j++) {
+                            reY[i * n + j] = reY[i * n + j - 1] * t;
+                        }
+                    } else {
+                        reY[i * n + n - 1] = 1;
+                        for (let j = n - 2;j >= 0;j--) {
+                            reY[i * n + j] = reY[i * n + j + 1] * t;
+                        }
+                    }
+                }
+            }
+            return Y;
         };
 
         const copyLower = (m: number, n: number, k: number, x: ArrayLike<number>, y: DataBlock): void => {
@@ -782,6 +840,7 @@ export class MatrixOpProviderFactory {
             eye: opEye,
             hilb: opHilb,
             diag: opDiag,
+            vander: opVander,
             tril: opTril,
             triu: opTriu,
             matmul: opMatMul,
