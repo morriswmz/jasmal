@@ -142,11 +142,21 @@ export class PolynomialOpProviderFactory {
                 }
             }
             return Y;
-        }
+        };
+
+        const opPolyfit = (x: OpInput, y: OpInput, n: number): Tensor => {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            let Y = y instanceof Tensor ? y : Tensor.toTensor(y);
+            if (X.size !== Y.size) {
+                throw new Error('x and y must have the same size.');
+            }
+            return matOp.linsolve(matOp.vander(X, n + 1), Y).reshape([-1]);
+        };
 
         return {
             polyval: opPolyval,
-            polyvalm: opPolyvalm
+            polyvalm: opPolyvalm,
+            polyfit: opPolyfit
         };
 
     }

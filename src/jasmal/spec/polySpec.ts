@@ -107,3 +107,18 @@ describe('polyvalm()', () => {
         checkTensor(actual, expected);
     });
 });
+
+describe('polyfit()', () => {
+    it('should fit a sine function with a cubic polynomial', () => {
+        let x = T.linspace(0, 5, 15);
+        let y = T.sin(x);
+        let actual = T.polyfit(x, y, 3);
+        let expected = T.fromArray([
+            0.089382847758163117,
+            -0.84554781931970624,
+            1.8125575000851049,
+            -0.12591214978029500
+        ]);
+        checkTensor(actual, expected, 12, false);
+    });
+});

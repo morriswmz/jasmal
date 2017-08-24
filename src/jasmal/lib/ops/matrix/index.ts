@@ -783,11 +783,14 @@ export class MatrixOpProviderFactory {
         const opLinsolve = (a: OpInput, b: OpInput): Tensor => {
             let A = a instanceof Tensor ? a.asType(DType.FLOAT64, true) : Tensor.toTensor(a);
             let B = b instanceof Tensor ? b.asType(DType.FLOAT64, true) : Tensor.toTensor(b);
-            if (A.ndim !== 2 || B.ndim !== 2) {
-                throw new Error('Matrix expected.');
+            if (A.ndim !== 2) {
+                throw new Error('a should be a matrix.');
+            }
+            if (B.ndim > 2) {
+                throw new Error('b should be a vector or a matrix.')
             }
             let shapeA = A.shape;
-            let shapeB = B.shape;
+            let shapeB = B.ndim === 1 ? [B.size, 1] : B.shape;
             if (shapeA[0] !== shapeB[0]) {
                 throw new Error('The number of rows in A must match that in B.');
             }
