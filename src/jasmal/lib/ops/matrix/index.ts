@@ -709,7 +709,10 @@ export class MatrixOpProviderFactory {
             return <Tensor>opMatMul(Z, X.get(':',':' + r, true), MatrixModifier.Hermitian);
         };
 
-        const opEig = (x: OpInput): [Tensor, Tensor] => {
+        function opEig(x: OpInput): [Tensor, Tensor];
+        function opEig(x: OpInput, evOnly: true): Tensor;
+        function opEig(x: OpInput, evOnly: false): [Tensor, Tensor];
+        function opEig(x: OpInput, evOnly?: boolean): Tensor | [Tensor, Tensor] {
             let X: Tensor;
             // We need to keep track of this because the eigendecomposition
             // subroutine for real symmetric matrices does not override the
@@ -730,31 +733,55 @@ export class MatrixOpProviderFactory {
             if (X.ndim !== 2 || shapeX[0] !== shapeX[1]) {
                 throw new Error('Square matrix expected.');
             }
-            let E = Tensor.zeros(shapeX);
+            let E: Tensor | undefined;
             let v = Tensor.zeros([shapeX[0]]);
             if (X.hasNonZeroComplexStorage()) {
-                E.ensureComplexStorage();
                 X = needExtraCopy ? X.copy(true) : X;
                 // Hermitian check
-                if (opIsHermitian(X)) {  
-                    Eigen.eigHermitian(shapeX[0], X.realData, X.imagData, v.realData, E.realData, E.imagData);
+                if (opIsHermitian(X)) {
+                    if (evOnly) {
+                        Eigen.ch(shapeX[0], X.realData, X.imagData, v.realData, false, [], []);
+                    } else {
+                        E = Tensor.zeros(shapeX);
+                        E.ensureComplexStorage();
+                        Eigen.ch(shapeX[0], X.realData, X.imagData, v.realData, true, E.realData, E.imagData);
+                    }
                 } else {
                     v.ensureComplexStorage();
-                    Eigen.eigComplexGeneral(shapeX[0], X.realData, X.imagData, v.realData, v.imagData, E.realData, E.imagData);
+                    if (evOnly) {
+                        Eigen.cg(shapeX[0], X.realData, X.imagData, v.realData, v.imagData, true, [], []);
+                    } else {
+                        E = Tensor.zeros(shapeX);
+                        E.ensureComplexStorage();
+                        Eigen.cg(shapeX[0], X.realData, X.imagData, v.realData, v.imagData, true, E.realData, E.imagData);
+                    }
                 }
             } else {
                 // symmetry check
                 if (opIsSymmetric(X)) {
-                    // eigSym does not override the original matrix
-                    Eigen.eigSym(shapeX[0], X.realData, v.realData, E.realData);
+                    // rs does not override the original matrix
+                    if (evOnly) {
+                        Eigen.rs(shapeX[0], X.realData, v.realData, false, []);
+                    } else {
+                        E = Tensor.zeros(shapeX);
+                        Eigen.rs(shapeX[0], X.realData, v.realData, true, E.realData);
+                    }
                 } else {
-                    X = needExtraCopy ? X.copy(true) : X;
-                    E.ensureComplexStorage();
                     v.ensureComplexStorage();
-                    Eigen.eigRealGeneral(shapeX[0], X.realData, v.realData, v.imagData, E.realData, E.imagData);
+                    X = needExtraCopy ? X.copy(true) : X;
+                    if (evOnly) {
+                        Eigen.rg(shapeX[0], X.realData, v.realData, v.imagData, false, [], []);
+                    } else {
+                        E = Tensor.zeros(shapeX);
+                        E.ensureComplexStorage();
+                        Eigen.rg(shapeX[0], X.realData, v.realData, v.imagData, true, E.realData, E.imagData);
+                    }
                 }
             }
-            return [E, opDiag(v)];
+            if (v.hasComplexStorage() && !v.hasNonZeroComplexStorage()) {
+                v.trimImaginaryPart();
+            }
+            return evOnly ? v : [<Tensor>E, opDiag(v)];
         };
 
         const opChol = (x: OpInput): Tensor => {

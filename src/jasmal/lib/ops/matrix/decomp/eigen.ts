@@ -7,8 +7,103 @@
 import { DataBlock } from '../../../commonTypes';
 import { CMath } from '../../../math/cmath';
 import { DataHelper } from '../../../helper/dataHelper';
+import { EPSILON } from "../../../constant";
 
 export class Eigen {
+
+    /**
+     * See tred1.f in EISPACK.
+     * @param n 
+     * @param a 
+     * @param d 
+     * @param e 
+     * @param e2 
+     */
+    public static tred1(n: number, a: DataBlock, d: DataBlock, e: DataBlock, e2: DataBlock): void {
+        let i: number, j: number, k: number, l: number;
+        let f: number, g: number, h: number, scale: number;
+        for (i = 0;i < n;i++) {
+            d[i] = a[(n - 1) * n + i];
+            a[(n - 1) * n + i] = a[i * n + i];
+        }
+        for (i = n - 1;i >= 0;i--) {
+            l = i - 1;
+            h = 0.0;
+            scale = 0.0;
+            if (l >= 0) {
+                // scale row
+                for (k = 0;k <= l;k++) {
+                    scale += Math.abs(d[k]);
+                }
+                if (scale === 0.0) {
+                    for (j = 0;j <= l;j++) {
+                        d[j] = a[l * n + j];
+                        a[l * n + j] = a[i * n + j];
+                        a[i * n + j] = 0.0;
+                    }
+                    e[i] = 0.0;
+                    e2[i] = 0.0;
+                    continue;
+                }
+            } else {
+                e[i] = 0.0;
+                e2[i] = 0.0;
+                continue;
+            }
+            for (k = 0;k <= l;k++) {
+                d[k] /= scale;
+                h += d[k] * d[k];
+            }
+            e2[i] = scale * scale * h;
+            f = d[l];
+            g = f >= 0 ? -Math.sqrt(h) : Math.sqrt(h);
+            e[i] = scale * g;
+            h = h - f * g;
+            d[l] = f - g;
+            if (l !== 0) {
+                // form a * u
+                for (j = 0;j <= l;j++) {
+                    e[j] = 0.0;
+                }
+                for (j = 0;j <= l;j++) {
+                    f = d[j];
+                    g = e[j] + a[j * n + j] * f;
+                    if (l >= j + 1) {
+                        for (k = j + 1;k <= l;k++) {
+                            g = g + a[k * n + j] * d[k];
+                            e[k] = e[k] + a[k * n + j] * f;
+                        }
+                    }
+                    e[j] = g;
+                }
+                // form p
+                f = 0.0;
+                for (j = 0;j <= l;j++) {
+                    e[j] /= h;
+                    f += e[j] * d[j];
+                }
+                h = f / (h + h);
+                // form q
+                for (j = 0;j <= l;j++) {
+                    e[j] -= h * d[j];
+                }
+                // form reduced a
+                for (j = 0;j <= l;j++) {
+                    f = d[j];
+                    g = e[j];
+                    for (k = j;k <= l;k++) {
+                        a[k * n + j] += -f * e[k] - g * d[k];
+                    }
+                }
+            }
+            for (j = 0;j <= l;j++) {
+                f = d[j];
+                d[j] = a[l * n + j];
+                a[l * n + j] = a[i * n + j];
+                a[i * n + j] = f * scale;
+            }
+        }
+    }
 
     /**
      * See tred2 in EISPACK.
@@ -129,6 +224,126 @@ export class Eigen {
         }
         reE[(n - 1) * n + n - 1] = 1.0;
         sub[0] = 0.0;
+    }
+
+    /**
+     * Finds the eigenvalues of a symmetric tridiagonal matrix.
+     * See tqlrat.f in EISPACK.
+     * @param n 
+     * @param d (Input/Output) Diagonal elements of the input matrix.
+     *          Will be overwritten with the eigenvalues.
+     * @param e2 (Input/Destroyed) Squares of the subdiagonal elements of the
+     *           input matrix.
+     */
+    public static tqlrat(n: number, d: DataBlock, e2: DataBlock): void {
+        if (n === 1) {
+            return;
+        }
+        let i: number, j: number, l: number, l1: number, m: number;
+        let b: number, c: number, f: number, g: number, h: number;
+        let p: number, r: number, s: number, t: number;
+        let flag: boolean;
+        for (i = 1;i < n;i++) {
+            e2[i - 1] = e2[i];
+        }
+        f = 0.0;
+        t = 0.0;
+        b = 0.0;
+        c = 0.0;
+        e2[n - 1] = 0.0;
+        for (l = 0;l < n;l++) {
+            j = 0;
+            h = Math.abs(d[l]) + Math.sqrt(e2[l]);
+            if (t <= h) {
+                t = h;
+                b = Math.abs(t) * EPSILON;
+                c = b * b;
+                if (c === 0) {
+                    // splitting tolerance underflowed. Look for larger value.
+                    for (i = l;i < n;i++) {
+                        h = Math.abs(d[i]) + Math.sqrt(e2[i]);
+                        if (h > t) {
+                            t = h;
+                        }
+                    }
+                    b = Math.abs(t) * EPSILON;
+                    c = b * b;
+                }
+            }
+            // look for small squared sub-diagonal element
+            for (m = l;m < n;m++) {
+                if (e2[m] <= c) {
+                    break;
+                    // e2[n - 1] is always zero
+                }
+            }
+            if (m !== l) {
+                do {
+                    if (j === 30) {
+                        throw new Error('Maximum iteration reached.');
+                    }
+                    j++;
+                    // form shift
+                    l1 = l + 1;
+                    s = Math.sqrt(e2[l]);
+                    g = d[l];
+                    p = (d[l1] - g) / (2.0 * s);
+                    r = CMath.length2(p, 1.0);
+                    d[l] = s / (p + (p >= 0 ? Math.abs(r) : -Math.abs(r)));
+                    h = g - d[l];
+                    for (i = l1;i < n;i++) {
+                        d[i] -= h;
+                    }
+                    f += h;
+                    // rational QL transformation
+                    g = d[m];
+                    if (g === 0) {
+                        g = b;
+                    }
+                    h = g;
+                    s = 0.0;
+                    for (i = m - 1;i >= l;i--) {
+                        p = g * h;
+                        r = p + e2[i];
+                        e2[i + 1] = s * r;
+                        s = e2[i] / r;
+                        d[i + 1] = h + s * (h + d[i]);
+                        g = d[i] - e2[i] / g;
+                        // avoid division by zero on next pass
+                        if (g === 0.0) {
+                            g = Math.abs(d[i]) * EPSILON;
+                        }
+                        h = g * (p / r);
+                    }
+                    e2[l] = s * g;
+                    d[l] = h;
+                    // guard against underflow in convergence test
+                    if (h !== 0.0) {
+                        if (Math.abs(e2[l]) > Math.abs(c / h)) {
+                            e2[l] *= h;
+                            if (e2[l] !== 0.0) {
+                                flag = true;
+                                continue;
+                            }
+                        }
+                    }
+                    flag = false;
+                } while (flag);
+            }
+            p = d[l] + f;
+            // order eigenvalues
+            if (l !== 0) {
+                for (i = l;i >= 1;i--) {
+                    if (p >= d[i - 1]) {
+                        break;
+                    }
+                    d[i] = d[i - 1];
+                }
+            } else {
+                i = 0;
+            }
+            d[i] = p;
+        }
     }
 
     /**
@@ -254,10 +469,17 @@ export class Eigen {
      * @param lambda (Output) Eigenvalues.
      * @param reE (Output) Eigenvectors.
      */
-    public static eigSym(n: number, reA: ArrayLike<number>, lambda: DataBlock, reE: DataBlock): void {
+    public static rs(n: number, reA: ArrayLike<number>, lambda: DataBlock,
+                     matz: boolean, reE: DataBlock): void {
         let tmpArr = DataHelper.allocateFloat64Array(n);
-        Eigen.tred2(n, reA, lambda, tmpArr, reE);
-        Eigen.tql2(n, lambda, tmpArr, reE);
+        if (matz) {
+            Eigen.tred2(n, reA, lambda, tmpArr, reE);
+            Eigen.tql2(n, lambda, tmpArr, reE);
+        } else {
+            let tmpArr2 = DataHelper.allocateFloat64Array(n);
+            Eigen.tred1(n, reA, lambda, tmpArr, tmpArr2);
+            Eigen.tqlrat(n, lambda, tmpArr2);
+        }
     }
 
     /**
@@ -437,7 +659,7 @@ export class Eigen {
     }
 
     /**
-     * 
+     * Eigendecomposition of a Hermitian matrix.
      * @param n Dimension of the matrix.
      * @param ar (Input/Destroyed) Real part of the input matrix. Will be
      *           destroyed.
@@ -447,17 +669,21 @@ export class Eigen {
      * @param zr (Output) Real part of the eigenvectors.
      * @param zi (Output) Imaginary part of the eigenvectors.
      */
-    public static eigHermitian(n: number, ar: DataBlock, ai: DataBlock,
-                               w: DataBlock, zr: DataBlock, zi: DataBlock): void {
+    public static ch(n: number, ar: DataBlock, ai: DataBlock,
+                     w: DataBlock, matz: boolean, zr: DataBlock, zi: DataBlock): void {
         let tmpArr1 = DataHelper.allocateFloat64Array(n);
         let tmpArr2 = DataHelper.allocateFloat64Array(n);
         let tmpArr3 = DataHelper.allocateFloat64Array(2 * n);
         Eigen.htridi(n, ar, ai, w, tmpArr1, tmpArr2, tmpArr3);
-        for (let i = 0;i < n;i++) {
-            zr[i * n + i] = 1.0;
+        if (matz) {
+            for (let i = 0;i < n;i++) {
+                zr[i * n + i] = 1.0;
+            }
+            Eigen.tql2(n, w, tmpArr1, zr);
+            Eigen.htribk(n, ar, ai, tmpArr3, n, zr, zi);
+        } else {
+            Eigen.tqlrat(n, w, tmpArr2);
         }
-        Eigen.tql2(n, w, tmpArr1, zr);
-        Eigen.htribk(n, ar, ai, tmpArr3, n, zr, zi);
     }
 
     /**
@@ -701,8 +927,214 @@ export class Eigen {
     }
 
     /**
-     * Finds the eigenvalues and eigenvectors of a real upper Hessenberg matrix
-     * by the QR iterations.
+     * Finds eigenvalues of a real upper Hessenberg matrix with QR
+     * iterations.
+     * @param n 
+     * @param low 
+     * @param igh 
+     * @param h (Input/Destroyed)
+     * @param wr (Output) Real part of the eigenvalues.
+     * @param wi (Output) Imaginary part of the eigenvalues.
+     */
+    public static hqr(n: number, low: number, igh: number, h: DataBlock,
+                      wr: DataBlock, wi: DataBlock): void {
+        let i: number, j: number, k: number, l: number, m: number, en: number;
+        let na: number = 0, itn: number, its: number = 0;
+        let mp2: number, enm2: number = 0;
+        let p: number = 0, q: number = 0, r: number = 0, s: number = 0, t: number, w: number;
+        let x: number, y: number;
+        let zz: number = 0, norm: number, tst1: number, tst2: number;
+        let notlas: boolean, skip: boolean = false;
+        norm = 0.0;
+        k = 0;
+        // store roots isolated by balanc and compute matrix norm
+        for (i = 0;i < n;i++) {
+            for (j = k;j <= n;j++) {
+                norm += Math.abs(h[i * n + j]);
+            }
+            k = i;
+            if (i < low || i >  igh) {
+                wr[i] = h[i * n + i];
+                wi[i] = 0.0;
+            }
+        }
+        en = igh;
+        t = 0.0;
+        itn = 30 * n;
+        while (true) {
+            // search for next eigenvalues
+            if (!skip) {
+                if (en < low) {
+                    break;
+                }
+                its = 0;
+                na = en - 1;
+                enm2 = na - 1;
+            }
+            // look for single small sub-diagonal element
+            for (l = en;l > low;l--) {
+                s = Math.abs(h[(l - 1) * n + l - 1]) + Math.abs(h[l * n + l]);
+                if (s === 0.0) {
+                    s = norm;
+                }
+                tst1 = s;
+                tst2 = tst1 + Math.abs(h[l * n + l - 1]);
+                if (tst2 === tst1) {
+                    break;
+                }
+            }
+            // form shift
+            x = h[en * n + en];
+            if (l !== en) {
+                y = h[na * n + na];
+                w = h[en * n + na] * h[na * n + en];
+                if (l !== na) {
+                    if (itn === 0) {
+                        throw new Error('Maximum number of iterations reached.');
+                    }
+                    if (its === 10 || its === 20) {
+                        // form exceptional shift
+                        t += x;
+                        for (i = low;i <= en;i++) {
+                            h[i * n + i] -= x;
+                        }
+                        s = Math.abs(h[en * n + na]) + Math.abs(h[na * n + enm2]);
+                        x = 0.75 * s;
+                        y = x;
+                        w = -0.4375 * s * s;
+                    }
+                    its++;
+                    itn--;
+                    // look for two consecutive small sub-diagonal elements
+                    for (m = en - 2;m >= l;m--) {
+                        zz = h[m * n + m];
+                        r = x - zz;
+                        s = y - zz;
+                        p = (r * s - w) / h[(m + 1) * n + m] + h[m * n + m + 1];
+                        q = h[(m + 1) * n + (m + 1)] - zz - r - s;
+                        r = h[(m + 2) * n + (m + 1)];
+                        s = Math.abs(p) + Math.abs(q) + Math.abs(r);
+                        p /= s;
+                        q /= s;
+                        r /= s;
+                        if (m === l) {
+                            break;
+                        }
+                        tst1 = Math.abs(p) * (Math.abs(h[(m - 1) * n + (m - 1)]) + Math.abs(zz)
+                            + Math.abs(h[(m + 1) * n + (m + 1)]));
+                        tst2 = tst1 + Math.abs(h[m * n + (m - 1)]) * (Math.abs(q) + Math.abs(r));
+                        if (tst2 === tst1) {
+                            break;
+                        }
+                    }
+                    mp2 = m + 2;
+                    for (i = mp2;i <= en;i++) {
+                        h[i * n + (i - 2)] = 0.0;
+                        if (i === mp2) {
+                            continue;
+                        }
+                        h[i * n + (i - 3)] = 0.0;
+                    }
+                    // double qr step involving rows 1 to en and columns m to en
+                    for (k = m;k <= na;k++) {
+                        notlas = k !== na;
+                        if (k !== m) {
+                            p = h[k * n + (k - 1)];
+                            q = h[(k + 1) * n + (k - 1)];
+                            r = notlas ? h[(k + 2) * n + (k - 1)] : 0.0;
+                            x = Math.abs(p) + Math.abs(q) + Math.abs(r);
+                            if (x === 0) {
+                                continue;
+                            }
+                            p /= x;
+                            q /= x;
+                            r /= x;
+                        }
+                        s = p >= 0 ? Math.sqrt(p * p + q * q + r * r) : -Math.sqrt(p * p + q * q + r * r);
+                        if (k !== m) {
+                            h[k * n + (k - 1)] = -s * x;
+                        } else {
+                            if (l !== m) {
+                                h[k * n + (k - 1)] = -h[k * n + (k - 1)];
+                            }
+                        }
+                        p += s;
+                        x = p / s;
+                        y = q / s;
+                        zz = r / s;
+                        q = q / p;
+                        r = r / p;
+                        if (notlas) {
+                            // row modification
+                            for (j = k;j < n;j++) {
+                                p = h[k * n + j] + q * h[(k + 1) * n + j] + r * h[(k + 2) * n + j];
+                                h[k * n + j] -= p * x;
+                                h[(k + 1) * n + j] -= p * y;
+                                h[(k + 2) * n + j] -= p * zz;
+                            }
+                            j = Math.min(en, k + 3);
+                            // column modification
+                            for (i = 0;i <= j;i++) {
+                                p = x * h[i * n + k] + y * h[i * n + (k + 1)] + zz * h[i * n + (k + 2)];
+                                h[i * n + k] -= p;
+                                h[i * n + (k + 1)] -= p * q;
+                                h[i * n + (k + 2)] -= p * r;
+                            }
+                        } else {
+                            // row modification
+                            for (j = k;j < n;j++) {
+                                p = h[k * n + j] + q * h[(k + 1) * n + j];
+                                h[k * n + j] -= p * x;
+                                h[(k + 1) * n + j] -= p * y;
+                            }
+                            j = Math.min(en, k + 3);
+                            // column modification
+                            for (i = 0;i <= j;i++) {
+                                p = x * h[i * n + k] + y * h[i * n + (k + 1)];
+                                h[i * n + k] -= p;
+                                h[i * n + (k + 1)] -= p * q;
+                            }
+                        }
+                    }
+                    skip = true;
+                } else {
+                    // two roots found
+                    p = (y - x) / 2.0;
+                    q = p * p + w;
+                    zz = Math.sqrt(Math.abs(q));
+                    x = x + t;
+                    if (q >= 0.0) {
+                        // real pair
+                        zz = p + (p >= 0 ? Math.abs(zz) : -Math.abs(zz));
+                        wr[na] = x + zz;
+                        wr[en] = wr[na];
+                        if (zz !== 0) {
+                            wr[en] = x - w / zz;
+                        }
+                        wi[na] = 0.0;
+                        wi[en] = 0.0;
+                    } else {
+                        wr[na] = x + p;
+                        wr[en] = x + p;
+                        wi[na] = zz;
+                        wi[en] = -zz;   
+                    }
+                    en = enm2;
+                    skip = false;
+                }
+            } else {
+                // one root found
+                wr[en] = x + t;
+                wi[en] = 0.0;
+                en = na;
+                skip = false;
+            }
+        }
+    }
+
+    /**
+     * Finds eigenvalues and eigenvectors of a real upper Hessenberg matrix
+     * by QR iterations.
      * See hqr2.f in EISPACK.
      * @param n 
      * @param low 
@@ -1180,38 +1612,44 @@ export class Eigen {
      * @param a (Input/Destroyed)
      * @param wr (Output)
      * @param wi (Output)
+     * @param matz If set to true, will compute the eigenvectors and store them
+     *             in zi and zr.
      * @param zr (Output)
      * @param zi (Output)
      */
-    public static eigRealGeneral(n: number, a: DataBlock, wr: DataBlock,
-                                 wi: DataBlock, zr: DataBlock, zi: DataBlock): void {
+    public static rg(n: number, a: DataBlock, wr: DataBlock, wi: DataBlock,
+                     matz: boolean, zr: DataBlock, zi: DataBlock): void {
         let i: number, j: number;
         let tmpArr1 = DataHelper.allocateFloat64Array(n);
         let [low, igh] = Eigen.balanc(n, a, tmpArr1);
-        let tmpArr2 = DataHelper.allocateFloat64Array(igh + 1);
+        let tmpArr2 = DataHelper.allocateInt32Array(igh + 1);
         Eigen.elmhes(n, low, igh, a, tmpArr2);
-        Eigen.eltran(n, low, igh, a, tmpArr2, zr);
-        Eigen.hqr2(n, low, igh, a, wr, wi, zr);
-        Eigen.balbak(n, low, igh, tmpArr1, n, zr);
-        // fill zi
-        for (i = 0;i < n;) {
-            if (wi[i] === 0) {
-                // real eigenvalue, set column to zero
-                for (j = 0;j < n;j++) {
-                    zi[j * n + i] = 0.0;
+        if (matz) {
+            Eigen.eltran(n, low, igh, a, tmpArr2, zr);
+            Eigen.hqr2(n, low, igh, a, wr, wi, zr);
+            Eigen.balbak(n, low, igh, tmpArr1, n, zr);
+            // fill zi
+            for (i = 0;i < n;) {
+                if (wi[i] === 0) {
+                    // real eigenvalue, set column to zero
+                    for (j = 0;j < n;j++) {
+                        zi[j * n + i] = 0.0;
+                    }
+                    i++;
+                } else if (wi[i] > 0) {
+                    // complex eigenvalue, set imaginary part and update real part
+                    for (j = 0;j < n;j++) {
+                        zi[j * n + i] = zr[j * n + (i + 1)];
+                        zi[j * n + (i + 1)] = -zr[j * n + (i + 1)];
+                        zr[j * n + (i + 1)] = zr[j * n + i];
+                    }
+                    i += 2;
+                } else {
+                    throw new Error('This should never happen.');
                 }
-                i++;
-            } else if (wi[i] > 0) {
-                // complex eigenvalue, set imaginary part and update real part
-                for (j = 0;j < n;j++) {
-                    zi[j * n + i] = zr[j * n + (i + 1)];
-                    zi[j * n + (i + 1)] = -zr[j * n + (i + 1)];
-                    zr[j * n + (i + 1)] = zr[j * n + i];
-                }
-                i += 2;
-            } else {
-                throw new Error('This should never happen.');
             }
+        } else {
+            Eigen.hqr(n, low, igh, a, wr, wi);
         }
     }
 
@@ -1426,6 +1864,182 @@ export class Eigen {
             orti[m] *= scale;
             ar[m * n + (m - 1)] *= -g;
             ai[m * n + (m - 1)] *= -g;
+        }
+    }
+
+    public static comqr(n: number, low: number, igh: number, hr: DataBlock,
+                        hi: DataBlock, wr: DataBlock, wi: DataBlock): void {
+        let i: number, j: number, l: number, ll: number, en: number;
+        let itn: number, its: number = 0, lp1: number, enm1: number = 0;
+        let si: number, sr: number, ti: number, tr: number, xi: number, xr: number;
+        let yi: number, yr: number, zzi: number, zzr: number, norm: number;
+        let tst1: number, tst2: number;
+        let skip: boolean = false;
+        // create real subdiagonal elements
+        if (low !== igh) {
+            l = low + 1;
+            for (i = l;i <= igh;i++) {
+                ll = Math.min(i + 1, igh);
+                if (hi[i * n + (i - 1)] === 0.0) {
+                    continue;
+                }
+                norm = CMath.length2(hr[i * n + (i - 1)], hi[i * n + (i - 1)]);
+                yr = hr[i * n + (i - 1)] / norm;
+                yi = hi[i * n + (i - 1)] / norm;
+                hr[i * n + (i - 1)] = norm;
+                hi[i * n + (i - 1)] = 0.0;
+
+                for (j = i;j < n;j++) {
+                    si = yr * hi[i * n + j] - yi * hr[i * n + j];
+                    hr[i * n + j] = yr * hr[i * n + j] + yi * hi[i * n + j];
+                    hi[i * n + j] = si;
+                }
+                for (j = 0;j <= ll;j++) {
+                    si = yr * hi[j * n + i] + yi * hr[j * n + i];
+                    hr[j * n + i] = yr * hr[j * n + i] - yi * hi[j * n + i];
+                    hi[j * n + i] = si;
+                }
+            }
+        }
+        // store roots isolated by cbal
+        for (i = 0;i < n;i++) {
+            if (i >= low && i <= igh) {
+                continue;
+            }
+            wr[i] = hr[i * n + i];
+            wi[i] = hi[i * n + i];
+        }
+
+        en = igh;
+        tr = 0.0;
+        ti = 0.0;
+        itn = 30 * n;
+        // search for next eigenvalue
+        while (true) {
+            if (!skip) {
+                if (en < low) {
+                    break;
+                }
+                its = 0;
+                enm1 = en - 1;
+            }
+            // look for single small sub-diagonal element
+            for (l = en;l > low;l--) {
+                tst1 = Math.abs(hr[(l - 1) * n + (l - 1)]) + Math.abs(hi[(l - 1) * n + (l - 1)])
+                    + Math.abs(hr[l * n + l]) + Math.abs(hi[l * n + l]);
+                tst2 = tst1 + Math.abs(hr[l * n + (l - 1)]);
+                if (tst2 === tst1) {
+                    break;
+                }
+            }
+            // form shift
+            if (l === en) {
+                // a root found
+                wr[en] = hr[en * n + en] + tr;
+                wi[en] = hi[en * n + en] + ti;
+                en = enm1;
+                skip = false;
+            } else {
+                if (itn === 0) {
+                    throw new Error('Maximum allowed iterations reached.');
+                }
+                if (its === 10 || its === 20) {
+                    // form exceptional shift
+                    sr = Math.abs(hr[en * n + enm1]) + Math.abs(hr[enm1 * n + (en - 2)]);
+                    si = 0.0;
+                } else {
+                    sr = hr[en * n + en];
+                    si = hi[en * n + en];
+                    xr = hr[enm1 * n + en] * hr[en * n + enm1];
+                    xi = hi[enm1 * n + en] * hr[en * n + enm1];
+                    if (xr !== 0.0 || xi !== 0.0) {
+                        yr = (hr[enm1 * n + enm1] - sr) / 2.0;
+                        yi = (hi[enm1 * n + enm1] - si) / 2.0;
+                        [zzr, zzi] = CMath.csqrt((yr + yi) * (yr - yi) + xr, 2.0 * yr * yi + xi);
+                        if (yr * zzr + yi * zzi < 0.0) {
+                            zzr = -zzr;
+                            zzi = -zzi;
+                        }
+                        [xr, xi] = CMath.cdivCC(xr, xi, yr + zzr, yi + zzi);
+                        sr -= xr;
+                        si -= xi;
+                    }
+                }
+
+                for (i = low;i <= en;i++) {
+                    hr[i * n + i] -= sr;
+                    hi[i * n + i] -= si;
+                }
+
+                tr += sr;
+                ti += si;
+                its++;
+                itn--;
+                // reduce to triangle (rows)
+                lp1 = l + 1;
+                for (i = lp1;i <= en;i++) {
+                    sr = hr[i * n + (i - 1)];
+                    hr[i * n + (i - 1)] = 0.0;
+                    norm = CMath.length2(
+                        CMath.length2(hr[(i - 1) * n + (i - 1)], hi[(i - 1) * n + (i - 1)]), sr);
+                    xr = hr[(i - 1) * n + (i - 1)] / norm;
+                    wr[i - 1] = xr;
+                    xi = hi[(i - 1) * n + (i - 1)] / norm;
+                    wi[i - 1] = xi;
+                    hr[(i - 1) * n + (i - 1)] = norm;
+                    hi[(i - 1) * n + (i - 1)] = 0.0;
+                    hi[i * n + (i - 1)] = sr / norm;
+
+                    for (j = i;j < n;j++) {
+                        yr = hr[(i - 1) * n + j];
+                        yi = hi[(i - 1) * n + j];
+                        zzr = hr[i * n + j];
+                        zzi = hi[i * n + j];
+                        hr[(i - 1) * n + j] = xr * yr + xi * yi + hi[i * n + (i - 1)] * zzr;
+                        hi[(i - 1) * n + j] = xr * yi - xi * yr + hi[i * n + (i - 1)] * zzi;
+                        hr[i * n + j] = xr * zzr - xi * zzi - hi[i * n + (i - 1)] * yr;
+                        hi[i * n + j] = xr * zzi + xi * zzr - hi[i * n + (i - 1)] * yi;
+                    }
+                }
+
+                si = hi[en * n + en];
+                if (si !== 0.0) {
+                    norm = CMath.length2(hr[en * n + en], si);
+                    sr = hr[en * n + en] / norm;
+                    si /= norm;
+                    hr[en * n + en] = norm;
+                    hi[en * n + en] = 0.0;
+                }
+                // inverse operation (columns)
+                for (j = lp1;j <= en;j++) {
+                    xr = wr[j - 1];
+                    xi = wi[j - 1];
+                    for (i = 0;i <= j;i++) {
+                        yr = hr[i * n + (j - 1)];
+                        yi = 0.0;
+                        zzr = hr[i * n + j];
+                        zzi = hi[i * n + j];
+                        if (i !== j) {
+                            yi = hi[i * n + (j - 1)];
+                            hi[i * n + (j - 1)] = xr * yi + xi * yr + hi[j * n + (j - 1)] * zzi;
+                        }
+                        hr[i * n + (j - 1)] = xr * yr - xi * yi + hi[j * n + (j - 1)] * zzr;
+                        hr[i * n + j] = xr * zzr + xi * zzi - hi[j * n + (j - 1)] * yr;
+                        hi[i * n + j] = xr * zzi - xi * zzr - hi[j * n + (j - 1)] * yi;
+                    }
+                }
+                if (si === 0.0) {
+                    skip = true;
+                    continue;
+                }
+                for (i = 0;i <= en;i++) {
+                    yr = hr[i * n + en];
+                    yi = hi[i * n + en];
+                    hr[i * n + en] = sr * yr - si * yi;
+                    hi[i * n + en] = sr * yi + si * yr;
+                }
+                skip = true;
+            }
         }
     }
 
@@ -1821,21 +2435,20 @@ export class Eigen {
      * @param zr (Output)
      * @param zi (Output)
      */
-    public static eigComplexGeneral(n: number, ar: DataBlock, ai: DataBlock,
-                                    wr: DataBlock, wi: DataBlock, zr: DataBlock,
-                                    zi: DataBlock): void {
+    public static cg(n: number, ar: DataBlock, ai: DataBlock,
+                     wr: DataBlock, wi: DataBlock, matz: boolean,
+                     zr: DataBlock, zi: DataBlock): void {
         let scale = DataHelper.allocateFloat64Array(n);
         let ortr = DataHelper.allocateFloat64Array(n);
         let orti = DataHelper.allocateFloat64Array(n);
-        for (let i = 0;i < n;i++) {
-            scale[i] = 0.0;
-            ortr[i] = 0.0;
-            orti[i] = 0.0;
-        }
         let [low, igh] = Eigen.cbal(n, ar, ai, scale);
         Eigen.corth(n, low, igh, ar, ai, ortr, orti);
-        Eigen.comqr2(n, low, igh, ortr, orti, ar, ai, wr, wi, zr, zi);
-        Eigen.cbabk2(n, low, igh, scale, n, zr, zi);
+        if (matz) {
+            Eigen.comqr2(n, low, igh, ortr, orti, ar, ai, wr, wi, zr, zi);
+            Eigen.cbabk2(n, low, igh, scale, n, zr, zi);
+        } else {
+            Eigen.comqr(n, low, igh, ar, ai, wr, wi);
+        }
     }
 
 }

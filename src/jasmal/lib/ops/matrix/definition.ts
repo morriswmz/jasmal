@@ -202,6 +202,20 @@ export interface IMatrixOpProvider {
      * @param x Input matrix.
      */
     eig(x: OpInput): [Tensor, Tensor];
+    /**
+     * Computes the eigendecomposition of the input matrix.
+     * Returns a 2-item tuple [E, L] such that x E = E L.
+     * If the input matrix is symmetric/Hermitian, E will be unitary. For
+     * general matrices E is unnormalized.
+     * @param x Input matrix.
+     */
+    eig(x: OpInput, evOnly: false): [Tensor, Tensor];
+    /**
+     * Computes the eigenvalues. Returns a vector of eigenvalues.
+     * @param x Input matrix.
+     */
+    eig(x: OpInput, evOnly: true): Tensor;
+
 
     /**
      * Computes the Cholesky decomposition of the input matrix.

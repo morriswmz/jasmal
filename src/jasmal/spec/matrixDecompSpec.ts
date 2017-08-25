@@ -241,17 +241,23 @@ describe('pinv()', () => {
 });
 
 describe('eig()', () => {
-    var shapes = [[5, 5], [7, 7], [10, 10], [15, 15], [20, 20], [30, 30], [50, 50]];
+    var shapes = [[5, 5], [6, 6], [7, 7], [10, 10], [12, 12], [15, 15], [20, 20], [24, 24], [30, 30], [50, 50]];
     // real symmetrical
     it('should perform eigendecomposition for a zero matrix', () => {
         let A = T.zeros([10, 10]);
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, true);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 14, false);
     })
     it('should perform eigendecomposition for a real diagonal matrix', () => {
         let A = T.diag([100, 1, 50, -2, -10000]);
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, true);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 14, false);
     });
     it('should perform eigendecomposition for a real symmetrical matrix', () => {
         let A = T.fromArray(
@@ -261,6 +267,9 @@ describe('eig()', () => {
         );
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, true);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 14, false);
     });
     for (let i = 0;i < shapes.length;i++) { 
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} real symmetrical matrix`, () => {
@@ -268,6 +277,9 @@ describe('eig()', () => {
             T.add(A, T.transpose(A), true);
             let [E, V] = T.eig(A);
             validateEVD(A, E, V, true);
+            // eigenvalues only, should match the above eigenvalues
+            let v = T.eig(A, true);
+            checkTensor(v, T.diag(V), 11, false);
         });
     }
     // complex Hermitian
@@ -282,6 +294,9 @@ describe('eig()', () => {
         );
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, true);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 1e-15);
     });
     for (let i = 0;i < shapes.length;i++) { 
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} complex Hermitian matrix`, () => {
@@ -289,6 +304,9 @@ describe('eig()', () => {
             T.add(A, T.hermitian(A), true);
             let [E, V] = T.eig(A);
             validateEVD(A, E, V, true);
+            // eigenvalues only, should match the above eigenvalues
+            let v = T.eig(A, true);
+            checkTensor(v, T.diag(V), 11, false);
         });
     }
     // real general
@@ -300,6 +318,9 @@ describe('eig()', () => {
              [ 0,  0, 0, 3]]);
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, false);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 14, false);
     });
     it('should perform eigendecomposition for a unbalanced real matrix', () => {
         let A = T.fromArray(
@@ -309,17 +330,26 @@ describe('eig()', () => {
              [    0,     0,  0, 3]]);
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, false);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 14, false);
     });
     it('should perform eigendecomposition for a Hilbert matrix', () => {
         let A = T.hilb(8);
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, false);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 7, false);
     });
     for (let i = 0;i < shapes.length;i++) { 
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} general real matrix`, () => {
             let A = T.rand(shapes[i]);
             let [E, V] = T.eig(A);
             validateEVD(A, E, V, false);
+            // eigenvalues only, should match the above eigenvalues
+            let v = T.eig(A, true);
+            checkTensor(v, T.diag(V), 12, false);
         });
     }
     // complex general
@@ -335,6 +365,9 @@ describe('eig()', () => {
              [ 0,  0,  0, -3]]);
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, false);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 14, false);
     });
     it('should perform eigendecomposition for a complex upper Hessenberg matrix', () => {
         let A = T.fromArray(
@@ -349,12 +382,18 @@ describe('eig()', () => {
         );
         let [E, V] = T.eig(A);
         validateEVD(A, E, V, false);
+        // eigenvalues only, should match the above eigenvalues
+        let v = T.eig(A, true);
+        checkTensor(v, T.diag(V), 14, false);
     });
     for (let i = 0;i < shapes.length;i++) { 
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} general complex matrix`, () => {
             let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
             let [E, V] = T.eig(A);
             validateEVD(A, E, V, false);
+            // eigenvalues only, should match the above eigenvalues
+            let v = T.eig(A, true);
+            checkTensor(v, T.diag(V), 12, false);
         });
     }
 });
