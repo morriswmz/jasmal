@@ -371,15 +371,17 @@ export class CoreOpProviderFactory {
             let t = x instanceof Tensor ? x : Tensor.toTensor(x);
             let indices: number[];
             let reX = t.realData;
-            let imX = t.imagData;
+            let imX: DataBlock;
             if (f) {
                 if (t.hasComplexStorage()) {
+                    imX = t.imagData;
                     indices = DataHelper.findWithCallbackComplex(reX, imX, f);
                 } else {
                     indices = DataHelper.findWithCallbackReal(reX, f);
                 }
             } else {
                 if (t.hasComplexStorage()) {
+                    imX = t.imagData;
                     indices = DataHelper.findComplex(reX, imX);
                 } else {
                     indices = DataHelper.findReal(reX);
