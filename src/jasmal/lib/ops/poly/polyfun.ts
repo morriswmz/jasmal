@@ -1,4 +1,4 @@
-export class PolynomialFunction {
+export class PolynomialEvaluator {
 
     public static evalPolyRR(p: ArrayLike<number>, x: number): number {
         if (p.length === 0) {
@@ -28,7 +28,7 @@ export class PolynomialFunction {
     }
 
     public static evalPolyCR(reP: ArrayLike<number>, imP: ArrayLike<number>, x: number): [number, number] {
-        return [PolynomialFunction.evalPolyRR(reP, x), PolynomialFunction.evalPolyRR(imP, x)];
+        return [PolynomialEvaluator.evalPolyRR(reP, x), PolynomialEvaluator.evalPolyRR(imP, x)];
     }
 
     public static evalPolyCC(reP: ArrayLike<number>, imP: ArrayLike<number>, reX: number, imX: number): [number, number] {

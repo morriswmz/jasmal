@@ -1,6 +1,7 @@
 import { JasmalEngine } from '..';
 import { checkTensor, checkComplex } from './testHelper';
 const T = JasmalEngine.createInstance();
+T.seed(32);
 
 describe('polyval()', () => {
     let p1 = [3, 2, -1];
@@ -120,5 +121,56 @@ describe('polyfit()', () => {
             -0.12591214978029500
         ]);
         checkTensor(actual, expected, 12, false);
+    });
+});
+
+describe('roots()', () => {
+    it('should find roots for a linear equation', () => {
+        checkTensor(T.roots([2, 3]), T.fromArray([-1.5]));
+    });
+    it('should handle trailing zeros correctly', () => {
+        checkTensor(T.roots([1, 1, 0, 0, 0]), T.fromArray([0, 0, 0, -1]));
+    });
+    it('should return zeros for x^3 = 0', () => {
+        checkTensor(T.roots([1, 0, 0, 0]), T.fromArray([0, 0, 0]));
+    });
+    it('should ignore the zeros at the beginning for the real case', () => {
+        let p = T.fromArray([0, 0, 1, 0, -1]);
+        let actual = T.roots(p);
+        let expected = T.fromArray([-1, 1]);
+        checkTensor(actual, expected, 1e-14);
+    });
+    it('should ignore the zeros at the beginning for the complex case', () => {
+        let p = T.fromArray([0, 0, 3, 1], [0, 0, 4, 2]);
+        let actual = T.roots(p);
+        let expected = T.fromArray([-0.44], [-0.08]);
+        checkTensor(actual, expected, 1e-14);
+    });
+    it('should return the roots for a polynomial with real coefficients', () => {
+        let actual = T.roots([1, 4, 6, 5, 2]);
+        let expected = T.fromArray(
+            [-2, -0.5, -0.5, -1],
+            [0, 0.8660254037844386, -0.8660254037844386, 0]
+        );
+        checkTensor(actual, expected, 1e-14);
+    });
+    it('should return the roots for a polynomial with complex coefficients', () => {
+        let actual = T.roots(T.fromArray([1, 4, 2, 3], [1, 0, -2.4, 2]));
+        let expected = T.fromArray(
+            [-2.1485614876360608, 0.031587776302088186, 0.11697371133397387],
+            [0.83069451997990695, 1.7799154861417656, -0.6106100061216736]
+        );
+        checkTensor(actual, expected, 1e-14);
+    });
+    it('should throw for illegal inputs', () => {
+        // all zeros
+        expect(() => T.roots([0, 0, 0])).toThrow();
+        // not enough degree
+        expect(() => T.roots([0, 0, 0, 0, 2])).toThrow();
+        // not a vector
+        expect(() => T.roots([[0.1, 2], [-0.3, 4]])).toThrow();
+        // contains NaN or Infinity
+        expect(() => T.roots([1, 1, 2, NaN])).toThrow();
+        expect(() => T.roots([1, 1, Infinity, 0])).toThrow();
     });
 });
