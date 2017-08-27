@@ -226,6 +226,4 @@ export class DataFunction {
         }
         return [n < 0 ? arrLength : n, ub];
     }
-
-
 }

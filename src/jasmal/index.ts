@@ -1,1 +1,2 @@
-export {JasmalEngine} from './lib/jasmal'
+export {JasmalEngine} from './lib/jasmal';
+

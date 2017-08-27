@@ -20,9 +20,9 @@ Despite its name, JASMAL can actually handle multi-dimensional arrays. It also h
 
 To access the JASMAL engine, simply use `const T = require('jasmal').JasmalEngine.createInstance()`.
 
-## Type Basics
+## Tensor objects and complex numbers
 
-JASMAL is built around [tensor](src/lib/tensor.ts) objects, which use typed
+JASMAL is built around [tensor](src/jasmal/lib/tensor.ts) objects, which use typed
 arrays for data storage. In plain JavaScript, jagged arrays is usually used to
 store multi-dimensional arrays. The following code show how to convert between
 JavaScript arrays and tensor objects:
@@ -42,7 +42,7 @@ let [reC, imC] = C.toArray(false); // convert both real and imaginary parts
 Note that during the conversions the data are **always copied** because JASMAL
 cannot be sure whether you will modify the array elements in the future.
 
-JASMAL also includes a built-in [ComplexNumber](src/lib/complexNumber.ts)
+JASMAL also includes a built-in [ComplexNumber](src/jasmal/lib/complexNumber.ts)
 type to support complex scalars. Complex numbers can be created with the
 following code:
 
@@ -95,7 +95,10 @@ let X = T.ones([3, 4, 3], T.INT32);
 
 ```
 
-## Indexing
+## Indexing/Slicing
+
+JASMAL support a flexible indexing/slicing scheme similar to that in MATLAB/Python.
+
 ``` JavaScript
 let A = T.eye([3, 3]);
 A.set(0, 10); // sets the first element to 10
@@ -118,6 +121,10 @@ A.get([0, 1, 1, 2, 0, 1], ':'); // sample rows
 ```
 
 ## Matrix/Tensor manipulation
+
+JASMAL provides basic tools for tensor manipulation. You can reshape, flatten,
+squeeze, tile or concatenate tensors. See the [definition file](src/jasmal/lib/ops/core/definition.ts)
+for details.
 
 ``` JavaScript
 let A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
@@ -210,7 +217,7 @@ let Z = T.randi(0, 10, [10]);
 You can configure JASMAL to use the JavaScript's `Math.random()` using the
 following code when creating the JASMAL instance:
 
-```
+``` JavaScript
 const T = require('jasmal').JasmalEngine.createInstance({
   rngEngine: 'native'
 });
@@ -219,7 +226,7 @@ const T = require('jasmal').JasmalEngine.createInstance({
 ## Matrix operations
 
 JASMAL supports various matrix operations. For details, see the definitions
-[here](src/lib/ops/matrix/definition.ts).
+[here](src/jasmal/lib/ops/matrix/definition.ts).
 
 ``` JavaScript
 let A = T.rand([3, 3]), B = T.rand([3, 3]);
@@ -255,7 +262,7 @@ let [E2, L2] = T.eig(C);
 ## Data functions
 
 JASMAL also includes several functions for data processing. For details, see
-the definitions [here](src/lib/ops/data/definition.ts).
+the definitions [here](src/jasmal/lib/ops/data/definition.ts).
 
 ``` JavaScript
 let A = T.fromArray([[1, 2, 3], [4, 5, 6]]);
@@ -266,6 +273,21 @@ let sums = T.sum(A, 1, true);
 // Sorts all the elements in A in descending order and return the indices I
 // such that As is given by `A.get(I)`.
 let [As, I] = T.sort(A, 'desc', true);
+```
+
+## Polynomial functions
+
+``` JavaScript
+// Evaluates x^2+2x+3 at 2 and 4.
+let v = T.polyval([1, 2, 3], [2, 4]);
+// Evaluates the matrix polynomial X^2 + 2X + 3I.
+let V = T.polyvalm([1, 2, 3], [[1, 2], [3, 4]]);
+// Finds the least-squares fit of the sine function with a cubic function.
+let x = T.linspace(0, 2, 20);
+let y = T.sin(x);
+let p = T.polyfit(x, y);
+// Finds roots of x^3 + x + 1 = 0.
+let r = T.roots([1, 0, 1, 1]);
 ```
 
 # Performance
@@ -319,7 +341,7 @@ im[0] = -1;
 
 JASMAL itself is released under the [MIT](LICENSE.md) license.
 
-[eigen.ts](src/lib/ops/matrix/decomp/eigen.ts)
+[eigen.ts](src/jasmal/lib/ops/matrix/decomp/eigen.ts)
 contains several subroutines ported from the pristine Fortran code
 [EISPACK](http://www.netlib.org/eispack/),
 which are distributed using the Modified BSD or MIT license

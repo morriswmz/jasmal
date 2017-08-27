@@ -890,6 +890,6 @@ export class MatrixOpProviderFactory {
             chol: opChol,
             qr: opQr,
             linsolve: opLinsolve
-        }
+        };
     }
 }

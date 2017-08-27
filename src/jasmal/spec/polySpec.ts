@@ -134,6 +134,13 @@ describe('roots()', () => {
     it('should return zeros for x^3 = 0', () => {
         checkTensor(T.roots([1, 0, 0, 0]), T.fromArray([0, 0, 0]));
     });
+    it('should return the roots of (x-1)(x-2)...(x-10)=0', () => {
+        let actual = T.sort(
+            T.roots([1, -55, 1320, -18150, 157773, -902055, 3416930, -8409500, 12753576, -10628640, 3628800]),
+            'asc', false);
+        let expected = T.fromArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        checkTensor(actual, expected, 1e-8);
+    });
     it('should ignore the zeros at the beginning for the real case', () => {
         let p = T.fromArray([0, 0, 1, 0, -1]);
         let actual = T.roots(p);
