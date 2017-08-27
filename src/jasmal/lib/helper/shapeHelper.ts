@@ -1,3 +1,6 @@
+import { TypedArray } from '../commonTypes';
+import { ObjectHelper } from './objHelper';
+
 export interface BroadcastingCheckResult {
     /**
      * Adjusted (by prepending new axis) shape of the first operand.
@@ -126,6 +129,48 @@ export class ShapeHelper {
             shapeZ: shapeZ,
             exact: exact
         };
+    }
+
+    /**
+     * Infers the shape of a (nested) JavaScript array (e.g., the shape of
+     * `[[1, 2], [3, 5], [-1, 2]]` is `[3, 2]`).
+     * @param arr A (nested) JavaScript array.
+     */
+    public static inferShapeFromArray(arr: any[] | TypedArray): number[] {
+        let shape: number[] = [];
+        let curEl: any = arr;
+        while (Array.isArray(curEl) || ObjectHelper.isTypedArray(curEl)) {
+            if (curEl.length === 0) {
+                throw new Error('Array cannot be empty.');
+            }
+            shape.push(curEl.length);
+            curEl = curEl[0];
+        }
+        if (shape.length === 0) {
+            throw new Error('Input is not an array.');
+        }
+        return shape;
+    }
+
+    /**
+     * Validates if the given JavaScript array has the given shape.
+     * @param arr The JavaScript array to be validated.
+     * @param shape Expected shape.
+     * @param level Used for recursive calling.
+     */
+    public static validateArrayShape(arr: any[] | TypedArray, shape: number[], level: number = 0): void {
+        if (arr.length !== shape[level]) {
+            throw new Error('The structure of the input array does not match that of a tensor.');
+        }
+        if (level < shape.length - 1) {
+            for (let i = 0;i < arr.length;i++) {
+                if (Array.isArray(arr[i])) {
+                    ShapeHelper.validateArrayShape(arr[i], shape, level + 1);
+                } else {
+                    throw new Error('Cannot have mixed array and non-array elements at the same level.');
+                }
+            }
+        }
     }
 
 }

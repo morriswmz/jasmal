@@ -129,9 +129,9 @@ export class Tensor {
             throw new Error('Cannot convert a complex array to a logic tensor.');
         }
         // determines the shape
-        let shape = Tensor._getShapeFromArray(re);
-        Tensor._validateArrayShape(re, shape, 0);
-        if (isComplex) Tensor._validateArrayShape(<any[] | TypedArray>im, shape, 0);
+        let shape = ShapeHelper.inferShapeFromArray(re);
+        ShapeHelper.validateArrayShape(re, shape);
+        if (isComplex) ShapeHelper.validateArrayShape(<any[] | TypedArray>im, shape);
         // copies the data
         let reStorage = isReTypedArray
             ? TensorStorage.fromTypedArray(<TypedArray>re, dtype)
@@ -145,34 +145,6 @@ export class Tensor {
             imStorage = TensorStorage.Empty;
         }
         return new Tensor(reStorage, imStorage, shape);
-    }
-
-    private static _getShapeFromArray(arr: any[] | TypedArray): number[] {
-        let shape: number[] = [];
-        let curEl: any = arr;
-        while (Array.isArray(curEl) || ObjectHelper.isTypedArray(curEl)) {
-            if (curEl.length === 0) {
-                throw new Error('Array cannot be empty.');
-            }
-            shape.push(curEl.length);
-            curEl = curEl[0];
-        }
-        return shape;
-    }
-
-    private static _validateArrayShape(arr: any[] | TypedArray, shape: number[], level: number): void {
-        if (arr.length !== shape[level]) {
-            throw new Error('The structure of the input array does not match that of a tensor.');
-        }
-        if (level < shape.length - 1) {
-            for (let i = 0;i < arr.length;i++) {
-                if (Array.isArray(arr[i])) {
-                    Tensor._validateArrayShape(arr[i], shape, level + 1);
-                } else {
-                    throw new Error('Cannot have mixed array and non-array elements at the same level.');
-                }
-            }
-        }
     }
 
     /**
@@ -1566,8 +1538,8 @@ export class Tensor {
                     if (Array.isArray(arg0)) {
                         // nested array detected, flatten it first and then
                         // index
-                        originalShape = Tensor._getShapeFromArray(arg0);
-                        Tensor._validateArrayShape(arg0, originalShape, 0);
+                        originalShape = ShapeHelper.inferShapeFromArray(arg0);
+                        ShapeHelper.validateArrayShape(arg0, originalShape);
                         this._setBatch(this._parseSignedNestedIndexArray(arg0, originalShape), args[1]);
                     } else {
                         this._setBatch(this._parseSignedIndices(arg0), args[1]);
@@ -1575,8 +1547,8 @@ export class Tensor {
                 } else {
                     if (Array.isArray(arg0[0])) {
                         // nested array detected
-                        originalShape = Tensor._getShapeFromArray(arg0);
-                        Tensor._validateArrayShape(arg0, originalShape, 0);
+                        originalShape = ShapeHelper.inferShapeFromArray(arg0);
+                        ShapeHelper.validateArrayShape(arg0, originalShape);
                         tmp = this._getBatch(this._parseSignedNestedIndexArray(arg0, originalShape), keepDims);
                         // we want to preserve the original shape here
                         if (tmp instanceof Tensor) {

@@ -5,6 +5,7 @@ import { DataHelper } from '../../helper/dataHelper';
 import { OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { OpInput, DataBlock } from '../../commonTypes';
 import { ElementWiseOpGenerator } from '../generator';
+import { ComplexNumber } from '../../complexNumber';
 
 export class CoreOpProviderFactory {
     public static create(generator: ElementWiseOpGenerator): ICoreOpProvider {
@@ -342,13 +343,30 @@ export class CoreOpProviderFactory {
         };
 
         const opImag = (x: OpInput): Tensor => {
-            return x instanceof Tensor ? x.imag() : Tensor.toTensor(x).imag();
+            if (x instanceof Tensor) {
+                return x.imag();
+            } else if (x instanceof ComplexNumber) {
+                return Tensor.scalar(x.im);
+            } else if (typeof x === 'number') {
+                return Tensor.scalar(0);
+            } else {
+                // Imaginary part is zero, bypass the copying of the real part
+                // in Tensor.toTensor().
+                let shape = ShapeHelper.inferShapeFromArray(x);
+                ShapeHelper.validateArrayShape(x, shape);
+                // TODO: DType inference?
+                return Tensor.zeros(shape);
+            }
         };
 
         const opIsReal = (x: OpInput): boolean => {
-            let t = x instanceof Tensor ? x : Tensor.toTensor(x);
-            if (!t.hasComplexStorage()) return false;
-            return DataHelper.isArrayAllZeros(t.imagData);
+            if (x instanceof Tensor) {
+                return !x.hasNonZeroComplexStorage();
+            } else if (x instanceof ComplexNumber) {
+                return x.im === 0;
+            } else {
+                return true;
+            }
         };
 
         const opIsNaN = generator.makeUnaryOp({

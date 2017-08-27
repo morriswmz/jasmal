@@ -172,6 +172,76 @@ describe('permuteAxis()', () => {
     });
 });
 
+describe('real()', () => {
+    it('should return the real part of a number', () => {
+        checkTensor(T.real(3.14), T.fromArray([3.14]));
+    });
+    it('should return the real part of a complex number', () => {
+        checkTensor(T.real(T.complexNumber(2, 3)), T.fromArray([2]));
+    });
+    it('should return the real part of an array', () => {
+        let arr = [[1, 2], [4, 8]];
+        let actual = T.real(arr);
+        let expected = T.fromArray(arr);
+        checkTensor(actual, expected);
+    });
+    it('should return the real part of a complex tensor', () => {
+        let A = T.fromArray([[[1, 3]]], [[[2, 4]]], T.INT32);
+        let actual = T.real(A);
+        let expected = T.fromArray([[[1, 3]]], [], T.INT32);
+        checkTensor(actual, expected);
+    });
+});
+
+describe('imag()', () => {
+    it('should return the imaginary part of a number', () => {
+        checkTensor(T.imag(3.14), T.fromArray([0]));
+    });
+    it('should return the imaginary part of a complex number', () => {
+        checkTensor(T.imag(T.complexNumber(2, 3)), T.fromArray([3]));
+    });
+    it('should return the imaginary part of an array', () => {
+        let arr = [[1, 2, 3], [4, 8, 12]];
+        let actual = T.imag(arr);
+        let expected = T.zeros([2, 3]);
+        checkTensor(actual, expected);
+    });
+    it('should return the imaginary part of a real tensor', () => {
+        let A = T.fromArray([[1], [3], [5]]);
+        let actual = T.imag(A);
+        let expected = T.fromArray([[0], [0], [0]]);
+        checkTensor(actual, expected);
+    });
+    it('should return the imaginary part of a complex tensor', () => {
+        let A = T.fromArray([[[1, 3]]], [[[2, 4]]], T.INT32);
+        let actual = T.imag(A);
+        let expected = T.fromArray([[[2, 4]]], [], T.INT32);
+        checkTensor(actual, expected);
+    });
+});
+
+describe('isreal()', () => {
+    it('should return true for a number, a JavaScript array or typed array', () => {
+        expect(T.isreal(0.9)).toBe(true);
+        expect(T.isreal(NaN)).toBe(true);
+        expect(T.isreal(Infinity)).toBe(true);
+        expect(T.isreal([0, 1, 2, 3])).toBe(true);
+        expect(T.isreal([[1, 2], [3, 4]])).toBe(true);
+        expect(T.isreal(new Float64Array([1, 2]))).toBe(true);
+        expect(T.isreal(new Uint8Array([1, 2]))).toBe(true);
+        expect(T.isreal(new Int32Array([1, 2]))).toBe(true);
+    });
+    it('should return true if a complex number\'s imaginary part is zero, and false if not', () => {
+        expect(T.isreal(T.complexNumber(1, 0))).toBe(true);
+        expect(T.isreal(T.complexNumber(0, 2))).toBe(false);        
+    });
+    it('should return true if a tensor\'s imaginary part is zero, and false if not', () => {
+        expect(T.isreal(T.ones([3, 3]).ensureComplexStorage())).toBe(true);
+        expect(T.isreal(T.zeros([2, 6]))).toBe(true);
+        expect(T.isreal(T.fromArray([1, 2], [0, 1]))).toBe(false);
+    });
+});
+
 describe('isnan()', () => {
     it('should return a boolean for a scalar input.', () => {
         expect(T.isnan(NaN)).toBe(1);
@@ -207,5 +277,38 @@ describe('isinf()', () => {
         let actual = T.isinf(x);
         let expected = T.fromArray([[0, 1, 0], [1, 1, 0]], [], T.LOGIC);
         checkTensor(actual, expected);
+    });
+});
+
+describe('linspace()', () => {
+    it('should return 11 evenly spaced points starting from 0 and stopping at 1', () => {
+        checkTensor(T.linspace(0, 1, 11), T.fromArray([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]), 1e-15);
+    });
+    it('should return the second argument when the number of points is 1', () => {
+        checkTensor(T.linspace(2, -2, 1), T.fromArray([-2]));
+    });
+});
+
+describe('logspace()', () => {
+    it('should return 10 logarithmically spaced points from 10^1 to 10^8', () => {
+        let actual = T.logspace(1, 8, 10);
+        let expectedArr = new Array<number>(10);
+        for (let i = 0;i < 10;i++) {
+            expectedArr[i] = Math.pow(10, 1 + (8 - 1) / 9 * i);
+        }
+        let expected = T.fromArray(expectedArr);
+        checkTensor(actual, expected, 13, false);
+    });
+});
+
+describe('find()', () => {
+    it('should find non zeros elements for a real tensor', () => {
+        let actual = T.find([0, 1, 0, NaN, -2, Infinity, 0, 0]);
+        expect(actual).toEqual([1, 3, 4, 5]);
+    });
+    it('should find non zeros elements for a complex tensor', () => {
+        let x = T.fromArray([[0, 0, 1], [2, 0, 0]], [[NaN, 0, 0], [Infinity, Infinity, 0]]);
+        let actual = T.find(x);
+        expect(actual).toEqual([0, 2, 3, 4]);
     });
 });
