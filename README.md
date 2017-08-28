@@ -30,6 +30,9 @@ JavaScript arrays and tensor objects:
 ``` JavaScript
 // Creates a tensor from JavaScript arrays.
 let A = T.fromArray([[1, 2], [3, 4]]); // real 2 x 2
+// Specifying the data type for the underlying storage.
+// Note that [] means no imaginary part.
+let B = T.fromArray([[1, 2], [3, 4]], [], T.INT32);
 let C = T.fromArray([[1, 2], [3, 4]], [[-1, -2], [-3, -4]]); // complex 2 x 2
 // Convert a tensor to a JavaScript array.
 let a = A.toArray(true); // real part only, arr = [[1, 2], [3, 4]]
@@ -169,9 +172,11 @@ let s = T.add(1, 2); // returns 3
 
 let A = T.ones(3);
 // Subtract one from matrix A and return the result as a new matrix.
-let B = T.sub(A, 1);
+let B1 = T.sub(A, 1);
 // Subtract one from matrix A but do it in-place.
 T.sub(A, 1, true);
+// Subtract 2+3j from A. The result will be complex.
+let B2 = T.sub(A, T.complexNumber(2, 3));
 
 // Broadcasting
 let X = T.rand([3, 3]);
@@ -257,6 +262,8 @@ let [U2, S2, V2] = T.svd(C);
 let [E1, L1] = T.eig(A);
 // Eigendecomposition also works for general complex square matrices.
 let [E2, L2] = T.eig(C);
+// Solve the linear system AX = B.
+let X = T.linsolve(A, B);
 ```
 
 ## Data functions

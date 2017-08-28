@@ -9,10 +9,6 @@
   "license": "MIT",
   "main": "dist/jasmal/index.js",
   "typings": "dist/jasmal/index.d.ts",
-  "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts"
-  ],
   "devDependencies": {
     "benchmark": "^2.1.4",
     "jasmine": "^2.6.0",
