@@ -147,8 +147,8 @@ export class JasmalEngine {
         let coreOpProvider = CoreOpProviderFactory.create(elementWiseOpGen);
         let randomOpProvider = RandomOpProviderFactory.create(options.rngEngine);
         let arithmeticOpProvider = ArithmeticOpProviderFactory.create(elementWiseOpGen);
-        let matrixOpProvider = MatrixOpProviderFactory.create(arithmeticOpProvider);
         let mathOpProvider = MathOpProviderFactory.create(elementWiseOpGen);
+        let matrixOpProvider = MatrixOpProviderFactory.create(arithmeticOpProvider, mathOpProvider);
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create(elementWiseOpGen);
         let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, reductionOpGen);
         let polyOpProvider = PolynomialOpProviderFactory.create(coreOpProvider, matrixOpProvider);

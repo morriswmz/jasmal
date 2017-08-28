@@ -1,6 +1,6 @@
 import { IMatrixOpProvider, MatrixModifier } from './definition';
 import { IArithmeticOpProvider } from '../arithmetic/definition';
-import { OpInput, OpOutput, Scalar, DataBlock } from '../../commonTypes';
+import { OpInput, Scalar, DataBlock } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 import { ComplexNumber } from '../../complexNumber';
 import { DType, OutputDTypeResolver } from '../../dtype';
@@ -13,10 +13,14 @@ import { QR } from './decomp/qr';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
 import { DataHelper } from '../../helper/dataHelper';
+import { CMath } from "../../math/cmath";
+import { IMathOpProvider } from '../math/definition';
 
 export class MatrixOpProviderFactory {
 
-    public static create(arithmOp: IArithmeticOpProvider, mbs: IMatrixBasicSubroutines = new BuiltInMBS()): IMatrixOpProvider {
+    // tslint:disable-next-line:max-line-length
+    public static create(arithmOp: IArithmeticOpProvider, mathOp: IMathOpProvider,
+                         mbs: IMatrixBasicSubroutines = new BuiltInMBS()): IMatrixOpProvider {
 
         const opEye = (m: number, n?: number, dtype: DType = DType.FLOAT64): Tensor => {
             if (n == undefined) n = m;
@@ -287,15 +291,24 @@ export class MatrixOpProviderFactory {
             return undefined;
         };
 
-        const opMatMul = (x: OpInput, y: OpInput, yModifier: MatrixModifier = MatrixModifier.None): OpOutput => {
-            if (x instanceof ComplexNumber || typeof x === 'number' ||
-                y instanceof ComplexNumber || typeof y === 'number') {
-                return arithmOp.mul(x, y);
-            }
+        const opMatMul = (x: OpInput, y: OpInput, yModifier: MatrixModifier = MatrixModifier.None): Tensor => {
             let vx = Tensor.analyzeOpInput(x);
             let vy = Tensor.analyzeOpInput(y);
             if (vx.originalShape.length > 2 || vy.originalShape.length > 2) {
                 throw new Error('Matrix or vector expected.');
+            }
+            // convert scalar
+            if (vx.isInputScalar) {
+                vx.reArr = [vx.re];
+                if (vx.isComplex) {
+                    vx.imArr = [vx.im];
+                }
+            }
+            if (vy.isInputScalar) {
+                vy.reArr = [vy.re];
+                if (vy.isComplex) {
+                    vy.imArr = [vy.im];
+                }
             }
             let m = vx.originalShape.length === 1 ? 1 : vx.originalShape[0];
             let n1 = vx.originalShape.length === 1 ? vx.originalShape[0] : vx.originalShape[1];
@@ -705,8 +718,8 @@ export class MatrixOpProviderFactory {
             for (let i = 0;i < r;i++) {
                 s[i] = 1.0 / s[i];
             }
-            let Z = <Tensor>arithmOp.mul(V.get(':',':' + r, true), s.slice(0, r));
-            return <Tensor>opMatMul(Z, X.get(':',':' + r, true), MatrixModifier.Hermitian);
+            let Z = arithmOp.mul(V.get(':',':' + r, true), s.slice(0, r));
+            return opMatMul(Z, X.get(':',':' + r, true), MatrixModifier.Hermitian);
         };
 
         function opEig(x: OpInput): [Tensor, Tensor];
@@ -864,6 +877,41 @@ export class MatrixOpProviderFactory {
             }
         };
 
+        const opSqrtm = (x: OpInput): Tensor => {
+            let X: Tensor = x instanceof Tensor ? x : Tensor.toTensor(x);
+            let shapeX = X.shape;
+            // scalar case
+            if (shapeX.length === 1 && shapeX[0] === 1) {
+                if (X.hasNonZeroComplexStorage()) {
+                    let [re, im] = CMath.csqrt(X.realData[0], X.imagData[0]);
+                    return Tensor.scalar(re, im);
+                } else {
+                    let re = X.realData[0];
+                    return re >= 0 ? Tensor.scalar(Math.sqrt(re)) : Tensor.scalar(0, Math.sqrt(-re));
+                }
+            }
+            if (shapeX.length !== 2 || (shapeX[0] !== shapeX[1])) {
+                throw new Error('Square matrix expected.');
+            }
+            if (opIsHermitian(X)) {
+                // use eig to compute the square root
+                let E = Tensor.zeros(shapeX);
+                let v = Tensor.zeros([shapeX[0]]);
+                if (X.hasNonZeroComplexStorage()) {
+                    X = X.asType(DType.FLOAT64, true);
+                    E.ensureComplexStorage();
+                    Eigen.ch(shapeX[0], X.realData, X.imagData, v.realData, true, E.realData, E.imagData);
+                } else {
+                    Eigen.rs(shapeX[0], X.realData, v.realData, true, E.realData);
+                }
+                mathOp.sqrt(v, true);
+                return opMatMul(arithmOp.mul(E, v), E, MatrixModifier.Hermitian);
+            } else {
+                // TODO: use Schur decomposition
+                throw new Error('Matrix square root for non-Hermitian matrices is not supported yet.');
+            }
+        };
+
         return {
             isSymmetric: opIsSymmetric,
             isHermitian: opIsHermitian,
@@ -889,7 +937,8 @@ export class MatrixOpProviderFactory {
             eig: opEig,
             chol: opChol,
             qr: opQr,
-            linsolve: opLinsolve
+            linsolve: opLinsolve,
+            sqrtm: opSqrtm
         };
     }
 }

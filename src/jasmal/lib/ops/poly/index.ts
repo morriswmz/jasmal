@@ -130,7 +130,7 @@ export class PolynomialOpProviderFactory {
             }
             for (i = 1;i < infoP.reArr.length;i++) {
                 // multiply
-                Y = <Tensor>matOp.matmul(Y, x);
+                Y = matOp.matmul(Y, x);
                 // add
                 reY = Y.realData;
                 for (k = 0;k < m;k++) {

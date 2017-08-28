@@ -1,4 +1,4 @@
-import { OpInput, OpOutput, Scalar } from '../../commonTypes';
+import { OpInput, Scalar } from '../../commonTypes';
 import { DType } from '../../dtype';
 import { Tensor } from '../../tensor';
 
@@ -95,7 +95,7 @@ export interface IMatrixOpProvider {
      *                  set to `MM_TRANSPOSED`, this function will compute
      *                  x y^T.
      */
-    matmul(x: OpInput, y: OpInput, yModifier?: MatrixModifier): OpOutput;
+    matmul(x: OpInput, y: OpInput, yModifier?: MatrixModifier): Tensor;
 
     /**
      * Computes the Kronecker product between two matrices.
@@ -247,5 +247,12 @@ export interface IMatrixOpProvider {
      * @param b Matrix B. 
      */
     linsolve(a: OpInput, b: OpInput): Tensor;
+
+    /**
+     * Computes the square root of the input matrix.
+     * Currently only Hermitian matrices are supported.
+     * @param x Matrix input.
+     */
+    sqrtm(x: OpInput): Tensor;
 
 }

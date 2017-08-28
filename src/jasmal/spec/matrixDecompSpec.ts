@@ -488,3 +488,53 @@ describe('linsolve()', () => {
         });
     }
 });
+
+describe('sqrtm()', () => {
+    let shapes = [[4, 4], [8, 8], [15, 15], [20, 20]];
+    it('should compute the square root of a real diagonal matrix', () => {
+        let A = T.diag([9, 1, -4]);
+        let ACopy = A.copy(true);
+        let actual = T.sqrtm(A);
+        let expected = T.diag(T.fromArray([3, 1, 0], [0, 0, 2]));
+        checkTensor(actual, expected);
+        // should not change A
+        checkTensor(A, ACopy);
+    });
+    it('should compute the square root of a simple Hermitian matrix', () => {
+        let A = T.fromArray(
+            [[3, 1, 2],
+             [1, 4, 0],
+             [2, 0, 2]],
+            [[0, 1, 2],
+             [-1, 0, 0],
+             [-2, 0, 0]]
+        );
+        let ACopy = A.copy(true);
+        let S = T.sqrtm(A);
+        checkTensor(T.matmul(S, S), A, 1e-14);
+        // should not change A
+        checkTensor(A, ACopy);
+    });
+    for (let i = 0;i < shapes.length;i++) { 
+        it(`should compute the square root of a ${shapes[i][0]} x ${shapes[i][0]} real symmetric matrix`, () => {
+            let A = T.rand(shapes[i]);
+            T.add(A, T.transpose(A), true);
+            let ACopy = A.copy(true);
+            let S = T.sqrtm(A);
+            checkTensor(T.matmul(S, S), A.copy().ensureComplexStorage(), 1e-14);
+            // should not change A
+            checkTensor(A, ACopy);
+        });
+    }
+    for (let i = 0;i < shapes.length;i++) { 
+        it(`should compute the square root of a ${shapes[i][0]} x ${shapes[i][0]} complex Hermitian matrix`, () => {
+            let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
+            T.add(A, T.hermitian(A), true);
+            let ACopy = A.copy(true);
+            let S = T.sqrtm(A);
+            checkTensor(T.matmul(S, S), A, 1e-14);
+            // should not change A
+            checkTensor(A, ACopy);
+        });
+    }
+});
