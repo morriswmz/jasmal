@@ -949,7 +949,7 @@ export class Eigen {
         k = 0;
         // store roots isolated by balanc and compute matrix norm
         for (i = 0;i < n;i++) {
-            for (j = k;j <= n;j++) {
+            for (j = k;j < n;j++) {
                 norm += Math.abs(h[i * n + j]);
             }
             k = i;
@@ -1066,7 +1066,7 @@ export class Eigen {
                         r = r / p;
                         if (notlas) {
                             // row modification
-                            for (j = k;j < n;j++) {
+                            for (j = k;j <= en;j++) {
                                 p = h[k * n + j] + q * h[(k + 1) * n + j] + r * h[(k + 2) * n + j];
                                 h[k * n + j] -= p * x;
                                 h[(k + 1) * n + j] -= p * y;
@@ -1074,7 +1074,7 @@ export class Eigen {
                             }
                             j = Math.min(en, k + 3);
                             // column modification
-                            for (i = 0;i <= j;i++) {
+                            for (i = l;i <= j;i++) {
                                 p = x * h[i * n + k] + y * h[i * n + (k + 1)] + zz * h[i * n + (k + 2)];
                                 h[i * n + k] -= p;
                                 h[i * n + (k + 1)] -= p * q;
@@ -1082,14 +1082,14 @@ export class Eigen {
                             }
                         } else {
                             // row modification
-                            for (j = k;j < n;j++) {
+                            for (j = k;j <= en;j++) {
                                 p = h[k * n + j] + q * h[(k + 1) * n + j];
                                 h[k * n + j] -= p * x;
                                 h[(k + 1) * n + j] -= p * y;
                             }
                             j = Math.min(en, k + 3);
                             // column modification
-                            for (i = 0;i <= j;i++) {
+                            for (i = l;i <= j;i++) {
                                 p = x * h[i * n + k] + y * h[i * n + (k + 1)];
                                 h[i * n + k] -= p;
                                 h[i * n + (k + 1)] -= p * q;
@@ -1990,7 +1990,7 @@ export class Eigen {
                     hi[(i - 1) * n + (i - 1)] = 0.0;
                     hi[i * n + (i - 1)] = sr / norm;
 
-                    for (j = i;j < n;j++) {
+                    for (j = i;j <= en;j++) {
                         yr = hr[(i - 1) * n + j];
                         yi = hi[(i - 1) * n + j];
                         zzr = hr[i * n + j];
@@ -2032,7 +2032,7 @@ export class Eigen {
                     skip = true;
                     continue;
                 }
-                for (i = 0;i <= en;i++) {
+                for (i = l;i <= en;i++) {
                     yr = hr[i * n + en];
                     yi = hi[i * n + en];
                     hr[i * n + en] = sr * yr - si * yi;

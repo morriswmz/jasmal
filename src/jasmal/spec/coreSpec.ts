@@ -11,6 +11,7 @@ describe('reshape()', () => {
         );
         let N = T.reshape(M, [2, 3, 2]);
         expect(N.shape).toEqual([2, 3, 2]);
+        expect(N.strides).toEqual([6, 2, 1]);
         // reference copy expected
         expect(N.realData).toBe(M.realData);
         expect(N.imagData).toBe(M.imagData);
@@ -27,6 +28,7 @@ describe('reshape()', () => {
         let M = T.ones([3, 4, 6]);
         let N = T.reshape(M, [2, -1, 3]);
         expect(N.shape).toEqual([2, 12, 3]);
+        expect(N.strides).toEqual([36, 3, 1]);
     });
     it('should throw if the new shape is invalid', () => {
         let M = T.ones([2, 3, 4]);

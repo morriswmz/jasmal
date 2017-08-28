@@ -21,6 +21,7 @@ import { DataOpProviderFactory } from './ops/data';
 import { PolynomialOpProviderFactory } from './ops/poly';
 import { ObjectHelper } from './helper/objHelper';
 import { ElementWiseOpGenerator, ReductionOpGenerator } from './ops/generator';
+import { EPSILON } from './constant';
 
 export interface JasmalOptions {
     rngEngine?: string | IRandomEngine;
@@ -68,6 +69,10 @@ export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
      * Imaginary unit.
      */
     readonly J: ComplexNumber;
+    /**
+     * Machine precision for double.
+     */
+    readonly EPSILON: number;
 
     /**
      * Creates a complex number.
@@ -159,6 +164,7 @@ export class JasmalEngine {
 
             J: new ComplexNumber(0, 1),
             PI: Math.PI,
+            EPSILON: EPSILON,
 
             complexNumber: (re, im?) => new ComplexNumber(re, im),
             isComplexNumber: x => x instanceof ComplexNumber,
