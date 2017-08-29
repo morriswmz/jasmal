@@ -122,4 +122,14 @@ export interface IDataOpProvider {
      */
     hist(x: OpInput, nBins?: number): [Tensor, Tensor];
 
+    /**
+     * Fast Fourier transform.
+     */
+    fft(x: OpInput, axis?: number): Tensor;
+
+    /**
+     * Inverse fast Fouriert transform.
+     */
+    ifft(x: OpInput, axis?: number): Tensor;
+
 }

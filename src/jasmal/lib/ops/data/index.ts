@@ -2,11 +2,13 @@ import { IDataOpProvider } from './definition';
 import { Tensor } from '../../tensor';
 import { OpInput, DataBlock } from '../../commonTypes';
 import { DataFunction } from './datafun';
-import { OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver, DType } from '../../dtype';
 import { DataHelper } from '../../helper/dataHelper';
 import { ICoreOpProvider } from '../core/definition';
 import { ReductionOpGenerator } from '../generator';
 import { ComparisonHelper } from '../../helper/comparisonHelper';
+import { SpecialFunction } from '../../math/special';
+import { FFT } from '../../math/fft';
 
 export class DataOpProviderFactory {
 
@@ -107,6 +109,64 @@ export class DataOpProviderFactory {
             }
             return X;
         };
+
+        const opFFTFB = (x: OpInput, forward: boolean = true, axis: number = -1): Tensor => {
+            let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
+            X.ensureComplexStorage();
+            if (axis < 0 || (axis === 0 && X.ndim === 1)) {
+                if (SpecialFunction.isPowerOfTwoN(X.size)) {
+                    FFT.FFT(X.realData, X.imagData, forward);
+                } else {
+                    throw new Error('NOPT FFT is not supported yet.');
+                }
+            } else {
+                if (axis >= X.ndim) {
+                    throw new Error(`Invalid axis number ${axis}.`);
+                }
+                let shapeX = X.shape;
+                let n = shapeX[axis];
+                if (SpecialFunction.isPowerOfTwoN(n)) {
+                    let tmpReArr = DataHelper.allocateFloat64Array(n);
+                    let tmpImArr = DataHelper.allocateFloat64Array(n);
+                    let strides = X.strides;
+                    let strideAtAxis = strides[axis];
+                    let maxLevel = X.ndim - 1;
+                    let doFFT = (re: DataBlock, im: DataBlock, level: number, offset: number): void => {
+                        if (level === maxLevel) {
+                            for (let i = 0;i < shapeX[level];i++) {
+                                // copy data to tmp array
+                                for (let k = 0;k < n;k++) {
+                                    tmpReArr[k] = re[strideAtAxis * k + offset];
+                                    tmpImArr[k] = im[strideAtAxis * k + offset];
+                                }
+                                // do FFT
+                                FFT.FFT(tmpReArr, tmpImArr, forward);
+                                // copy back
+                                for (let k = 0;k < n;k++) {
+                                    re[strideAtAxis * k + offset] = tmpReArr[k];
+                                    im[strideAtAxis * k + offset] = tmpImArr[k];
+                                }
+                                offset++;
+                            }
+                        } else {
+                            // recursive calling
+                            let maxI = level === axis ? 1 : shapeX[level];
+                            for (let i = 0;i < maxI;i++) {
+                                doFFT(re, im, level + 1, offset);
+                                offset += strides[level];
+                            }
+                        }
+                    }
+                    doFFT(X.realData, X.imagData, 0, 0);
+                } else {
+                    throw new Error('NOPT FFT is not supported yet.');
+                }
+            }
+            return X;
+        };
+
+        const opFFT = (x: OpInput, axis: number = -1): Tensor => opFFTFB(x, true, axis);
+        const opIFFT = (x: OpInput, axis: number = -1): Tensor => opFFTFB(x, false, axis);
 
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
@@ -370,7 +430,9 @@ export class DataOpProviderFactory {
             sort: opSort,
             sortRows: opSortRows,
             unique: opUnique,
-            hist: opHist
+            hist: opHist,
+            fft: opFFT,
+            ifft: opIFFT
         };
 
     }

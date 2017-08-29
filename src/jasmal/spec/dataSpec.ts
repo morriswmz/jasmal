@@ -354,3 +354,45 @@ describe('hist()', () => {
         checkTensor(actualE, expectedE);
     });
 });
+
+describe('fft()/ifft()', () => {
+    let v = [1, 0, 2, 0, 3, 0, 2, 0];
+    let A = T.fromArray(
+        [[1, 2],
+         [2, 2],
+         [1, 2],
+         [3, 2]],
+        [[0, 1],
+         [2, 2],
+         [0, 2],
+         [2, 1]],
+    );
+    let ACopy = A.copy(true);
+    it('should compute the FFT of a real vector', () => {
+        let actual = T.fft(v);
+        let expected = T.fromArray([8, -2, 0, -2, 8, -2, 0, -2]).ensureComplexStorage();
+        checkTensor(actual, expected, 1e-15);
+    });
+    it('should compute the FFT along the columns of a complex matrix', () => {
+        let actual = T.fft(A, 0);
+        let expected = T.fromArray(
+            [[7, 8],
+             [0, 1],
+             [-3, 0],
+             [0, -1]],
+            [[4, 6],
+             [1, -1],
+             [-4, 0],
+             [-1, -1]]
+        );
+        checkTensor(actual, expected, 1e-15);
+        // should not change A
+        checkTensor(A, ACopy);
+    });
+    it('ifft(fft(A, 0), 0) should give back A', () => {
+        let actual = T.ifft(T.fft(A, 0), 0);
+        checkTensor(actual, A, 1e-13);
+        // should not change A
+        checkTensor(A, ACopy, 1e-15);
+    });
+});

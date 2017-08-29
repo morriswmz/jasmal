@@ -87,6 +87,8 @@ export interface IMatrixOpProvider {
 
     /**
      * Performs matrix multiplication.
+     * Scalars will be treated as 1x1 matrices and 1D vectors will be treated
+     * as 1xN matrices.
      * @param x Input matrix x.
      * @param y Input matrix y.
      * @param yModifier Specifies whether whether transpose or Hermitian

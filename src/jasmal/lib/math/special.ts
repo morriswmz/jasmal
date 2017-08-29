@@ -27,6 +27,14 @@ export class FactorialTable {
 }
 
 export class SpecialFunction {
+
+    /**
+     * Checks if a 32-bit integer is a power of two.
+     * @param n 
+     */
+    public static isPowerOfTwoN(n: number): boolean {
+        return ((n !== 0) && !(n & (n - 1)));
+    }
     
     /**
      * Computes log(gamma(x)) for a nonnegative x.
