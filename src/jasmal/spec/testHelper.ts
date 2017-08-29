@@ -154,13 +154,13 @@ export function checkTensor(actual: any, expected: Tensor, tolerance: number = 0
                 } else {
                     if (absolute) {
                         if (!areCloseByAbsoluteValue(imActual[i], imExpected[i], tolerance)) {
-                            fail(`At index ${i}, expecting the imaginary part to be ${reExpected[i]} ± ${tolerance}, got ${reActual[i]}.`);
+                            fail(`At index ${i}, expecting the imaginary part to be ${imExpected[i]} ± ${tolerance}, got ${imActual[i]}.`);
                             return;
                         }
                     } else {
                         if (!areCloseByPrecision(imActual[i], imExpected[i], tolerance)) {
-                            fail(`At index ${i}, expecting the imaginary part to be close to ${reExpected[i].toExponential(tolerance)}` +
-                                ` (actual value is ${reExpected[i]}), got ${reActual[i].toExponential(tolerance)}.`);
+                            fail(`At index ${i}, expecting the imaginary part to be close to ${imExpected[i].toExponential(tolerance)}` +
+                                ` (actual value is ${imExpected[i]}), got ${imActual[i].toExponential(tolerance)}.`);
                             return;
                         }
                     }
