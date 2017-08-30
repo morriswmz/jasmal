@@ -3,14 +3,18 @@ import { Tensor } from '../lib/tensor';
 import { ShapeHelper } from '../lib/helper/shapeHelper';
 import { DTypeHelper } from '../lib/dtype';
 
-function areCloseByAbsoluteValue(x: number, y: number, tol: number): boolean {
-    return Math.abs(x - y) <= tol;
+function areCloseByAbsoluteValue(actual: number, expected: number, tol: number): boolean {
+    return Math.abs(actual - expected) <= tol;
 }
 
-function areCloseByPrecision(x: number, y: number, n: number): boolean {
-    let xStr = x.toExponential(n);
-    let yStr = y.toExponential(n);
-    return xStr === yStr;
+function areCloseByPrecision(actual: number, expected: number, n: number): boolean {
+    if (expected === 0) {
+        return Math.pow(10, n) * Math.abs(expected) < 1;
+    } else {
+        let xStr = actual.toExponential(n);
+        let yStr = expected.toExponential(n);
+        return xStr === yStr;
+    }
 }
 
 export function maxAbs(x: ArrayLike<number>): number {
@@ -24,26 +28,41 @@ export function maxAbs(x: ArrayLike<number>): number {
     return max;
 }
 
-export function checkNumber(actual: any, expected: number, tolerance: number = 0): void {
+export function checkNumber(actual: any, expected: number, tolerance: number = 0,
+                            absolute: boolean = false, msgPrefix: string = ''): void {
     if (actual === expect) {
         return;
     }
     if (typeof actual !== 'number') {
-        fail(`Expecting a number got "O=${Object.prototype.toString.call(actual)}".`);
+        fail(`${msgPrefix}Expecting a number got "O=${Object.prototype.toString.call(actual)}".`);
         return;
     }
     if (isNaN(expected)) {
+        // NaN handling
         if (!isNaN(actual)) {
-            fail(`Expecting a NaN, got ${actual}.`);
+            fail(`${msgPrefix}Expecting a NaN, got ${actual}.`);
             return;
         }
     } else {
-        if (isNaN(actual)) {
-            fail('Expecting a valid number, got a NaN.');
-            return;
-        } else if (!areCloseByAbsoluteValue(actual, expected, tolerance)) {
-            fail(`Expecting ${expected} ± ${tolerance}, got ${actual}.`);
-            return;
+        if (!isFinite(expected)) {
+            // Infinity handling
+            if (actual !== expected) {
+                fail(`${msgPrefix}Expecting ${expected}, got ${actual}.`);
+                return;
+            }
+        } else {
+            if (absolute) {
+                if (!areCloseByAbsoluteValue(actual, expected, tolerance)) {
+                    fail(`${msgPrefix}Expecting ${expected} ± ${tolerance}, got ${actual}.`);
+                    return;
+                }
+            } else {
+                if (!areCloseByPrecision(actual, expected, tolerance)) {
+                    fail(`${msgPrefix}Expecting the value to be close to ${expected.toExponential(tolerance)}` +
+                    ` (actual value is ${expected}), got ${actual.toExponential(tolerance)}.`);
+                    return;
+                }
+            }
         }
     }
 }
@@ -61,19 +80,14 @@ export function checkArrayLike<T>(actual: ArrayLike<T>, expected: ArrayLike<T>):
     }
 };
 
-export function checkComplex(actual: any, expected: ComplexNumber, tolerance: number = 0): void {
+export function checkComplex(actual: any, expected: ComplexNumber, tolerance: number = 0,
+                             absolute: boolean = false, msgPrefix: string = ''): void {
     if (actual === expected) return;
     if (!(actual instanceof ComplexNumber)) {
-        throw new Error('Expecting a complex number.');
+        throw new Error(`${msgPrefix}Expecting a complex number.`);
     }
-    if (!areCloseByAbsoluteValue(actual.re, expected.re, tolerance)) {
-        fail(`Expecting the real part to be ${expected.re} ± ${tolerance}, got ${actual.re}.`);
-        return;
-    }
-    if (!areCloseByAbsoluteValue(actual.im, expected.im, tolerance)) {
-        fail(`Expecting the real part to be ${expected.im} ± ${tolerance}, got ${actual.im}.`);
-        return;
-    }
+    checkNumber(actual.re, expected.re, tolerance, absolute, 'Real part: ');
+    checkNumber(actual.im, expected.im, tolerance, absolute, 'Imaginary part: ');
 }
 
 export function checkTensor(actual: any, expected: Tensor, tolerance: number = 0, absolute: boolean = true): void {
@@ -102,70 +116,17 @@ export function checkTensor(actual: any, expected: Tensor, tolerance: number = 0
     }
     let reActual = actual.realData;
     let reExpected = expected.realData;
-    for (let i = 0;i < reActual.length;i++) {
-        if (isNaN(reExpected[i])) {
-            if (!isNaN(reActual[i])) {
-                fail(`At index ${i}, expecting the real part to be NaN, got ${reActual[i]}.`);
-                return;
-            }
-        } else if (!isFinite(reExpected[i])) {
-            if (reExpected[i] !== reActual[i]) {
-                fail(`At index ${i}, expecting the real part to be ${reExpected[i]}, got ${reActual[i]}.`);
-                return;                
-            }
-        } else {
-            if (isNaN(reActual[i])) {
-                fail(`At index ${i}, expecting the real part to be a valid number, got NaN.`);
-                return;
-            } else {
-                if (absolute) {
-                    if (!areCloseByAbsoluteValue(reActual[i], reExpected[i], tolerance)) {
-                        fail(`At index ${i}, expecting the real part to be ${reExpected[i]} ± ${tolerance}, got ${reActual[i]}.`);
-                        return;
-                    }
-                } else {
-                    if (!areCloseByPrecision(reActual[i], reExpected[i], tolerance)) {
-                        fail(`At index ${i}, expecting the real part to be close to ${reExpected[i].toExponential(tolerance)}` +
-                            ` (actual value is ${reExpected[i]}), got ${reActual[i].toExponential(tolerance)}.`);
-                        return;
-                    }
-                }                
-            }
-        }
-    }
     if (expected.hasComplexStorage()) {
         let imActual = actual.imagData;
         let imExpected = expected.imagData;
-        for (let i = 0;i < imActual.length;i++) {
-            if (isNaN(imExpected[i])) {
-                if (!isNaN(imActual[i])) {
-                    fail(`At index ${i}, expecting the imaginary part to be NaN, got ${imActual[i]}.`);
-                    return;
-                }
-            } else if (!isFinite(imExpected[i])) {
-                if (imExpected[i] !== imActual[i]) {
-                    fail(`At index ${i}, expecting the imaginary part to be ${imExpected[i]}, got ${imActual[i]}.`);
-                    return;                
-                }
-            } else {
-                if (isNaN(imActual[i])) {
-                    fail(`At index ${i}, expecting the imaginary part to be a valid number, got NaN.`);
-                    return;
-                } else {
-                    if (absolute) {
-                        if (!areCloseByAbsoluteValue(imActual[i], imExpected[i], tolerance)) {
-                            fail(`At index ${i}, expecting the imaginary part to be ${imExpected[i]} ± ${tolerance}, got ${imActual[i]}.`);
-                            return;
-                        }
-                    } else {
-                        if (!areCloseByPrecision(imActual[i], imExpected[i], tolerance)) {
-                            fail(`At index ${i}, expecting the imaginary part to be close to ${imExpected[i].toExponential(tolerance)}` +
-                                ` (actual value is ${imExpected[i]}), got ${imActual[i].toExponential(tolerance)}.`);
-                            return;
-                        }
-                    }
-                }
-            }
+        for (let i = 0;i < reActual.length;i++) {
+            checkComplex(new ComplexNumber(reActual[i], imActual[i]),
+                new ComplexNumber(reExpected[i], imExpected[i]),
+                tolerance, absolute, `Index ${i}: `);
+        }
+    } else {
+        for (let i = 0;i < reActual.length;i++) {
+            checkNumber(reActual[i], reExpected[i], tolerance, absolute, `Index ${i}: `);
         }
     }
 }
