@@ -1,5 +1,5 @@
-import { DataBlock } from '../commonTypes';
-import { SpecialFunction } from './special';
+import { DataBlock } from '../../commonTypes';
+import { SpecialFunction } from '../../math/special';
 
 export class FFT {
 
@@ -83,6 +83,10 @@ export class FFT {
                 im[i] *= nInv;
             }
         }
+    }
+
+    public static FFTNoPT(_re: DataBlock, _im: DataBlock, _forward: boolean = true): void {
+        throw new Error('Not implemented.');
     }
 
 }

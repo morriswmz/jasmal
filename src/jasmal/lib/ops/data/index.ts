@@ -8,7 +8,7 @@ import { ICoreOpProvider } from '../core/definition';
 import { ReductionOpGenerator } from '../generator';
 import { ComparisonHelper } from '../../helper/comparisonHelper';
 import { SpecialFunction } from '../../math/special';
-import { FFT } from '../../math/fft';
+import { FFT } from './fft';
 
 export class DataOpProviderFactory {
 
@@ -117,7 +117,7 @@ export class DataOpProviderFactory {
                 if (SpecialFunction.isPowerOfTwoN(X.size)) {
                     FFT.FFT(X.realData, X.imagData, forward);
                 } else {
-                    throw new Error('NOPT FFT is not supported yet.');
+                    FFT.FFTNoPT(X.realData, X.imagData, forward);
                 }
             } else {
                 if (axis >= X.ndim) {
@@ -125,42 +125,39 @@ export class DataOpProviderFactory {
                 }
                 let shapeX = X.shape;
                 let n = shapeX[axis];
-                if (SpecialFunction.isPowerOfTwoN(n)) {
-                    let tmpReArr = DataHelper.allocateFloat64Array(n);
-                    let tmpImArr = DataHelper.allocateFloat64Array(n);
-                    let strides = X.strides;
-                    let strideAtAxis = strides[axis];
-                    let maxLevel = X.ndim - 1;
-                    let doFFT = (re: DataBlock, im: DataBlock, level: number, offset: number): void => {
-                        if (level === maxLevel) {
-                            for (let i = 0;i < shapeX[level];i++) {
-                                // copy data to tmp array
-                                for (let k = 0;k < n;k++) {
-                                    tmpReArr[k] = re[strideAtAxis * k + offset];
-                                    tmpImArr[k] = im[strideAtAxis * k + offset];
-                                }
-                                // do FFT
-                                FFT.FFT(tmpReArr, tmpImArr, forward);
-                                // copy back
-                                for (let k = 0;k < n;k++) {
-                                    re[strideAtAxis * k + offset] = tmpReArr[k];
-                                    im[strideAtAxis * k + offset] = tmpImArr[k];
-                                }
-                                offset++;
+                let FFTFunc = SpecialFunction.isPowerOfTwoN(n) ? FFT.FFT : FFT.FFTNoPT;
+                let tmpReArr = DataHelper.allocateFloat64Array(n);
+                let tmpImArr = DataHelper.allocateFloat64Array(n);
+                let strides = X.strides;
+                let strideAtAxis = strides[axis];
+                let maxLevel = X.ndim - 1;
+                let doFFT = (re: DataBlock, im: DataBlock, level: number, offset: number): void => {
+                    if (level === maxLevel) {
+                        for (let i = 0;i < shapeX[level];i++) {
+                            // copy data to tmp array
+                            for (let k = 0;k < n;k++) {
+                                tmpReArr[k] = re[strideAtAxis * k + offset];
+                                tmpImArr[k] = im[strideAtAxis * k + offset];
                             }
-                        } else {
-                            // recursive calling
-                            let maxI = level === axis ? 1 : shapeX[level];
-                            for (let i = 0;i < maxI;i++) {
-                                doFFT(re, im, level + 1, offset);
-                                offset += strides[level];
+                            // do FFT
+                            FFTFunc(tmpReArr, tmpImArr, forward);
+                            // copy back
+                            for (let k = 0;k < n;k++) {
+                                re[strideAtAxis * k + offset] = tmpReArr[k];
+                                im[strideAtAxis * k + offset] = tmpImArr[k];
                             }
+                            offset++;
+                        }
+                    } else {
+                        // recursive calling
+                        let maxI = level === axis ? 1 : shapeX[level];
+                        for (let i = 0;i < maxI;i++) {
+                            doFFT(re, im, level + 1, offset);
+                            offset += strides[level];
                         }
                     }
-                    doFFT(X.realData, X.imagData, 0, 0);
-                } else {
-                    throw new Error('NOPT FFT is not supported yet.');
                 }
+                doFFT(X.realData, X.imagData, 0, 0);
             }
             return X;
         };

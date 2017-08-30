@@ -393,6 +393,15 @@ describe('fft()/ifft()', () => {
         let actual = T.ifft(T.fft(A, 0), 0);
         checkTensor(actual, A, 1e-13);
         // should not change A
-        checkTensor(A, ACopy, 1e-15);
+        checkTensor(A, ACopy);
+    });
+    it('ifft(fft(X)) should give back X for a random tensor X', () => {
+        let shape = [3, 16, 7];
+        let X = T.complex(T.rand(shape), T.rand(shape));
+        let XCopy = X.copy(true);
+        let actual = T.ifft(T.fft(X, 1), 1);
+        checkTensor(actual, X, 1e-13);
+        // should not change X
+        checkTensor(X, XCopy);
     });
 });
