@@ -30,42 +30,43 @@ export function maxAbs(x: ArrayLike<number>): number {
 }
 
 export function checkNumber(actual: any, expected: number, tolerance: number = 0,
-                            absolute: boolean = true, msgPrefix: string = ''): void {
+                            absolute: boolean = true, msgPrefix: string = ''): boolean {
     if (actual === expect) {
-        return;
+        return true;
     }
     if (typeof actual !== 'number') {
         fail(`${msgPrefix}Expecting a number got "O=${Object.prototype.toString.call(actual)}".`);
-        return;
+        return false;
     }
     if (isNaN(expected)) {
         // NaN handling
         if (!isNaN(actual)) {
             fail(`${msgPrefix}Expecting a NaN, got ${actual}.`);
-            return;
+            return false;
         }
     } else {
         if (!isFinite(expected)) {
             // Infinity handling
             if (actual !== expected) {
                 fail(`${msgPrefix}Expecting ${expected}, got ${actual}.`);
-                return;
+                return false;
             }
         } else {
             if (absolute) {
                 if (!areCloseByAbsoluteValue(actual, expected, tolerance)) {
                     fail(`${msgPrefix}Expecting ${expected} ± ${tolerance}, got ${actual}.`);
-                    return;
+                    return false;
                 }
             } else {
                 if (!areCloseByPrecision(actual, expected, tolerance)) {
                     fail(`${msgPrefix}Expecting the value to be close to ${expected.toExponential(tolerance)}` +
                     ` (actual value is ${expected}), got ${actual.toExponential(tolerance)}.`);
-                    return;
+                    return false;
                 }
             }
         }
     }
+    return true;
 }
 
 export function checkArrayLike<T>(actual: ArrayLike<T>, expected: ArrayLike<T>): void {
@@ -82,54 +83,66 @@ export function checkArrayLike<T>(actual: ArrayLike<T>, expected: ArrayLike<T>):
 };
 
 export function checkComplex(actual: any, expected: ComplexNumber, tolerance: number = 0,
-                             absolute: boolean = true, msgPrefix: string = ''): void {
-    if (actual === expected) return;
+                             absolute: boolean = true, msgPrefix: string = ''): boolean {
+    if (actual === expected) return true;
     if (!(actual instanceof ComplexNumber)) {
         throw new Error(`${msgPrefix}Expecting a complex number.`);
     }
-    checkNumber(actual.re, expected.re, tolerance, absolute, 'Real part: ');
-    checkNumber(actual.im, expected.im, tolerance, absolute, 'Imaginary part: ');
+    if (!checkNumber(actual.re, expected.re, tolerance, absolute, `${msgPrefix}Real part >> `)) {
+        return false;
+    }
+    if (!checkNumber(actual.im, expected.im, tolerance, absolute, `${msgPrefix}Imaginary part >> `)) {
+        return false;
+    }
+    return true;
 }
 
-export function checkTensor(actual: any, expected: Tensor, tolerance: number | ArrayLike<number> = 0, absolute: boolean = true): void {
-    if (actual === expected) return;
+export function checkTensor(actual: any, expected: Tensor, tolerance: number | ArrayLike<number> = 0, absolute: boolean = true): boolean {
+    if (actual === expected) return true;
     if (!(actual instanceof Tensor)) {
         fail(`Expecting a tensor, but got "${Object.prototype.toString.call(actual)}".`);
-        return;
+        return false;
     }
     if (!ShapeHelper.compareShape(actual.shape, expected.shape)) {
         fail(`Expected shape: ${ShapeHelper.shapeToString(expected.shape)}, ` +
             `actual shape: ${ShapeHelper.shapeToString(actual.shape)}.`);
-        return;
+        return false;
     }
     if (actual.dtype !== expected.dtype) {
         fail(`Expected dtype is ${DTypeHelper.dTypeToString(expected.dtype)}, ` +
             `actual dtype is ${DTypeHelper.dTypeToString(actual.dtype)}.`);
-        return;
+        return false;
     }
     if (expected.hasComplexStorage() && !actual.hasComplexStorage()) {
         fail('Expecting a tensor with complex storage, got a tensor without one.');
-        return;
+        return false;
     }
     if (!expected.hasComplexStorage() && actual.hasComplexStorage()) {
         fail('Expecting a tensor without complex storage, got a tensor with one.');
-        return;
+        return false;
     }
     let isComplex = expected.hasComplexStorage();
     let reActual = actual.realData;
     let reExpected = expected.realData;
     let imActual = isComplex ? actual.imagData : [];
     let imExpected = isComplex ? expected.imagData : [];
+    let pass: boolean;
     if (typeof tolerance === 'number') {
         if (isComplex) {
             for (let i = 0;i < reActual.length;i++) {
-                checkComplex(new ComplexNumber(reActual[i], imActual[i]),
+                pass = checkComplex(new ComplexNumber(reActual[i], imActual[i]),
                     new ComplexNumber(reExpected[i], imExpected[i]),
-                    tolerance, absolute, `Index ${i}: `);
+                    tolerance, absolute, `Index ${i} >> `);
+                if (!pass) {
+                    return false;
+                }
             }
         } else {
             for (let i = 0;i < reActual.length;i++) {
-                checkNumber(reActual[i], reExpected[i], tolerance, absolute, `Index ${i}: `);
+                pass = checkNumber(reActual[i], reExpected[i], tolerance, absolute, `Index ${i} >> `);
+                if (!pass) {
+                    return false;
+                }
             }
         }
     } else {
@@ -138,16 +151,23 @@ export function checkTensor(actual: any, expected: Tensor, tolerance: number | A
         }
         if (isComplex) {
             for (let i = 0;i < reActual.length;i++) {
-                checkComplex(new ComplexNumber(reActual[i], imActual[i]),
+                pass = checkComplex(new ComplexNumber(reActual[i], imActual[i]),
                     new ComplexNumber(reExpected[i], imExpected[i]),
-                    tolerance[i], absolute, `Index ${i}: `);
+                    tolerance[i], absolute, `Index ${i} >> `);
+                if (!pass) {
+                    return false;
+                }
             }
         } else {
             for (let i = 0;i < reActual.length;i++) {
-                checkNumber(reActual[i], reExpected[i], tolerance[i], absolute, `Index ${i}: `);
+                pass = !checkNumber(reActual[i], reExpected[i], tolerance[i], absolute, `Index ${i} >> `);
+                if (!pass) {
+                    return false;
+                }
             }
         }
     }
+    return true;
 }
 
 export function testUnaryOpInBatch(fn: (x: OpInput) => OpOutput, data: Array<[Scalar, Scalar, number]>, absolute: boolean = true) {
