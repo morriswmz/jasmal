@@ -71,14 +71,14 @@ export class CMath {
         if (Math.abs(reY) > Math.abs(imY)) {
             r = imY / reY;
             t = reY + imY * r;
-            return [-r / t * reX, reX / t];
+            return [reX / t, -r / t * reX];
         } else {
             if (imY === 0) {
                 return [Infinity, 0];
             } else {
                 r = reY / imY;
                 t = reY * r + imY;
-                return [-reX / t, r / t * reX];
+                return [r / t * reX, -reX / t];
             }
         }
     }
@@ -203,12 +203,12 @@ export class CMath {
 
     /**
      * Complex inverse sine function.
-     * asin(z) = -j Ln(jz + sqrt(1-z^2))
+     * asin(z) = -j Ln(jz + sqrt(1 - z) * sqrt(1 + z))
      * @param reX 
      * @param imX 
      */
     public static casin(reX: number, imX: number): [number, number] {
-        let tRe: number, tIm: number, r: number, s: number;
+        let tRe1: number, tIm1: number, tRe2: number, tIm2: number, r: number, s: number;
         if (imX === 0) {
             if (reX > 1 || reX < -1) {
                 r = 1 / reX;
@@ -218,17 +218,21 @@ export class CMath {
                 return [Math.asin(reX), 0];
             }
         } else {
-            [tRe, tIm] = CMath.csqrt(1 - reX * reX + imX * imX, -2 * reX * imX);
-            tIm += reX;
-            tRe -= imX;
-            [tRe, tIm] = CMath.clog(tRe, tIm);
-            return [tIm, -tRe];
+            [tRe1, tIm1] = CMath.csqrt(1 - reX, -imX);
+            [tRe2, tIm2] = CMath.csqrt(1 + reX, imX);
+            r = tRe1;
+            tRe1 = r * tRe2 - tIm1 * tIm2;
+            tIm1 = r * tIm2 + tIm1 * tRe2;
+            tRe1 -= imX;
+            tIm1 += reX;
+            [tRe1, tIm1] = CMath.clog(tRe1, tIm1);
+            return [tIm1, -tRe1];
         }
     }
 
     /**
      * Complex inverse cosine function.
-     * acos(z) = \pi/2 + j Ln(jz + sqrt(1-z^2))
+     * acos(z) = \pi/2 + j Ln(jz + sqrt(1 - z) * sqrt(1 + z))
      * @param re 
      * @param im 
      */
@@ -239,26 +243,27 @@ export class CMath {
 
     /**
      * Complex inverse tangent function.
-     * atan(z) = 0.5j Ln[(1-jz)/(1+jz)]
+     * atan(z) = 0.5j [Ln(1-jz) - Ln(1+jz)]
      * @param re 
      * @param im 
      */
     public static catan(re: number, im: number): [number, number] {
-        let [tRe, tIm] = CMath.cdivCC(1 + im, -re, 1 - im, re);
-        [tRe, tIm] = CMath.clog(tRe, tIm);
-        return [-0.5 * tIm, 0.5 * tRe];
+        let [tRe1, tIm1] = CMath.clog(1 + im, -re);
+        let [tRe2, tIm2] = CMath.clog(1 - im, re)
+        return [-0.5 * (tIm1 - tIm2), 0.5 * (tRe1 - tRe2)];
     }
 
     /**
      * Complex inverse cotangent function.
-     * acot(z) = 0.5j Ln[(z - j)/(z + j)]
+     * acot(z) = 0.5j [Ln(1 - j/z) - Ln(1 + j/z)]
      * @param re 
      * @param im 
      */
     public static cacot(re: number, im: number): [number, number] {
-        let [tRe, tIm] = CMath.cdivCC(re, im - 1, re, im + 1);
-        [tRe, tIm] = CMath.clog(tRe, tIm);
-        return [-0.5 * tIm, 0.5 * tRe];
+        let [invRe, invIm] = CMath.cdivRC(1, re, im);
+        let [tRe1, tIm1] = CMath.clog(1 + invIm, -invRe);
+        let [tRe2, tIm2] = CMath.clog(1 - invIm, invRe);
+        return [-0.5 * (tIm1 - tIm2), 0.5 * (tRe1 - tRe2)];
     }
 
     /**
