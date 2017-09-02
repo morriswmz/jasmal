@@ -126,48 +126,52 @@ export function checkTensor(actual: any, expected: Tensor, tolerance: number | A
     let reExpected = expected.realData;
     let imActual = isComplex ? actual.imagData : [];
     let imExpected = isComplex ? expected.imagData : [];
-    let pass: boolean;
+    let pass: boolean = true;
+    let i = 0, n = reExpected.length;
     if (typeof tolerance === 'number') {
         if (isComplex) {
-            for (let i = 0;i < reActual.length;i++) {
+            for (i = 0;i < n;i++) {
                 pass = checkComplex(new ComplexNumber(reActual[i], imActual[i]),
                     new ComplexNumber(reExpected[i], imExpected[i]),
                     tolerance, absolute, `Index ${i} >> `);
                 if (!pass) {
-                    return false;
+                    break;
                 }
             }
         } else {
-            for (let i = 0;i < reActual.length;i++) {
+            for (i = 0;i < n;i++) {
                 pass = checkNumber(reActual[i], reExpected[i], tolerance, absolute, `Index ${i} >> `);
                 if (!pass) {
-                    return false;
+                    break;
                 }
             }
         }
     } else {
-        if (tolerance.length !== reExpected.length) {
+        if (tolerance.length !== n) {
             throw new Error('The length of tolerance must match the size of the tensor.');
         }
         if (isComplex) {
-            for (let i = 0;i < reActual.length;i++) {
+            for (i = 0;i < n;i++) {
                 pass = checkComplex(new ComplexNumber(reActual[i], imActual[i]),
                     new ComplexNumber(reExpected[i], imExpected[i]),
                     tolerance[i], absolute, `Index ${i} >> `);
                 if (!pass) {
-                    return false;
+                    break;
                 }
             }
         } else {
-            for (let i = 0;i < reActual.length;i++) {
-                pass = !checkNumber(reActual[i], reExpected[i], tolerance[i], absolute, `Index ${i} >> `);
+            for (i = 0;i < n;i++) {
+                pass = checkNumber(reActual[i], reExpected[i], tolerance[i], absolute, `Index ${i} >> `);
                 if (!pass) {
-                    return false;
+                    break;
                 }
             }
         }
     }
-    return true;
+    if (pass && i !== n) {
+        throw new Error('Should have checked all the elements. However the loop index end with a incorrect value.');
+    }
+    return pass;
 }
 
 export function testUnaryOpInBatch(fn: (x: OpInput) => OpOutput, data: Array<[Scalar, Scalar, number]>, absolute: boolean = true) {
