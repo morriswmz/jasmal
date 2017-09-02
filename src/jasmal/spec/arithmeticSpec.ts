@@ -242,11 +242,23 @@ describe('div()', () => {
         let expected = T.fromArray([NaN, 0, -1/3, Infinity]);
         checkTensor(actual, expected, EPSILON);
     });
+    it('should perform the element-wise division between a real vector and a complex vector', () => {
+        let x = [1, 2, 3];
+        let y = T.fromArray([1, 3, 8], [5, 7, -2]);
+        let actual = T.div(x, y);
+        let expected = T.fromArray(
+            [3.8461538461538464e-2, 1.0344827586206898e-1, 3.5294117647058826e-1],
+            [-1.9230769230769229e-1, -2.4137931034482762e-1, 8.8235294117647065e-2]
+        );
+        checkTensor(actual, expected, 14, false);
+    });
     it('should perform the element-wise division between two complex vectors', () => {
-        let C = T.fromArray([1, 2, 3, 4], [1, 2, 3, 4]);
-        let D = T.fromArray([1, -1, 0, 4], [1, 2, 0, -3]);
+        let C = T.fromArray([1, 2, 3, 4, 5], [1, 2, 3, 4, 0]);
+        let D = T.fromArray([1, -1, 0, 4, 3], [1, 2, 0, -3, 4]);
         let actual = T.div(C, D);
-        let expected = T.fromArray([1, 0.4, Infinity, 0.16], [0, -1.2, Infinity, 1.12]);
+        let expected = T.fromArray(
+            [1, 0.4, Infinity, 0.16, 5.9999999999999998e-1],
+            [0, -1.2, Infinity, 1.12, -8.0000000000000004e-1]);
         checkTensor(actual, expected, EPSILON);
     });
 });
