@@ -326,6 +326,57 @@ export class CMath {
     }
 
     /**
+     * Complex inverse hyperbolic sine.
+     * asinh(z) = Ln(z + sqrt(z^2 + 1))
+     * @param re 
+     * @param im 
+     */
+    public static casinh(re: number, im: number): [number, number] {
+        let [tRe, tIm] = CMath.csqrt(re * re - im * im + 1, 2 * re * im);
+        return CMath.clog(tRe + re, tIm + im);
+    }
+
+    /**
+     * Complex inverse hyperbolic cosine.
+     * acosh(z) = Ln(z + sqrt(z + 1) * sqrt(z - 1))
+     * @param re 
+     * @param im 
+     */
+    public static cacosh(re: number, im: number): [number, number] {
+        let [tRe1, tIm1] = CMath.csqrt(re + 1, im);
+        let [tRe2, tIm2] = CMath.csqrt(re - 1, im);
+        let tmp = tRe1;
+        tRe1 = tmp * tRe2 - tIm1 * tIm2;
+        tIm1 = tmp * tIm2 + tIm1 * tRe2;
+        return CMath.clog(tRe1 + re, tIm1 + im);
+    }
+
+    /**
+     * Complex inverse hyperbolic tangent.
+     * atanh(z) = 0.5 [Ln(1 + z) - Ln(1 - z)]
+     * @param re 
+     * @param im 
+     */
+    public static catanh(re: number, im: number): [number, number] {
+        let [tRe1, tIm1] = CMath.clog(1 + re, im);
+        let [tRe2, tIm2] = CMath.clog(1 - re, -im);
+        return [0.5 * (tRe1 - tRe2), 0.5 * (tIm1 - tIm2)];
+    }
+
+    /**
+     * Complex inverse hyperbolic cotangent.
+     * acoth(z) = 0.5 [Ln(1 + 1/z) - Ln(1 - 1/z)]
+     * @param re 
+     * @param im 
+     */
+    public static cacoth(re: number, im: number): [number, number] {
+        let [invRe, invIm] = CMath.cdivRC(1, re, im);
+        let [tRe1, tIm1] = CMath.clog(1 + invRe, invIm);
+        let [tRe2, tIm2] = CMath.clog(1 - invRe, -invIm);
+        return [0.5 * (tRe1 - tRe2), 0.5 * (tIm1 - tIm2)];
+    }
+
+    /**
      * Complex exponentiation.
      * @param re
      * @param im 

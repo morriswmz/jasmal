@@ -74,7 +74,7 @@ export class HyperbolicTrigonometry {
      * @param x 
      */
     public static acoth(x: number): number {
-        if (x >= -1 && x <= 1) {
+        if (x > -1 && x < 1) {
             return NaN;
         }
         return 0.5 * Math.log((x + 1) / (x - 1));

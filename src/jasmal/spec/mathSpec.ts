@@ -1,6 +1,6 @@
 import { JasmalEngine } from '..';
 import { Tensor } from '../lib/tensor';
-import { checkTensor, checkComplex, testUnaryOpInBatch } from './testHelper';
+import { checkTensor, checkComplex, testUnaryOpInBatch, checkNumber } from './testHelper';
 import { EPSILON } from '../lib/constant';
 const T = JasmalEngine.createInstance();
 
@@ -308,7 +308,7 @@ describe('cot()', () => {
             [CN(8, -8), CN(7.8344506323200080e-1, -3.1191680344383275), 14],
             [CN(2.5, -16), CN(1.5470672855346543e-1, -3.4787030473473450), 14],
             [CN(-2.5, 0.01), CN(-1.5664320046169189, 1.5668096281544301), 13],
-            [CN(-4e-3, -8192), CN(-4.8828124636198238e-7, -9.7040605315646431), 15]
+            [CN(-4e-3, -8192), CN(-4.8828124636198238e-07, -9.7040605315646431), 8]
         ], false);
     });
 });
@@ -348,9 +348,9 @@ describe('atan()', () => {
     });
     it('should compute the inverse tangent for a complex vector', () => {
         testUnaryOpInBatch(T.atan, [
-            [CN(0.1, 8), CN(1.5692092824500021, 1.2563706123023594e-1), 15],
-            [CN(24, -0.8), CN(1.5291998327194452, -1.3849491828050295e-3), 13],
-            [CN(1124, -8e3), CN(1.5707791042715509, -1.2258023608365283e-4), 12]
+            [CN(0.1, 8), CN(1.5692092824500021, 1.2563706123023594e-1), 14],
+            [CN(24, -0.8), CN(1.5291998327194452, -1.3849491828050295e-3), 12],
+            [CN(1124, -8e3), CN(1.5707791042715509, -1.2258023608365283e-4), 10]
         ], false);
     });
 });
@@ -368,7 +368,7 @@ describe('acot()', () => {
         testUnaryOpInBatch(T.acot, [
             [CN(-0.5, 3), CN(-6.0311834290051360e-2, -3.3529348145985532e-1), 15],
             [CN(128, -39), CN(7.1487532404470042e-3, 2.1780546567428069e-3), 13],
-            [CN(0.2, -0.01), CN(1.3733822741793942, 9.6156453976447061e-3), 12]
+            [CN(0.2, -0.01), CN(1.3733822741793942, 9.6156453976447061e-3), 13]
         ], false);
     });
 });
@@ -442,6 +442,90 @@ describe('coth()', () => {
             [CN(0.1, -0.1), CN(5.0333776929527225, 4.9667111955975427), 13],
             [CN(8.2, 0.5), CN(1.0000000815149539, -1.2695203687850526e-7), 15],
             [CN(1e-3, -8), CN(1.0216277703960035e-3, -1.4706491370377722e-1), 13]
+        ], false);
+    });
+});
+
+describe('asinh()', () => {
+    it('should compute the inverse hyperbolic sine for a real vector', () => {
+        testUnaryOpInBatch(T.asinh, [
+            [0, 0, 15],
+            [0.5, 4.8121182505960347e-1, 15],
+            [40, 4.3821828480654981, 15],
+            [-16384, -1.0397207709330502e1, 9]
+        ], false);
+    });
+    it('should compute the inverse hyperbolic sine for a complex vector', () => {
+        testUnaryOpInBatch(T.asinh, [
+            [CN(0.5, -0.3), CN(4.9790294283028769e-1, -2.6955564142495020e-1), 15],
+            [CN(144, -1), CN(5.6629966465739843, -6.9441653882313563e-3), 15],
+            [CN(-0.1, 6666), CN(-9.4979224301619531, 1.5707813252946414), 15]
+        ]);
+    });
+});
+
+describe('acosh()', () => {
+    it('should compute the inverse hyperbolic cosine for real scalar inputs', () => {
+        checkNumber(T.acosh(1.04), 2.8190828905414689e-1, 14, false);
+        checkComplex(T.acosh(0.5), CN(0, 1.0471975511965976), 15, false);
+        checkComplex(T.acosh(-64), CN(4.8519692231746738, 3.1415926535897931), 15, false);
+    });
+    it('should compute the inverse hyperbolic cosine for a real vector', () => {
+        testUnaryOpInBatch(T.acosh, [
+            [82330, 1.2011638020815534e+1, 15],
+            [5, 2.2924316695611777, 15],
+            [1, 0, 15]
+        ], false);
+    });
+    it('should compute the inverse hyperbolic cosine for a complex vector', () => {
+        testUnaryOpInBatch(T.acosh, [
+            [CN(0, 5), CN(2.3124383412727525, 1.5707963267948966), 15],
+            [CN(0.5, -2), CN(1.4657153519472905, -1.3497776911720127), 14],
+            [CN(-128, 10), CN(5.5482049442505463, 3.0636236643061188), 15]
+        ], false);
+    });
+});
+
+describe('atanh()', () => {
+    it('should compute the inverse hyperbolic tangent for real scalar inputs', () => {
+        checkNumber(T.atanh(0.5), 5.4930614433405478e-1, 15, false);
+        checkNumber(T.atanh(-1), -Infinity, 15, false);
+        checkComplex(T.atanh(5), CN(2.0273255405408219e-1, -1.5707963267948966), 15, false);
+    });
+    it('should compute the inverse hyperbolic tangent for a real vector', () => {
+        testUnaryOpInBatch(T.atanh, [
+            [-0.01, -1.0000333353334763e-2, 14],
+            [0.9999, 4.9517187756430978, 15],
+            [1, Infinity, 15]
+        ], false);
+    });
+    it('should compute the inverse hyperbolic tangent for a complex vector', () => {
+        testUnaryOpInBatch(T.atanh, [
+            [CN(0.5, -0.5), CN(4.0235947810852513e-1, -5.5357435889704520e-1), 15],
+            [CN(-1.02, -0.99), CN(-4.1028948149813871e-1, -1.0233455448596347), 14],
+            [CN(42, 3), CN(2.3693027864166154e-2, 1.5691033310076210), 13]
+        ], false);
+    });
+});
+
+describe('acoth()', () => {
+    it('should compute the inverse hyperbolic cotangent for real scalar inputs', () => {
+        checkNumber(T.acoth(576), 1.7361128553745606e-3, 13, false);
+        checkNumber(T.acoth(1), Infinity, 15, false);
+        checkComplex(T.acoth(0.5), CN(5.4930614433405489e-1, -1.5707963267948966), 14, false);
+    });
+    it('should compute the inverse hyperbolic cotangent for a real vector', () => {
+        testUnaryOpInBatch(T.acoth, [
+            [1.0001, 4.9517687756430018, 12],
+            [-32767, -3.0518509485471961e-5, 15],
+            [-1, -Infinity, 15]
+        ], false);
+    });
+    it('should compute the inverse hyperbolic cotangent for a complex vector', () => {
+        testUnaryOpInBatch(T.acoth, [
+            [CN(0.9, 1.01), CN(3.7573064530738270e-1, -5.9044706373941935e-1), 14],
+            [CN(-1.5, 23), CN(-2.8182543637043644e-3, -4.3267442009331684e-2), 12],
+            [CN(500, -0.01), CN(2.0000026658730805e-3, 4.0000159984639798e-8), 12]
         ], false);
     });
 });
