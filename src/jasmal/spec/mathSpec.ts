@@ -1,6 +1,6 @@
 import { JasmalEngine } from '..';
 import { Tensor } from '../lib/tensor';
-import { checkTensor } from './testHelper';
+import { checkTensor, checkComplex, testUnaryOpInBatch } from './testHelper';
 import { EPSILON } from '../lib/constant';
 const T = JasmalEngine.createInstance();
 
@@ -161,75 +161,6 @@ describe('log()', () => {
     });
 });
 
-// TODO: add math tests
-describe('sin()', () => {
-    it('should compute the sine of real numbers', () => {
-        let actual = T.sin([0, Math.PI/2, 0.5]);
-        let expected = T.fromArray([0, Math.sin(Math.PI/2), Math.sin(0.5)]);
-        checkTensor(actual, expected, EPSILON);
-    });
-    it('should compute the sine of complex numbers', () => {
-        let z = T.fromArray([0.5, 0.8], [-6, 4.6]);
-        let actual = T.sin(z);
-        let expected = T.fromArray(
-            [96.707627492897842, 35.686445260153995],
-            [-177.01994941200556, 34.652193500570938]
-        );
-        checkTensor(actual, expected, 1e-12);
-    });
-});
-
-describe('cos()', () => {
-    it('should compute the cosine of real numbers', () => {
-        let actual = T.cos([0, Math.PI/2, 0.5]);
-        let expected = T.fromArray([1, Math.cos(Math.PI/2), Math.cos(0.5)]);
-        checkTensor(actual, expected, EPSILON);
-    });
-    it('should compute the cosine of complex numbers', () => {
-        let z = T.fromArray([0, 0.5, 1], [-1, 0.5, 3]);
-        let actual = T.cos(z);
-        let expected = T.fromArray(
-            [1.5430806348152439, 0.9895848833999199, 5.4395809910197643],
-            [0, -0.24982639750046154, -8.429751080849945]
-        );
-        checkTensor(actual, expected, 1e-14);
-    });
-});
-
-describe('tan()', () => {
-    it('should compute the tangent of real numbers', () => {
-        let actual = T.tan([0, Math.PI/4, Math.PI/2, -1]);
-        let expected = T.fromArray([0, Math.tan(Math.PI/4), Math.tan(Math.PI/2), Math.tan(-1)]);
-        checkTensor(actual, expected, EPSILON * 2);
-    });
-    it('should compute the tangent of complex numbers', () => {
-        let z = T.fromArray([0, 0.3, -2], [-1, 0.5, 1.5]);
-        let actual = T.tan(z);
-        let expected = T.fromArray(
-            [0, 0.23840508333812324, 0.080391015310168221],
-            [-0.76159415595576485, 0.49619706577350758, 1.0641443991765371]
-        );
-        checkTensor(actual, expected, 1e-14);
-    });
-});
-
-describe('cot()', () => {
-    it('should compute the cotangent of real numbers', () => {
-        let actual = T.cot([0, Math.PI/4, Math.PI/2, -2]);
-        let expected = T.fromArray([NaN, 1.0, 6.123233995736766e-17, 0.45765755436028577]);
-        checkTensor(actual, expected, EPSILON * 2);
-    });
-    it('should compute the cotangent of complex numbers', () => {
-        let z = T.fromArray([0, 0.5, -2], [-1, 0.4, 8]);
-        let actual = T.cot(z);
-        let expected = T.fromArray(
-            [0, 1.0556222918520826, 1.7033377703904913e-7],
-            [1.3130352854993315, -1.1141257265554689, -9.9999985288419813e-1]
-        );
-        checkTensor(actual, expected, 1e-14);
-    });
-});
-
 describe('pow2', () => {
     it('should compute the power for real numbers', () => {
         let x = T.fromArray([1, 2, 3.3, -3]);
@@ -281,5 +212,236 @@ describe('pow2', () => {
         let actual = T.pow(x, 2, true);
         let expected = T.fromArray([-3, -15], [-4, -8]);
         checkTensor(actual, expected, EPSILON * 10);
+    });
+});
+
+/**
+ * Trigonometry
+ */
+
+ let CN = T.complexNumber;
+ 
+describe('sin()', () => {
+    it('should compute the sine of real numbers', () => {
+        testUnaryOpInBatch(T.sin, [
+            [0, 0, EPSILON],
+            [Math.PI/2, Math.sin(Math.PI/2), EPSILON],
+            [0.5, Math.sin(0.5), EPSILON]
+        ], true);
+    });
+    it('should compute the sine of complex numbers', () => {
+        testUnaryOpInBatch(T.sin, [
+            [CN(0.5, -6), CN(9.6707627492897842e1, -1.7701994941200556e2), 15],
+            [CN(0.8, 4.6), CN(3.5686445260153995e1, 3.4652193500570938e1), 15]
+        ], false);
+    });
+});
+
+describe('cos()', () => {
+    it('should compute the cosine of real numbers', () => {
+        testUnaryOpInBatch(T.cos, [
+            [0, 1, EPSILON],
+            [Math.PI/2, Math.cos(Math.PI/2), EPSILON],
+            [0.5, Math.cos(0.5), EPSILON]
+        ], true);
+    });
+    it('should compute the cosine of complex numbers', () => {
+        testUnaryOpInBatch(T.cos, [
+            [CN(0, -1), CN(1.5430806348152437, 0), 15],
+            [CN(0.5, 0.5), CN(9.8958488339991990e-1, -2.4982639750046154e-1), 15],
+            [CN(1, 3), CN(5.4395809910197643, -8.4297510808499450), 15]
+        ], false);
+    });
+});
+
+describe('tan()', () => {
+    it('should compute the tangent of real numbers', () => {
+        testUnaryOpInBatch(T.tan, [
+            [0, 0, EPSILON],
+            [Math.PI/4, Math.tan(Math.PI/4), EPSILON],
+            [Math.PI/2, Math.tan(Math.PI/2), EPSILON],
+            [-1, Math.tan(-1), EPSILON]
+        ], true);
+    });
+    it('should compute the tangent of complex numbers', () => {
+        testUnaryOpInBatch(T.tan, [
+            [CN(0, -1), CN(0, -7.6159415595576485e-1), 14],
+            [CN(0.3, 0.5), CN(2.3840508333812321e-1, 4.9619706577350764e-1), 14],
+            [CN(-2, 1.5), CN(8.0391015310168193e-2, 1.0641443991765371), 14]
+        ], false);
+    });
+});
+
+describe('cot()', () => {
+    it('should compute the cotangent of real numbers', () => {
+        testUnaryOpInBatch(T.cot, [
+            [0, NaN, EPSILON],
+            [Math.PI/4, 1.0, EPSILON],
+            [Math.PI/2, 6.123233995736766e-17, EPSILON],
+            [-2, 0.45765755436028577, EPSILON]
+        ], true);
+    });
+    it('should compute the cotangent of complex numbers', () => {
+        testUnaryOpInBatch(T.cot, [
+            [CN(0, -1), CN(0, 1.3130352854993315), 15],
+            [CN(0.5, 0.4), CN(1.0556222918520826, -1.1141257265554689), 15],
+            [CN(-2, 8), CN(1.7033377701610623e-7, -9.9999985288419813e-1), 14]
+        ], false);
+    });
+});
+
+ describe('asin()', () => {
+    it('should compute the inverse sine of a real number', () => {
+        expect(T.asin(0.5)).toEqual(Math.asin(0.5));
+        checkComplex(T.asin(2), T.complexNumber(Math.PI / 2, -1.3169578969248166), 1e-14);
+        checkComplex(T.asin(T.complexNumber(1, 2)), T.complexNumber(4.2707858639247592e-1, 1.5285709194809975), 1e-14);
+    });
+    it('should compute the inverse sine for a real vector', () => {
+        testUnaryOpInBatch(T.asin, [
+            [-1, -Math.PI/2, 15],
+            [0.05, 5.0020856805770016e-2, 15],
+            [14, CN(Math.PI/2, -3.3309265526412517), 15]
+        ], false);
+    });
+    it('should compute the inverse sine for a complex vector', () => {
+        testUnaryOpInBatch(T.asin, [
+            [CN(8, -8), CN(7.8344506323200080e-1, -3.1191680344383275), 14],
+            [CN(2.5, -16), CN(1.5470672855346543e-1, -3.4787030473473450), 14],
+            [CN(-2.5, 0.01), CN(-1.5664320046169189, 1.5668096281544301), 13],
+            [CN(-4e-3, -8192), CN(-4.8828124636198238e-7, -9.7040605315646431), 15]
+        ], false);
+    });
+});
+
+describe('acos()', () => {
+    it('should compute the inverse cosine of a real number', () => {
+        expect(T.acos(0.4)).toEqual(Math.acos(0.4));
+        checkComplex(T.acos(-2), T.complexNumber(Math.PI, -1.3169578969248166), 1e-14);
+        checkComplex(T.acos(T.complexNumber(1, 2)), T.complexNumber(1.1437177404024206, -1.5285709194809980), 1e-14);
+    });
+    it('should compute the inverse cosine for a real vector', () => {
+        testUnaryOpInBatch(T.acos, [
+            [  -1,                   Math.PI, 15],
+            [0.01,        1.5607961601207294, 15],
+            [ 8.2, CN(0, 2.7935424012671657), 13]
+        ], false);
+    });
+    it('should compute the inverse cosine for a complex vector', () => {
+        testUnaryOpInBatch(T.acos, [
+            [CN(8, 8.2), CN(7.9964725006154480e-1, -3.1317134967322042), 11],
+            [CN(2.5, -11.3), CN(1.3538479613188765, 3.1435321043680937), 13],
+            [CN(-3, 0.01), CN(3.1380571371772006, -1.7627538031107808), 15],
+            [CN(-8.5e-3, -1125), CN(1.5708038823474688, 7.7186856927813130), 10]
+        ], false);
+    });
+});
+
+describe('atan()', () => {
+    it('should compute the inverse tangent for a real vector', () => {
+        testUnaryOpInBatch(T.atan, [
+            [0, 0, 15],
+            [0.9, Math.atan(0.9), 15],
+            [-248, Math.atan(-248), 15],
+            [8.7e9, Math.atan(8.7e9), 15],
+            [Infinity, Math.atan(Infinity), 15]
+        ], false);
+    });
+    it('should compute the inverse tangent for a complex vector', () => {
+        testUnaryOpInBatch(T.atan, [
+            [CN(0.1, 8), CN(1.5692092824500021, 1.2563706123023594e-1), 15],
+            [CN(24, -0.8), CN(1.5291998327194452, -1.3849491828050295e-3), 13],
+            [CN(1124, -8e3), CN(1.5707791042715509, -1.2258023608365283e-4), 12]
+        ], false);
+    });
+});
+
+describe('acot()', () => {
+    it('should compute the inverse cotangent for a real vector', () => {
+        testUnaryOpInBatch(T.acot, [
+            [0, Math.PI/2, 15],
+            [Infinity, 0, 15],
+            [0.2, 1.3734007669450159, 15],
+            [-9, -1.1065722117389563e-1, 15]
+        ], false);
+    });
+    it('should compute the inverse cotangent for a complex vector', () => {
+        testUnaryOpInBatch(T.acot, [
+            [CN(-0.5, 3), CN(-6.0311834290051360e-2, -3.3529348145985532e-1), 15],
+            [CN(128, -39), CN(7.1487532404470042e-3, 2.1780546567428069e-3), 13],
+            [CN(0.2, -0.01), CN(1.3733822741793942, 9.6156453976447061e-3), 12]
+        ], false);
+    });
+});
+
+describe('sinh()', () => {
+    it('should compute the hyperbolic sine for a real vector', () => {
+        testUnaryOpInBatch(T.sinh, [
+            [-4, -2.7289917197127750e1, 15],
+            [-0.25, -2.5261231680816831e-1, 15],
+            [0, 0, 15],
+            [25, 3.6002449668692940e10, 15],
+            [Infinity, Infinity, 15]
+        ], false);
+    });
+    it('should compute the hyperbolic sine for a complex vector', () => {
+        testUnaryOpInBatch(T.sinh, [
+            [CN(-2.2, 3), CN(4.4125006753895839, 6.4462326019085248e-1), 15],
+            [CN(8, -0.01), CN(1.4904043024692915e3, -1.4904543200570302e1), 15],
+            [CN(0, 2), CN(0,9.0929742682568171e-1), 15]
+        ], false);
+    });
+});
+
+describe('cosh()', () => {
+    it('should compute the hyperbolic cosine for a real vector', () => {
+        testUnaryOpInBatch(T.cosh, [
+            [0, 1, 15],
+            [-1, 1.5430806348152437, 15],
+            [8, 1.4904791612521781e+3, 15],
+            [170, 3.3808969052425046e+73, 15]
+        ], false);
+    });
+    it('should compute the hyperbolic cosine for a complex vector', () => {
+        testUnaryOpInBatch(T.cosh, [
+            [CN(0.5, -0.5), CN(9.8958488339991990e-1, -2.4982639750046154e-1), 15],
+            [CN(42, 0.01), CN(8.6959398924906022e+17, 8.6962297687487410e+15), 15],
+            [CN(-0.2, 10), CN(-8.5590897239735397e-1, 1.0953103576443095e-1), 13]
+        ], false);
+    });
+});
+
+describe('tanh()', () => {
+    it('should compute the hyperbolic tangent for a real vector', () => {
+        testUnaryOpInBatch(T.tanh, [
+            [0, 0, 15],
+            [1, 7.6159415595576485e-1, 15],
+            [-9, -9.9999996954004100e-1, 15],
+            [Infinity, 1, 15]
+        ], false);
+    });
+    it('should compute the hyperbolic tangent for a complex vector', () => {
+        testUnaryOpInBatch(T.tanh, [
+            [CN(1, -1), CN(1.0839233273386946, -2.7175258531951180e-1), 14],
+            [CN(8, -0.05), CN(9.9999977605408963e-1, -2.2469536938381050e-8), 13],
+            [CN(-1, 20), CN(-1.1717475060430786, 2.4072734799016834e-1), 15]
+        ], false);
+    });
+});
+
+describe('coth()', () => {
+    it('should compute the hyperbolic cotangent for a real vector', () => {
+        testUnaryOpInBatch(T.coth, [
+            [0, Infinity, 15],
+            [-0.8, -1.5059407020437063, 14],
+            [1.5, 1.1047913929825119, 15],
+            [-8, -1.0000002250703748, 15]
+        ], false);
+    });
+    it('should compute the hyperbolic cotangent for a complex vector', () => {
+        testUnaryOpInBatch(T.coth, [
+            [CN(0.1, -0.1), CN(5.0333776929527225, 4.9667111955975427), 13],
+            [CN(8.2, 0.5), CN(1.0000000815149539, -1.2695203687850526e-7), 15],
+            [CN(1e-3, -8), CN(1.0216277703960035e-3, -1.4706491370377722e-1), 13]
+        ], false);
     });
 });

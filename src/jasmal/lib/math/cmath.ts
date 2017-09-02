@@ -1,3 +1,5 @@
+import { M_PI_2 } from '../constant';
+
 export class CMath {
     
     /**
@@ -197,6 +199,66 @@ export class CMath {
         let ep = Math.exp(im2), en = Math.exp(-im2);
         let d = 0.5 * (ep + en) - Math.cos(re2);
         return [Math.sin(re2) / d, -0.5 * (ep - en) / d];
+    }
+
+    /**
+     * Complex inverse sine function.
+     * asin(z) = -j Ln(jz + sqrt(1-z^2))
+     * @param reX 
+     * @param imX 
+     */
+    public static casin(reX: number, imX: number): [number, number] {
+        let tRe: number, tIm: number, r: number, s: number;
+        if (imX === 0) {
+            if (reX > 1 || reX < -1) {
+                r = 1 / reX;
+                s = Math.abs(reX + Math.abs(reX) * Math.sqrt(1 - r * r));
+                return [reX > 0 ? M_PI_2 : -M_PI_2, -Math.log(s)];
+            } else {
+                return [Math.asin(reX), 0];
+            }
+        } else {
+            [tRe, tIm] = CMath.csqrt(1 - reX * reX + imX * imX, -2 * reX * imX);
+            tIm += reX;
+            tRe -= imX;
+            [tRe, tIm] = CMath.clog(tRe, tIm);
+            return [tIm, -tRe];
+        }
+    }
+
+    /**
+     * Complex inverse cosine function.
+     * acos(z) = \pi/2 + j Ln(jz + sqrt(1-z^2))
+     * @param re 
+     * @param im 
+     */
+    public static cacos(re: number, im: number): [number, number] {
+        let [tRe, tIm] = CMath.casin(re, im);
+        return [M_PI_2 - tRe, -tIm];
+    }
+
+    /**
+     * Complex inverse tangent function.
+     * atan(z) = 0.5j Ln[(1-jz)/(1+jz)]
+     * @param re 
+     * @param im 
+     */
+    public static catan(re: number, im: number): [number, number] {
+        let [tRe, tIm] = CMath.cdivCC(1 + im, -re, 1 - im, re);
+        [tRe, tIm] = CMath.clog(tRe, tIm);
+        return [-0.5 * tIm, 0.5 * tRe];
+    }
+
+    /**
+     * Complex inverse cotangent function.
+     * acot(z) = 0.5j Ln[(z - j)/(z + j)]
+     * @param re 
+     * @param im 
+     */
+    public static cacot(re: number, im: number): [number, number] {
+        let [tRe, tIm] = CMath.cdivCC(re, im - 1, re, im + 1);
+        [tRe, tIm] = CMath.clog(tRe, tIm);
+        return [-0.5 * tIm, 0.5 * tRe];
     }
 
     /**

@@ -13,6 +13,8 @@ export const MIN_SAFE_INTEGER = -9007199254740991;
  */
 export const EPSILON = 7/3 - 4/3 - 1;
 
+export const M_PI_2 = Math.PI / 2;
+
 export const NOT_IMPLEMENTED = () => {
     throw new Error('Not implemented.');
 };
