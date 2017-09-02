@@ -18,8 +18,17 @@ export interface IPowerMathOpSet {
 
     /**
      * Raises `x` to the powers from `y` element by element.
+     * Note: This operation accepts complex inputs and can produce complex
+     *       outputs for certain real inputs (e.g., `pow(-1, 0.5)`).
      */
     pow(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+
+    /**
+     * Raises `x` to the powers from `y` element by element, but only allows
+     * real inputs. In addition, NaN is produced when x^y is complex.
+     * This operation should behave the same as `Math.pow` in JavaScript.
+     */
+    realpow(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
 
 }
 
@@ -98,7 +107,8 @@ export class PowerMathOpSetFactory {
         return {
             sqrt: opSqrt,
             square: opSquare,
-            pow: opPow
+            pow: opPow,
+            realpow: opPowR
         };
 
     }

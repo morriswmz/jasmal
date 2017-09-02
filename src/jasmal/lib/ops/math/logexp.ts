@@ -7,14 +7,14 @@ import { DataHelper } from '../../helper/dataHelper';
 export interface ILogExpMathOpSet {
 
     /**
-     * Computes the natural logarithm of each element in the input.
+     * Computes the natural logarithm for each element in the input.
      * @param x
      * @param inPlace
      */
     log(x: OpInput, inPlace?: boolean): OpOutput;
 
     /**
-     * Computes the exponential of each element in the input.
+     * Computes the exponential for each element in the input.
      * @param x
      * @param inPlace
      */
