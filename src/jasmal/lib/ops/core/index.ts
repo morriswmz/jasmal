@@ -141,11 +141,17 @@ export class CoreOpProviderFactory {
                 let doTile = (level: number, offsetX: number, offsetY: number): void => {
                     if (level === maxLevel) {
                         // last level
-                        for (let j = 0;j < repeats[nExtraDims + level];j++) {
-                            for (let i = 0;i < shapeX[level];i++) {
-                                Y[offsetY + i] = X[offsetX + i];
+                        if (shapeX[level] === 1) {
+                            for (let j = 0;j < repeats[nExtraDims + level];j++) {
+                                Y[offsetY + j] = X[offsetX];
                             }
-                            offsetY += stridesY[nExtraDims + level] * shapeX[level];
+                        } else {
+                            for (let j = 0;j < repeats[nExtraDims + level];j++) {
+                                for (let i = 0;i < shapeX[level];i++) {
+                                    Y[offsetY + i] = X[offsetX + i];
+                                }
+                                offsetY += stridesY[nExtraDims + level] * shapeX[level];
+                            }
                         }
                     } else {
                         // recursive calling
