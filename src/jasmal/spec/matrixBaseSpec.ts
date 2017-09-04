@@ -1,4 +1,4 @@
-import { JasmalEngine } from '../';
+import { JasmalEngine } from '../index';
 import { checkTensor, checkNumber, checkComplex } from './testHelper';
 import { Tensor } from '../lib/tensor';
 import { ComplexNumber } from '../lib/complexNumber';

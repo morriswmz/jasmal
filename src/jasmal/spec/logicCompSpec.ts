@@ -1,4 +1,4 @@
-import { JasmalEngine } from '..';
+import { JasmalEngine } from '../index';
 import { checkTensor } from './testHelper';
 const T = JasmalEngine.createInstance();
 
