@@ -10,6 +10,7 @@ import { IMathOpProvider } from './ops/math/definition';
 import { ILogicComparisonOpProvider } from './ops/logicComp/definition';
 import { IDataOpProvider } from './ops/data/definition';
 import { IPolynomialOpProvider } from './ops/poly/definition';
+import { ISetOpProvider } from './ops/set/definition';
 import { RandomOpProviderFactory } from './ops/random';
 import { ArithmeticOpProviderFactory } from './ops/arithmetic';
 import { MathOpProviderFactory } from './ops/math';
@@ -19,6 +20,7 @@ import { LogicComparisonOpProviderFactory } from './ops/logicComp';
 import { MatrixOpProviderFactory } from './ops/matrix';
 import { DataOpProviderFactory } from './ops/data';
 import { PolynomialOpProviderFactory } from './ops/poly';
+import { SetOpProviderFactory } from './ops/set/index';
 import { ObjectHelper } from './helper/objHelper';
 import { ElementWiseOpGenerator, ReductionOpGenerator } from './ops/generator';
 import { EPSILON } from './constant';
@@ -33,7 +35,8 @@ export interface JasmalOptions {
  */
 export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
     IRandomOpProvider, IArithmeticOpProvider, IMathOpProvider,
-    ILogicComparisonOpProvider, IDataOpProvider, IPolynomialOpProvider {
+    ILogicComparisonOpProvider, IDataOpProvider, IPolynomialOpProvider,
+    ISetOpProvider {
 
     /**
      * Logic data type.
@@ -152,6 +155,7 @@ export class JasmalEngine {
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create(elementWiseOpGen);
         let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, reductionOpGen);
         let polyOpProvider = PolynomialOpProviderFactory.create(coreOpProvider, matrixOpProvider);
+        let setOpProvider = SetOpProviderFactory.create();
         
         let jasmalCore =  {
             LOGIC: DType.LOGIC,
@@ -184,6 +188,7 @@ export class JasmalEngine {
             .extend(logicCompOpProvider)
             .extend(dataOpProvider)
             .extend(polyOpProvider)
+            .extend(setOpProvider)
             .end();
         
     }

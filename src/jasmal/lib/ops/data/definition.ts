@@ -99,20 +99,6 @@ export interface IDataOpProvider {
     sortRows(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];
 
     /**
-     * Obtains the unique elements in the (flattened) input.
-     * Note: NaN is not equal to NaN. Therefore no NaN will be removed.
-     */
-    unique(x: OpInput, outputIndices: false): Tensor;
-    /**
-     * Obtains the unique elements in the (flattened) input.
-     * Returns a tensor tuple [y, iy, ix] such that y = x[iy] and ix[j]
-     * contains the indices in x such that all elements in x[ix[j]] equal to
-     * y[j].
-     * Note: NaN is not equal to NaN. Therefore no NaN will be removed.
-     */
-    unique(x: OpInput, outputIndices: true): [Tensor, number[], number[][]];
-
-    /**
      * Used for creating histograms. Bins the elements in the input into
      * specified number of bins. Returns the number of elements in each bin
      * and the edges of the bins.
