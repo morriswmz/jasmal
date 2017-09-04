@@ -1,4 +1,18 @@
 {
     "spec_dir": "dist/jasmal/spec",
-    "spec_files": ["**/*Spec.js"]
+    "spec_files": [
+        "complexNumberSpec.js",
+        "tensorBasicSpec.js",
+        "tensorIndexingSpec.js",
+        "coreSpec.js",
+        "arithmeticSpec.js",
+        "mathSpec.js",
+        "mathSpecialSpec.js",
+        "logicCompSpec.js",
+        "matrixBaseSpec.js",
+        "matrixDecompSpec.js",
+        "dataSpec.js",
+        "polySpec.js",
+        "compositeSpec.js"
+    ]
 }
