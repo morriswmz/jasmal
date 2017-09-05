@@ -153,7 +153,8 @@ export class JasmalEngine {
         let mathOpProvider = MathOpProviderFactory.create(elementWiseOpGen);
         let matrixOpProvider = MatrixOpProviderFactory.create(arithmeticOpProvider, mathOpProvider);
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create(elementWiseOpGen);
-        let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, reductionOpGen);
+        let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, arithmeticOpProvider,
+                                mathOpProvider, matrixOpProvider, reductionOpGen);
         let polyOpProvider = PolynomialOpProviderFactory.create(coreOpProvider, matrixOpProvider);
         let setOpProvider = SetOpProviderFactory.create();
         

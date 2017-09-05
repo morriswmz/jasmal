@@ -72,6 +72,44 @@ export interface IDataOpProvider {
     std(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
 
     /**
+     * Estimates the (cross-)covariance matrix from samples. Assuming samples
+     * are stored as column vectors, the cross-covariance matrix is computed
+     * via:
+     *  cov(X, Y) = E[(X - E[X])(Y - E[Y])^H]
+     * @param x An 1D or 2D input of samples.
+     * @param y (Optional) Another set of samples stored in the same format as
+     *          x. If specified and different from x, the cross covariance
+     *          matrix between x and y will be computed. Default value is x and
+     *          the covariance matrix of x is computed.
+     *          Note: x and y must share the same amount of samples.
+     * @param samplesInColumns (Optional) If set to true, each column in x
+     *          (or y) represents a sample. Otherwise each row in x (or y)
+     *          represents a sample. Default value is true.
+     * @return If each sample in x has dimension px, and each sample in y has
+     *         dimension py, a px x py matrix will be returned.
+     */
+    cov(x: OpInput, y?: OpInput, samplesInColumns?: boolean): Tensor;
+
+    /**
+     * Computes the sample correlation coefficient matrix from samples. More
+     * specifically
+     *  corrcoef(x_i, y_j) = cov(x_i, y_j) / (cov(x_i, x_i) * cov(y_j, y_j))
+     * @param x An 1D or 2D input of samples.
+     * @param y (Optional) Another set of samples stored in the same format as
+     *          x. If specified and different from x, the correlation
+     *          coefficient matrix between x and y will be computed. Default
+     *          value is x and the autocorrelation coefficient matrix is
+     *          computed.
+     *          Note: x and y must have the same shape.
+     * @param samplesInColumns (Optional) If set to true, each column in x
+     *          (or y) represents a sample. Otherwise each row in x (or y)
+     *          represents a sample. Default value is true.
+     * @return If each sample in x has dimension px, and each sample in y has
+     *         dimension py, a px x py matrix will be returned.
+     */
+    corrcoef(x: OpInput, y?: OpInput, samplesInColumns?: boolean): Tensor;
+
+    /**
      * Sorts the elements in the (flattened) input in the specified order and
      * return the result as a new tensor.
      * Note: NaN is treated as the largest number (larger than Infinity).

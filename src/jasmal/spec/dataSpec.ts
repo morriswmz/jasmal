@@ -241,6 +241,121 @@ describe('median()', () => {
     });
 });
 
+describe('cov()', () => {
+    let X = T.fromArray([[1, 2, 3, 5], [2, 5, 6, 7]]);
+    let CX = T.fromArray([
+        [2.9166666666666665, 3.3333333333333335],
+        [3.3333333333333335, 4.6666666666666670]
+    ]);
+    let Y = T.fromArray([[-3, -4, -5, -6], [1, 2, 3, 6], [2, 4, 6, 8]]);
+    let Z = T.fromArray(
+        [[1, 2, 4, 8], [2, 4, 8, 16]],
+        [[1, 0, 1, 0], [2, 0, 3, 0]]
+    );
+    let CZ = T.fromArray(
+        [[9.9166666666666661, 20],
+         [20, 40.583333333333336]],
+        [[0, -8.3333333333333329e-2],
+         [8.3333333333333329e-02, 0]]
+    );
+    it('should produce the same result as var() for a real vector', () => {
+        let x = [0, 1, 2, 4, 8];
+        checkTensor(T.cov(x), T.reshape(T.var(x), [1, 1]));
+    });
+    it('should compute the covariance matrix for a real matrix input', () => {
+        checkTensor(T.cov(X), CX, 15, false);
+    });
+    it('should compute the covariance matrix for a real matrix input with samples stored as rows', () => {
+        checkTensor(T.cov(T.transpose(X), undefined, false), CX, 15, false);
+    });
+    it('should compute the covariance matrix for a complex matrix input', () => {
+        checkTensor(T.cov(Z), CZ, 15, false);
+    });
+    it('should compute the covariance matrix for a complex matrix input with samples stored as rows', () => {
+        checkTensor(T.cov(T.transpose(Z), undefined, false), CZ, 15, false);
+    });
+    it('should compute the cross-covariance matrix for real matrix inputs', () => {
+        let actual = T.cov(X, Y);
+        let expected = T.fromArray(
+            [[-2.1666666666666665, 3.6666666666666665, 4.3333333333333330],
+             [-2.6666666666666665, 4.0000000000000000, 5.3333333333333330]]
+        );
+        checkTensor(actual, expected, 15, false);
+    });
+    it('should compute the cross-covariance matrix for complex matrix inputs', () => {
+        let actual = T.cov(X, Z);
+        let expected = T.fromArray(
+            [[5.250, 10.5],
+             [5.6666666666666670, 1.1333333333333334e1]],
+            [[0.5, 9.1666666666666663e-01],
+             [0.66666666666666663, 1]]
+        );
+        checkTensor(actual, expected, 15, false);
+    });
+    it('should work for a INT32 input', () => {
+        let XI = X.asType(T.INT32, true);
+        checkTensor(T.cov(XI), CX);
+    });
+    it('should throw for invalid inputs', () => {
+        // not 1D or 2D inputs
+        expect(() => T.cov([[[1]]])).toThrow();
+        // inconsistent number of samples
+        expect(() => T.cov([[1, 2, 3], [1, 2, 3]], [[1, 2], [3, 4]])).toThrow();
+    });
+});
+
+describe('corrcoef()', () => {
+    let X = T.fromArray([[1, 2, 3, 4], [2, 4, 5, 8]]);
+    let CX = T.fromArray(
+        [[1, 9.8115578103921230e-1],
+         [9.811557810392123e-1, 1]]
+    );
+    let Y = T.fromArray([[-1, -2, -3, -4], [3, 3, 5, 5], [1, 2, 4, 8]]);
+    let Z = T.fromArray(
+        [[0, 2, 4, 6], [1, 2, 4, 6]],
+        [[0, 1, 1, 2], [2, 3, 3, 3]]
+    );
+    let CZ = T.fromArray(
+        [[1, 9.7475464993298833e-1],
+         [9.7475464993298833e-1, 1]],
+        [[0, 1.0830607221477648e-1],
+         [-1.0830607221477648e-1, 0]]
+    );
+    it('should produce 1 for a vector input', () => {
+        checkTensor(T.corrcoef([1, 2, 4, 19]), T.ones([1, 1]), 1e-15);
+    });
+    it('should compute the correlation coefficients for a real matrix input', () => {
+        checkTensor(T.corrcoef(X), CX, 1e-15);
+    });
+    it('should compute the correlation coefficients for a real matrix input with samples stored as rows', () => {
+        checkTensor(T.corrcoef(T.transpose(X), undefined, false), CX, 1e-15);
+    });
+    it('should compute the correlation coefficients for a complex matrix input', () => {
+        checkTensor(T.corrcoef(Z), CZ, 1e-15);
+    });
+    it('should compute the correlation coefficients for a complex matrix input with samples stored as rows', () => {
+        checkTensor(T.corrcoef(T.transpose(Z), undefined, false), CZ, 1e-15);
+    });
+    it('should compute the correlation coefficients for two real matrix inputs', () => {
+        let actual = T.corrcoef(X, Y);
+        let expected = T.fromArray(
+            [[-1, 8.9442719099991597e-1, 9.5916630466254393e-1],
+             [-9.8115578103921230e-1, 8.0829037686547622e-1, 9.7985506174586101e-1]]
+        );
+        checkTensor(actual, expected, 1e-15);
+    });
+    it('should compute the correlation coefficients for complex inputs', () => {
+        let actual = T.corrcoef(X, Z);
+        let expected = T.fromArray(
+            [[9.5346258924559235e-1, 9.6553511822001026e-1],
+             [9.3549533144292885e-1, 9.5320624763879636e-1]],
+            [[-2.8603877677367773e-1, -1.7038855027411945e-1],
+             [-2.9541957835039862e-1, -1.6131182652348861e-1]]
+        );
+        checkTensor(actual, expected, 1e-15);
+    });
+});
+
 describe('sort()', () => {
     let A = T.fromArray([[1, 3, NaN, 4], [Infinity, -2, 99, 4]]);
     it('should sort in ascending order', () => {

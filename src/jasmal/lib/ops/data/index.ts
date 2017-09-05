@@ -9,10 +9,14 @@ import { ReductionOpGenerator } from '../generator';
 import { ComparisonHelper } from '../../helper/comparisonHelper';
 import { SpecialFunction } from '../../math/special';
 import { FFT } from './fft';
+import { IArithmeticOpProvider } from '../arithmetic/definition';
+import { IMatrixOpProvider, MatrixModifier } from '../matrix/definition';
+import { IMathOpProvider } from '../math/definition';
 
 export class DataOpProviderFactory {
 
-    public static create(coreOp: ICoreOpProvider, reductionOpGen: ReductionOpGenerator): IDataOpProvider {
+    public static create(coreOp: ICoreOpProvider, arithOp: IArithmeticOpProvider, mathOp: IMathOpProvider,
+                         matOp: IMatrixOpProvider, reductionOpGen: ReductionOpGenerator): IDataOpProvider {
 
         const opMin = reductionOpGen.makeRealOnlyOpWithIndexOutput(
             DataFunction.min, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat });
@@ -108,6 +112,68 @@ export class DataOpProviderFactory {
                 }
             }
             return X;
+        };
+
+        const opCov = (x: OpInput, y: OpInput = x, samplesInColumns: boolean = true): Tensor => {
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            if (X.ndim === 1) {
+                X = coreOp.prependAxis(X);
+            } else if (X.ndim > 2) {
+                throw new Error('Input must be either 1D or 2D.');
+            }
+            let axis = samplesInColumns ? 1 : 0;
+            let n = X.shape[axis];
+            let mX: Tensor = <Tensor>opMean(X, axis, true);
+            let xM = arithOp.sub(X, mX);
+            if (y === x) {
+                // covariance matrix
+                if (samplesInColumns) {
+                    return <Tensor>arithOp.div(matOp.matmul(xM, xM, MatrixModifier.Hermitian), n - 1);
+                } else {
+                    xM = <Tensor>mathOp.conj(xM, true);
+                    return <Tensor>arithOp.div(matOp.matmul(matOp.hermitian(xM), xM), n - 1);
+                }
+            } else {
+                let Y = y instanceof Tensor ? y : Tensor.toTensor(y);
+                if (Y.ndim === 1) {
+                    Y = coreOp.prependAxis(X);
+                } else if (Y.ndim > 2) {
+                    throw new Error('Input must be either 1D or 2D.');
+                }
+                if (Y.shape[axis] !== n) {
+                    throw new Error('x and y must share the same number of samples.');
+                }
+                // cross covariance matrix
+                let mY: Tensor = <Tensor>opMean(Y, axis, true);
+                let yM = arithOp.sub(Y, mY);
+                if (samplesInColumns) {
+                    return <Tensor>arithOp.div(matOp.matmul(xM, yM, MatrixModifier.Hermitian), n - 1);
+                } else {
+                    yM = <Tensor>mathOp.conj(yM, true);
+                    return <Tensor>arithOp.div(matOp.matmul(matOp.hermitian(xM), yM), n - 1);
+                }
+            }
+        };
+
+        const opCorrcoef = (x: OpInput, y: OpInput = x, samplesInColumns: boolean = true): Tensor => {
+            let auto = x === y;
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            let Y = auto ? X : (y instanceof Tensor ? y : Tensor.toTensor(y));
+            let C = opCov(X, Y, samplesInColumns);
+            if (auto) {
+                // we can extra the standard deviation from the diagonals directly
+                let v = matOp.diag(C).trimImaginaryPart();
+                v = <Tensor>mathOp.sqrt(v, true);
+                arithOp.div(C, v, true);
+                arithOp.div(C, coreOp.appendAxis(v), true);
+            } else {
+                let axis = samplesInColumns ? 1 : 0;
+                let stdX = opStd(X, axis);
+                let stdY = opStd(Y, axis);
+                arithOp.div(C, coreOp.appendAxis(stdX), true);
+                arithOp.div(C, coreOp.prependAxis(stdY), true);
+            }
+            return C;
         };
 
         const opFFTFB = (x: OpInput, forward: boolean = true, axis: number = -1): Tensor => {
@@ -326,6 +392,8 @@ export class DataOpProviderFactory {
             mode: opMode,
             std: opStd,
             var: opVar,
+            cov: opCov,
+            corrcoef: opCorrcoef,
             sort: opSort,
             sortRows: opSortRows,
             hist: opHist,

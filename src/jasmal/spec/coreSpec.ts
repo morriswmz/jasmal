@@ -47,6 +47,58 @@ describe('reshape()', () => {
     });
 });
 
+describe('prependAxis()', () => {
+    it('should prepend a new axis to a complex number', () => {
+        let Y = T.prependAxis(T.complexNumber(-3, 27));
+        expect(Y.shape).toEqual([1, 1]);
+        expect(Y.strides).toEqual([1, 1]);
+        expect(Y.realData[0]).toBe(-3);
+        expect(Y.imagData[0]).toBe(27);
+    });
+    it('should prepend a new axis to an array', () => {
+        let arr = [1, 2, 5.5];
+        let Y = T.prependAxis(arr);
+        expect(Y.shape).toEqual([1, 3]);
+        expect(Y.strides).toEqual([3, 1]);
+        checkArrayLike(Y.realData, arr);
+    });
+    it('should prepend a new axis to a tensor', () => {
+        let X = T.rand([2, 3, 3]);
+        let Y = T.prependAxis(X);
+        expect(Y.shape).toEqual([1, 2, 3, 3]);
+        expect(Y.strides).toEqual([18, 9, 3, 1]);
+        // should be a reference copy
+        expect(X === Y).toBe(false);
+        expect(Y.realData).toBe(X.realData);
+    });
+});
+
+describe('appendAxis()', () => {
+    it('should append a new axis to a complex number', () => {
+        let Y = T.appendAxis(T.complexNumber(1.5, -9));
+        expect(Y.shape).toEqual([1, 1]);
+        expect(Y.strides).toEqual([1, 1]);
+        expect(Y.realData[0]).toBe(1.5);
+        expect(Y.imagData[0]).toBe(-9);
+    });
+    it('should append a new axis to an array', () => {
+        let arr = [6, -1, 3];
+        let Y = T.appendAxis(arr);
+        expect(Y.shape).toEqual([3, 1]);
+        expect(Y.strides).toEqual([1, 1]);
+        checkArrayLike(Y.realData, arr);
+    });
+    it('should append a new axis to a tensor', () => {
+        let X = T.rand([3, 2, 4]);
+        let Y = T.appendAxis(X);
+        expect(Y.shape).toEqual([3, 2, 4, 1]);
+        expect(Y.strides).toEqual([8, 4, 1, 1]);
+        // should be a reference copy
+        expect(X === Y).toBe(false);
+        expect(Y.realData).toBe(X.realData);
+    });
+});
+
 describe('tile()', () => {
     it('should repeat a scalar', () => {
         checkTensor(T.tile(1, [2, 3, 4, 2]), T.ones([2, 3, 4, 2]));
