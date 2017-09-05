@@ -109,23 +109,31 @@ export class ShapeHelper {
         'use strict';
         // check shape
         let shapeZ: number[] = [];
-        let shapeX = <number[]>(Array.isArray(shapeXIn) ? shapeXIn : Array.prototype.slice.call(shapeXIn));
-        let shapeY = <number[]>(Array.isArray(shapeYIn) ? shapeYIn : Array.prototype.slice.call(shapeYIn));
-        while (shapeX.length < shapeY.length) shapeX.unshift(1);
-        while (shapeY.length < shapeX.length) shapeY.unshift(1);
+        if (shapeXIn.length < shapeYIn.length) {
+            // need to modify shapeX, make a copy
+            let shapeX = Array.prototype.slice.call(shapeXIn);
+            while (shapeX.length < shapeYIn.length) shapeX.unshift(1);
+            shapeXIn = shapeX;
+        }
+        if (shapeYIn.length < shapeXIn.length) {
+            // need to modify shapeY, make a copy
+            let shapeY = Array.prototype.slice.call(shapeYIn);
+            while (shapeY.length < shapeXIn.length) shapeY.unshift(1);
+            shapeYIn = shapeY;
+        }
         let exact = true;
-        for (let i = 0;i < shapeX.length;i++) {
-            if (shapeX[i] !== shapeY[i]) {
-                if (shapeX[i] !== 1 && shapeY[i] !== 1) {
+        for (let i = 0;i < shapeXIn.length;i++) {
+            if (shapeXIn[i] !== shapeYIn[i]) {
+                if (shapeXIn[i] !== 1 && shapeYIn[i] !== 1) {
                     throw new Error('Incompatible shape.')
                 }
                 exact = false;
             }
-            shapeZ.push(Math.max(shapeX[i], shapeY[i]));
+            shapeZ.push(Math.max(shapeXIn[i], shapeYIn[i]));
         }
         return {
-            shapeX: shapeX,
-            shapeY: shapeY,
+            shapeX: shapeXIn,
+            shapeY: shapeYIn,
             shapeZ: shapeZ,
             exact: exact
         };
