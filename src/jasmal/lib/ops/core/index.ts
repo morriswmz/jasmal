@@ -29,17 +29,13 @@ export class CoreOpProviderFactory {
         };
 
         const opPrependAxis = (x: OpInput) => {
-            let t = x instanceof Tensor ? x : Tensor.toTensor(x);
-            let shape = t.shape;
-            shape.unshift(1);
-            return x instanceof Tensor ? t.getReshapedCopy(shape) : t.reshape(shape);            
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            return X.copy().prependAxis();       
         };
 
         const opAppendAxis = (x: OpInput) => {
-            let t = x instanceof Tensor ? x : Tensor.toTensor(x);
-            let shape = t.shape;
-            shape.push(1);
-            return x instanceof Tensor ? t.getReshapedCopy(shape) : t.reshape(shape);
+            let X = x instanceof Tensor ? x : Tensor.toTensor(x);
+            return X.copy().appendAxis();
         };
 
         const opFlatten = (x: OpInput) => {

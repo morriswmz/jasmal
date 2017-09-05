@@ -1816,6 +1816,26 @@ export class Tensor {
     }
 
     /**
+     * Prepends a new axis to this tensor.
+     * This method modifies the shape in-place.
+     */
+    public prependAxis(): Tensor {
+        this._shape.unshift(1);
+        this._updateStridesAndCalculator();
+        return this;
+    }
+
+    /**
+     * Appends a new axis to this tensor.
+     * This method modifies the shape in-place.
+     */
+    public appendAxis(): Tensor {
+        this._shape.push(1);
+        this._updateStridesAndCalculator();
+        return this;
+    }
+
+    /**
      * Reshapes the tensor in-place.
      * @param newShape New shape.
      */
