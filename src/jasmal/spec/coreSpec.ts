@@ -141,6 +141,18 @@ describe('tile()', () => {
               [4, 2, 4, 2]]]);
         checkTensor(actual, expected);
     });
+    it('should not change the data type', () => {
+        let X = T.fromArray([[1, 2]], [], T.INT32);
+        let actual = T.tile(X, [3, 1]);
+        let expected = T.fromArray([[1, 2], [1, 2], [1, 2]], [], T.INT32);
+        checkTensor(actual, expected);
+    });
+    it('should tile an empty tensor', () => {
+        let X = T.zeros([3, 0, 2]);
+        let actual = T.tile(X, [2, 3, 4]);
+        let expected = T.zeros([6, 0, 8]);
+        checkTensor(actual, expected);
+    });
 });
 
 describe('concat()', () => {
@@ -179,6 +191,14 @@ describe('concat()', () => {
             [[1, 2], [4, 8], [-1, -2], [-4, -8], [10, 20]],
             [[0, 0], [0, 0], [3.2, 3.1], [-0.2, 3], [0, 0]]);
         let actual = T.concat([A, B, [[10, 20]]], 0);
+        checkTensor(actual, expected);
+    });
+    it('should work when one of the matrix is empty', () => {
+        let actual = T.concat([A, T.zeros([2, 0]), [[99], [98]]], 1);
+        let expected = T.fromArray(
+            [[1, 2, 99],
+             [4, 8, 98]]
+        );
         checkTensor(actual, expected);
     });
 });
@@ -222,6 +242,12 @@ describe('permuteAxis()', () => {
              [[2, 4, 6],
               [8, 10, 12]]]
         );
+        checkTensor(actual, expected);
+    });
+    it('should permute the axes for an empty tensor', () => {
+        let X = T.ones([0, 2, 4]);
+        let actual = T.permuteAxis(X, [2, 1, 0]);
+        let expected = T.ones([4, 2, 0]);
         checkTensor(actual, expected);
     });
 });
@@ -271,6 +297,33 @@ describe('imag()', () => {
         let actual = T.imag(A);
         let expected = T.fromArray([[[2, 4]]], [], T.INT32);
         checkTensor(actual, expected);
+    });
+});
+
+describe('isempty()', () => {
+    it('should return true for empty tensors', () => {
+        expect(T.isempty(T.zeros([0]))).toBe(true);
+        expect(T.isempty(T.zeros([0, 5]))).toBe(true);
+        expect(T.isempty(T.zeros([3, 2, 0]))).toBe(true);
+    });
+    it('should return true for empty arrays', () => {
+        expect(T.isempty([])).toBe(true);
+        expect(T.isempty([[], [], []])).toBe(true);
+        expect(T.isempty(new Int32Array(0))).toBe(true);        
+    });
+    it('should return false for non-empty tensors', () => {
+        expect(T.isempty(T.zeros([1]))).toBe(false);
+        expect(T.isempty(T.ones([2, 3]))).toBe(false);
+    });
+    it('should return false for non-empty arrays', () => {
+        expect(T.isempty([1, 2, 3])).toBe(false);
+        expect(T.isempty([[1], [2]])).toBe(false);
+        expect(T.isempty(new Float64Array([1, 2]))).toBe(false);
+    });
+    it('should return false for scalars', () => {
+        expect(T.isempty(NaN)).toBe(false);
+        expect(T.isempty(T.complexNumber(2, 3))).toBe(false);
+        expect(T.isempty(0.01)).toBe(false);
     });
 });
 

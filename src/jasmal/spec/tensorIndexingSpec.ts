@@ -107,6 +107,24 @@ describe('Advanced indexing', () => {
             X.set([0, 1, 1, 0], [1, 2, 3, 4]);
             checkTensor(X, T.fromArray([[4, 3], [0, 0]]));
         });
+        it('should do nothing when the index list is empty', () => {
+            let X = A.copy(true);
+            X.set([], 1000);
+            checkTensor(X, A);
+        });
+        it('should do nothing if the slicing string represents an empty range', () => {
+            let X = A.copy(true);
+            X.set('0:0', 1000);
+            X.set(0, '1:0', 2000);
+            X.set('0:2:-1', 1, 3000);
+            checkTensor(X, A);
+        });
+        it('should do nothing if the masks consists of false values', () => {
+            let X = A.copy(true);
+            let M = T.zeros(X.shape, T.LOGIC);
+            X.set(M, 1000);
+            checkTensor(X, A);
+        });
         it('should throw when indices are not an integer', () => {
             let X = A.copy(true);
             // non-integer in direct indexing
@@ -210,6 +228,12 @@ describe('Advanced indexing', () => {
             let expected = T.fromArray([[1, 3], [4, 6]]);
             checkTensor(actual, expected);
         });
+        it('should return the masked elements as a vector', () => {
+            let M = T.fromArray([[1, 1, 0], [1, 0, 0]], [], T.LOGIC);
+            let actual = A.get(M);
+            let expected = T.fromArray([1, 2, 4], [], A.dtype);
+            checkTensor(actual, expected);
+        });
         it('should return all negative elements', () => {
             let actual = B.get(x => x < 0);
             let expected = T.fromArray([-1, -2, -3, -4]);
@@ -227,10 +251,31 @@ describe('Advanced indexing', () => {
             let expected = T.fromArray([[1, 2], [2, 6]]);
             checkTensor(actual, expected);
         });
+        it('should return an empty tensor when the index list is empty', () => {
+            checkTensor(A.get([]), T.zeros([0], A.dtype));
+            checkTensor(A.get([], []), T.zeros([0, 0], A.dtype));
+        });
+        it('should return an empty tensor if the slicing string represents an empty range', () => {
+            checkTensor(A.get(0, '2:2'), T.zeros([0], A.dtype));
+            checkTensor(A.get(0, '2:2', true), T.zeros([1, 0], A.dtype));
+            checkTensor(A.get([1], '1:2:-1'), T.zeros([1, 0], A.dtype));            
+            checkTensor(A.get('1:0', [1]), T.zeros([0, 1], A.dtype));            
+        });
+        it('should return an empty tensor if the masks consists of false values', () => {
+            let M = T.zeros(A.shape, T.LOGIC);
+            let actual = A.get(M);
+            let expected = T.zeros([0], A.dtype);
+            checkTensor(actual, expected);
+        });
         it('should not change the data type', () => {
             let X = T.ones([3, 3], T.INT32);
             expect((<Tensor>X.get(':', 1)).dtype).toEqual(T.INT32);
             expect((<Tensor>X.get(0, 1, true)).dtype).toEqual(T.INT32);
+        });
+        it('should not change the data type even if the result is empty', () => {
+            let X = T.ones([3, 3], T.INT32);
+            expect((<Tensor>X.get([])).dtype).toEqual(T.INT32);
+            expect((<Tensor>X.get(':', [])).dtype).toEqual(T.INT32);
         });
     });
 });

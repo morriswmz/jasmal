@@ -74,6 +74,11 @@ describe('min()', () => {
         checkTensor(M, T.fromArray([[-2]]));
         checkTensor(I, T.fromArray([[1]], [], T.INT32));
     });
+    it('should work on an empty tensor', () => {
+        let [M, I] = T.min(T.zeros([3, 4, 0]), 1, true);
+        checkTensor(M, T.zeros([3, 1, 0]));
+        checkTensor(I, T.zeros([3, 1, 0], T.INT32));
+    });
 });
 
 describe('max()', () => {

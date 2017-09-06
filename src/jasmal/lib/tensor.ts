@@ -351,9 +351,6 @@ export class Tensor {
             originalType = OpInputType.Tensor;
             originalDType = value.dtype;
         } else if (Array.isArray(value) || ObjectHelper.isTypedArray(value)) {
-            if (value.length === 0) {
-                throw new Array('Value cannot be an empty array.');
-            }
             if (Array.isArray(value[0])) {
                 // Detected a nested array, convert to Tensor.
                 // This is not very efficient because we need to copy every
@@ -477,6 +474,13 @@ export class Tensor {
     }
 
     /**
+     * Returns whether this tensor is empty.
+     */
+    public isEmpty(): boolean {
+        return this._re.data.length === 0;
+    }
+
+    /**
      * Returns whether this tensor has complex storage.
      * Note: DO NOT use this method to test if a tensor is numerically complex.
      *       Use hasNonZeroComplexStorage() instead.
@@ -579,7 +583,8 @@ export class Tensor {
         // determine the shape of the sub tensor
         let [shapeSub, sizeSub] = Tensor._inferShapeFromIterDefs(iterDefs);
         if (sizeSub === 0) {
-            throw new Error('The number of indices cannot be zero. No elements to update.')
+            // no element to update
+            return;
         }
         let maxLevel = iterDefs.length - 1;
         if (iterDefs.length === 1) {
@@ -1028,8 +1033,27 @@ export class Tensor {
         let stridesX: number[];
         // determine the shape of the sub tensor
         let [shapeSub, sizeSub] = Tensor._inferShapeFromIterDefs(iterDefs);
+        let result: Tensor;
         if (sizeSub === 0) {
-            throw new Error('The number of indices cannot be zero. No elements to retrieve.')
+            // special treatment for empty output
+            if (iterInfo.areAllConstantType) {
+                throw new Error('This should never happen!');
+            } else {
+                result = Tensor.zeros(shapeSub, this.dtype);
+                if (!keepDims) {
+                    // remove singleton dimensions along the axis where
+                    // IndexIterationType is Constant
+                    for (let i = 0, j = 0;i < shapeSub.length;i++, j++) {
+                        if (iterDefs[j].type === IndexIteratorType.Constant) {
+                            shapeSub.splice(i, 1);
+                            i--;
+                        }
+                    }
+                    result._shape = shapeSub;
+                    result._updateStridesAndCalculator();
+                }
+                return result;
+            }
         }
         let maxLevel = iterDefs.length - 1;
         if (iterDefs.length === 1) {
@@ -1065,7 +1089,7 @@ export class Tensor {
             }
         } else {
             // The result is a Tensor
-            let result = Tensor.zeros(shapeSub, this.dtype);
+            result = Tensor.zeros(shapeSub, this.dtype);
             let newRe = result._re.data;
             // determine trailingOffset
             let i = shapeSub.length - 1;
@@ -1380,17 +1404,6 @@ export class Tensor {
                         throw new Error(`Index ${stop} is out of bounds for dimension ${dim}.`);
                     }
                 }
-                // stop cannot be equal to start
-                if (stop === start) {
-                    throw new Error('The stop index cannot be equal to the start index');
-                }
-                // consistency check
-                if (start < stop && step < 0) {
-                    throw new Error('The start index must be greater than the stop index when step is negative.');
-                }
-                if (start > stop && step > 0) {
-                    throw new Error('The start index must be less than the stop index when step is positive.');
-                }
                 return {
                     type: IndexIteratorType.Range,
                     start: start,
@@ -1448,7 +1461,11 @@ export class Tensor {
         }
         let max = dim == undefined ? this.size : this._shape[dim];
         if (index < 0 || index >= max) {
-            throw new Error(`Index ${index} is out of bounds for dimension ${dim}.`);
+            if (dim == undefined) {
+                throw new Error(`Index ${index} is out of bounds.`);
+            } else {
+                throw new Error(`Index ${index} is out of bounds for dimension ${dim}.`);
+            }
         }
     }
 
@@ -1465,15 +1482,21 @@ export class Tensor {
                     size *= shape[i];
                     break;
                 case IndexIteratorType.Range:
-                    let r = Math.abs(<number>iterDefs[i].stop - <number>iterDefs[i].start) - 1;
-                    shape[i] = Math.max(0, Math.floor(r / Math.abs(<number>iterDefs[i].step))) + 1;
-                    size *= shape[i];
+                    let start = <number>iterDefs[i].start;
+                    let stop = <number>iterDefs[i].stop;
+                    let step = <number>iterDefs[i].step;
+                    if (start === stop || (start < stop && step < 0) || (start > stop && step > 0)) {
+                        // empty range handling
+                        shape[i] = 0;
+                        size = 0;
+                    } else {
+                        let r = Math.abs(stop - start) - 1;
+                        shape[i] = Math.max(0, Math.floor(r / Math.abs(step))) + 1;
+                        size *= shape[i];
+                    }
                     break;
                 default:
                     throw new Error('Should never reach here.');
-            }
-            if (size === 0) {
-                throw new Error('Specified indices result in a empty tensor.');
             }
         }
         return [shape, size];
@@ -1884,7 +1907,7 @@ export class Tensor {
             // used elsewhere.
             newShape = newShape.slice();
             newShape[idxM1] = this.size / ns;
-            if ((newShape[idxM1] | 0) !== newShape[idxM1]) {
+            if (!isFinite(newShape[idxM1]) || (newShape[idxM1] | 0) !== newShape[idxM1]) {
                 throw new Error('The inferred length of the unknown dimension is not an integer.');
             }
         } else {

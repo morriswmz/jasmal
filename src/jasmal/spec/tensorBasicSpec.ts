@@ -82,20 +82,17 @@ describe('Tensor creation', () => {
             expect(arrIm[0]).toBe(-1); 
         });
         it('should throw in invalid cases', () => {
-            // empty array
-            let case1 = () => { T.fromArray([]); };
             // inconsistent real and imaginary parts
-            let case2 = () => { T.fromArray([1], [2,3]); };
+            let case1 = () => { T.fromArray([1], [2,3]); };
             // inconsistent nested array
-            let case3 = () => { T.fromArray([[1, 2], [3]]); };
+            let case2 = () => { T.fromArray([[1, 2], [3]]); };
             // dtype conversion not possible
-            let case4 = () => { T.fromArray([1, NaN], [], DType.LOGIC); };
-            let case5 = () => { T.fromArray([1], [2], DType.LOGIC); };
+            let case3 = () => { T.fromArray([1, NaN], [], DType.LOGIC); };
+            let case4 = () => { T.fromArray([1], [2], DType.LOGIC); };
             expect(case1).toThrow();
             expect(case2).toThrow();
             expect(case3).toThrow();
             expect(case4).toThrow();
-            expect(case5).toThrow();
         });
     });
     describe('toArray()', () => {

@@ -105,6 +105,14 @@ export interface ICoreOpProvider {
      * @param x
      */
     imag(x: OpInput): Tensor;
+
+    /**
+     * Checks if the input has any element.
+     * @param x
+     * @returns Returns true if x is an empty tensor, an array of length 0, or
+     *          a nested array consists of zero numeric elements (e.g. [[], []]).
+     */
+    isempty(x: OpInput): boolean;
     
     /**
      * Returns true if every element is a real number (imaginary part is zero).

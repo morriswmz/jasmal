@@ -6,6 +6,7 @@ import { OutputDTypeResolver, DTypeHelper } from '../../dtype';
 import { OpInput, DataBlock } from '../../commonTypes';
 import { ElementWiseOpGenerator } from '../generator';
 import { ComplexNumber } from '../../complexNumber';
+import { ObjectHelper } from '../../helper/objHelper';
 
 export class CoreOpProviderFactory {
     public static create(generator: ElementWiseOpGenerator): ICoreOpProvider {
@@ -79,6 +80,10 @@ export class CoreOpProviderFactory {
                 shapeY[i] = repeats[i] * shapeX[i - nExtraDims];
             }
             let Y = Tensor.zeros(shapeY, X.dtype);
+            if (X.isEmpty()) {
+                // early return for empty input
+                return Y;
+            }
             
             // Tile
             tileImpl(X.realData, shapeX, repeats, Y.realData, shapeY);
@@ -231,11 +236,13 @@ export class CoreOpProviderFactory {
                 // Concatenating along the first dimension is straightforward.
                 let offset = 0;
                 for (let i = 0;i < tensors.length;i++) {
-                    DataHelper.copy(tensors[i].realData, Y.realData, offset);
-                    if (tensors[i].hasComplexStorage()) {
-                        DataHelper.copy(tensors[i].imagData, Y.imagData, offset);
+                    if (!tensors[i].isEmpty()) {
+                        DataHelper.copy(tensors[i].realData, Y.realData, offset);
+                        if (tensors[i].hasComplexStorage()) {
+                            DataHelper.copy(tensors[i].imagData, Y.imagData, offset);
+                        }
+                        offset += tensors[i].size;
                     }
-                    offset += tensors[i].size;
                 }
             } else {
                 // Concatenating along other dimensions requires some extra
@@ -243,15 +250,17 @@ export class CoreOpProviderFactory {
                 let finalStrides = Y.strides;
                 let axisOffset = 0;
                 for (let i = 0;i < tensors.length;i++) {
-                    copyWithAxisOffset(tensors[i].realData, shapes[i], strides[i],
-                        Y.realData, finalStrides, axis, axisOffset);
-                    if (tensors[i].hasComplexStorage()) {
-                        copyWithAxisOffset(tensors[i].imagData, shapes[i], strides[i],
-                            Y.imagData, finalStrides, axis, axisOffset);
+                    if (!tensors[i].isEmpty()) {
+                        copyWithAxisOffset(tensors[i].realData, shapes[i], strides[i],
+                            Y.realData, finalStrides, axis, axisOffset);
+                        if (tensors[i].hasComplexStorage()) {
+                            copyWithAxisOffset(tensors[i].imagData, shapes[i], strides[i],
+                                Y.imagData, finalStrides, axis, axisOffset);
+                        }
+                        // Update the offset along the axis where the concatenation
+                        // is performed.
+                        axisOffset += shapes[i][axis];
                     }
-                    // Update the offset along the axis where the concatenation
-                    // is performed.
-                    axisOffset += shapes[i][axis];
                 }
             }
             return Y;
@@ -306,6 +315,10 @@ export class CoreOpProviderFactory {
                 shapeY[i] = shapeX[order[i]];
             }
             let Y = Tensor.zeros(shapeY, X.dtype);
+            if (X.isEmpty()) {
+                // early return for empty tensors
+                return Y;
+            }
             let stridesX = X.strides;
             let stridesY = Y.strides;
             permuteAxis(X.realData, Y.realData, shapeX, order, stridesX,
@@ -359,6 +372,25 @@ export class CoreOpProviderFactory {
                 // TODO: DType inference?
                 return Tensor.zeros(shape);
             }
+        };
+
+        const opIsEmpty = (x: OpInput): boolean => {
+            if (x instanceof Tensor) {
+                return x.isEmpty();
+            } else if (Array.isArray(x)) {
+                if (x.length === 0) {
+                    return true;
+                }
+                let shape = ShapeHelper.inferShapeFromArray(x);
+                ShapeHelper.validateArrayShape(x, shape);
+                return ShapeHelper.getSizeFromShape(shape) === 0;
+            } else if (ObjectHelper.isTypedArray(x)) {
+                return x.length === 0;
+            } else if (x instanceof ComplexNumber || typeof x === 'number') {
+                return false;
+            } else {
+                throw new Error(`Unsupported input type "${Object.prototype.toString.call(x)}".`);
+            } 
         };
 
         const opIsReal = (x: OpInput): boolean => {
@@ -460,6 +492,7 @@ export class CoreOpProviderFactory {
             logspace: opLogspace,
             real: opReal,
             imag: opImag,
+            isempty: opIsEmpty,
             isreal: opIsReal,
             isnan: opIsNaN,
             isinf: opIsInf,

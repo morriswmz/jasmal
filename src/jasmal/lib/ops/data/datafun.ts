@@ -217,9 +217,6 @@ export class DataFunction {
     }
 
     private static _processArgs(arrLength: number, offset: number, stride: number, n: number): [number, number] {
-        if (arrLength === 0) {
-            throw new Error('Array cannot be empty.')
-        }
         let ub = n < 0 ? arrLength : offset + n * stride;
         if (ub >= arrLength + stride) {
             throw new Error('Maximum index is out of bounds.');

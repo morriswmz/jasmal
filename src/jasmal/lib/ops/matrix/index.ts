@@ -325,6 +325,10 @@ export class MatrixOpProviderFactory {
             let dims: [number, number, number] = [m, n1, p];
             let Z = Tensor.zeros([m, p],
                 matMulOutputTypeResolver(vx.originalDType, vx.isComplex, vy.originalDType, vy.isComplex));
+            if (vx.reArr.length === 0 || vy.reArr.length === 0) {
+                // empty input handling
+                return Z;
+            }
             if (vx.isComplex) {
                 Z.ensureComplexStorage();
                 if (vy.isComplex) {

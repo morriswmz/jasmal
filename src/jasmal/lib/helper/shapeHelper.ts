@@ -30,8 +30,8 @@ export class ShapeHelper {
             if ((shape[i] | 0) !== shape[i]) {
                 throw new Error('Shape can only consists of integers.');
             }
-            if (shape[i] <= 0) {
-                throw new Error(`The length of dimension ${i} must be positive.`);
+            if (shape[i] < 0) {
+                throw new Error(`The length of dimension ${i} must be nonnegative.`);
             }
         }
     }
@@ -148,9 +148,6 @@ export class ShapeHelper {
         let shape: number[] = [];
         let curEl: any = arr;
         while (Array.isArray(curEl) || ObjectHelper.isTypedArray(curEl)) {
-            if (curEl.length === 0) {
-                throw new Error('Array cannot be empty.');
-            }
             shape.push(curEl.length);
             curEl = curEl[0];
         }

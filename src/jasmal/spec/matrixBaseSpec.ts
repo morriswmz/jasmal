@@ -423,6 +423,16 @@ describe('matmul()', () => {
         let actual = T.matmul(A10, B10);
         checkTensor(actual, C10);
     });
+    it('should perform matrix multiplication between two empty matrices', () => {
+        let actual = T.matmul(T.zeros([4, 0]), T.zeros([0, 6]));
+        let expected = T.zeros([4, 6]);
+        checkTensor(actual, expected);
+    });
+    it('should perform matrix multiplication between an empty matrix and a normal matrix', () => {
+        let actual = T.matmul(T.zeros([0, 4]), T.ones([4, 4]));
+        let expected = T.zeros([0, 4]);
+        checkTensor(actual, expected);
+    });
 });
 
 describe('kron()', () => {
