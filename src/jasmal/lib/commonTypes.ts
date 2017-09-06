@@ -22,6 +22,11 @@ export type TypedArray = Uint8Array | Uint16Array | Uint32Array | Int8Array | In
 export type Scalar = number | ComplexNumber;
 
 /**
+ * An array (possibly nested), or a tensor.
+ */
+export type NonScalarOpInput = any[] | TypedArray | Tensor;
+
+/**
  * An input can be a number, a complex number, an array (possibly nested),
  * or a tensor.
  */

@@ -1,5 +1,6 @@
 import { DataBlock } from '../commonTypes';
 import { ObjectHelper } from './objHelper';
+import { ComparisonHelper } from './comparisonHelper';
 
 export class DataHelper {
 
@@ -170,6 +171,88 @@ export class DataHelper {
         for (let i = 0;i < from.length;i++) {
             to[i + offset] = from[i];
         }
+    }
+
+    public static firstIndexOf(reX: number, reArr: ArrayLike<number>): number {
+        for (let i = 0;i < reArr.length;i++) {
+            if (reArr[i] === reX) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static firstIndexOfComplex(reX: number, imX: number, reArr: ArrayLike<number>, imArr: ArrayLike<number>): number {
+        for (let i = 0;i < reArr.length;i++) {
+            if (reArr[i] === reX && imArr[i] === imX) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Finds the index of reX in reArr via binary search.
+     * If reX is NaN, -1 is returned.
+     * @param reX Input.
+     * @param reArr Sorted array in ascending order.
+     */
+    public static binarySearch(reX: number, reArr: ArrayLike<number>): number {
+        if (isNaN(reX)) {
+            return -1;
+        }
+        let l = 0;
+        let h = reArr.length - 1;
+        let m: number;
+        let status: number;
+        while (l <= h) {
+            m = (l + h) >>> 1;
+            status = ComparisonHelper.compareNumberAsc(reX, reArr[m]);
+            if (status > 0) {
+                l = m + 1;
+            } else if (status < 0) {
+                h = m - 1;
+            } else {
+                return m;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Finds the index of the complex number (reX, imX) via binary search.
+     * If either reX or imX is NaN, -1 is returned.
+     * @param reX Real part of the input.
+     * @param imX Imaginary part of the input.
+     * @param reArr Real part of the complex number array sorted in
+     *              lexicographic order.
+     * @param imArr Imaginary part of the complex number array sorted in
+     *              lexicographic order.
+     */
+    public static binarySearchComplex(reX: number, imX: number, reArr: ArrayLike<number>, imArr: ArrayLike<number>): number {
+        if (isNaN(reX) || isNaN(imX)) {
+            return -1;
+        }
+        let l = 0;
+        let h = reArr.length - 1;
+        let m: number;
+        let status: number;
+        while (l <= h) {
+            m = (l + h) >>> 1;
+            // lexicographic order
+            status = ComparisonHelper.compareNumberAsc(reX, reArr[m]);
+            if (status === 0) {
+                status = ComparisonHelper.compareNumberAsc(imX, imArr[m]);
+            }
+            if (status > 0) {
+                l = m + 1;
+            } else if (status < 0) {
+                h = m - 1;
+            } else {
+                return m;
+            }
+        }
+        return -1;
     }
 
 }
