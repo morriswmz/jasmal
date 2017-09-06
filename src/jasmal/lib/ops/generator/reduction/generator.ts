@@ -1,6 +1,6 @@
 import { OpGeneratorBase } from '../generatorBase';
 import { OpInput, OpOutput, OpOutputWithIndex } from '../../../commonTypes';
-import { DType, OutputDTypeResolver } from '../../../dtype';
+import { DType, OutputDTypeResolver, DTypeHelper } from '../../../dtype';
 import { Tensor } from '../../../tensor';
 import { ComplexNumber } from '../../../complexNumber';
 import { ShapeHelper } from '../../../helper/shapeHelper';
@@ -18,7 +18,7 @@ export interface ReductionOpDependencies {
     ComplexNumber: Function;
     DataHelper: Function;
     ShapeHelper: Function;
-    ObjectHelper: Function;
+    DTypeHelper: Function;
     outputDTypeResolver: (t: DType, isComplex: boolean) => DType | undefined;
 }
 
@@ -109,7 +109,7 @@ export class ReductionOpGenerator extends OpGeneratorBase {
             ComplexNumber: ComplexNumber,
             ShapeHelper: ShapeHelper,
             DataHelper: DataHelper,
-            ObjectHelper: ObjectHelper,
+            DTypeHelper: DTypeHelper,
             outputDTypeResolver: config && config.outputDTypeResolver
                 ? config.outputDTypeResolver
                 : OutputDTypeResolver.uNoChange 

@@ -1,5 +1,3 @@
-import { DType } from '../../../dtype';
-
 /**
  * Main template for reduction operations.
  * Supported configurations:
@@ -26,7 +24,7 @@ return function(x, axis, keepDims) {
 #endif
     var tmp;
     var outputDType = outputDTypeResolver(X.dtype, isInputComplex);
-    var indexDType = ObjectHelper.hasTypedArraySupport() ? ${DType.INT32} : ${DType.FLOAT64};
+    var indexDType = DTypeHelper.getDTypeOfIndices();
     if (outputDType == undefined) {
         throw new Error('Failed to determine the output dtype.');
     }

@@ -1,3 +1,5 @@
+import { ObjectHelper } from './helper/objHelper';
+
 /**
  * Data type.
  */
@@ -38,6 +40,10 @@ export class DTypeHelper {
      */
     public static getWiderType(t1: DType, t2: DType): DType {
         return t1 > t2 ? t1 : t2;
+    }
+
+    public static getDTypeOfIndices(): DType {
+        return ObjectHelper.hasTypedArraySupport() ? DType.INT32 : DType.FLOAT64;
     }
 
 }
