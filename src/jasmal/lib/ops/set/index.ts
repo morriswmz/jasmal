@@ -14,6 +14,11 @@ export class SetOpProviderFactory {
         function opUniqueInternal(infoX: OpInputInfo, outputIndices: false): [Tensor, number[]];
         function opUniqueInternal(infoX: OpInputInfo, outputIndices: true): [Tensor, number[], number[][]];
         function opUniqueInternal(infoX: OpInputInfo, outputIndices: boolean): [Tensor, number[]] | [Tensor, number[], number[][]] {
+            // empty input handling
+            if (!infoX.isInputScalar && infoX.reArr.length === 0) {
+                let empty = Tensor.zeros([0], infoX.originalDType);
+                return outputIndices ? [empty, [], []] : [empty, []];
+            }
             let dataRe: ArrayLike<number> = infoX.isInputScalar ? [infoX.re] : infoX.reArr;
             let dataIm: ArrayLike<number>;
             let n = dataRe.length;
@@ -22,7 +27,6 @@ export class SetOpProviderFactory {
             let iy: number[] = [];
             let i: number, last: number, k: number;
             let curRe: number, curIm: number, newRe: number, newIm: number;
-            let nUnique = 1;
             let uniqueRe: DataBlock;
             let uniqueIm: DataBlock;
             let Y: Tensor;
@@ -56,7 +60,6 @@ export class SetOpProviderFactory {
                         // found a different value
                         curRe = newRe;
                         curIm = newIm;
-                        nUnique++;
                         iy.push(k);
                         k = indices[i];
                         if (outputIndices) {
@@ -90,7 +93,6 @@ export class SetOpProviderFactory {
                     if (newRe !== curRe) {
                         // found a different value
                         curRe = newRe;
-                        nUnique++;
                         iy.push(k);
                         k = indices[i];
                         if (outputIndices) {
@@ -132,6 +134,7 @@ export class SetOpProviderFactory {
             let infoX = Tensor.analyzeOpInput(x);
             let infoY = Tensor.analyzeOpInput(y);
             if (infoX.isInputScalar) {
+                // Special treatment when x is scalar.
                 if (infoY.isInputScalar) {
                     if (infoX.re === infoY.re && infoX.im === infoY.im) {
                         return outputIndices ? [true, 0] : true;
@@ -159,6 +162,8 @@ export class SetOpProviderFactory {
                     return outputIndices ? [flag, idx] : flag;
                 }
             } else {
+                // Calling unique to remove duplicates and obtain an ordered
+                // list of elements.
                 let [U, iy] = opUniqueInternal(infoY, false);
                 let M = Tensor.zeros(infoX.originalShape, DType.LOGIC);
                 let i: number;
@@ -284,11 +289,12 @@ export class SetOpProviderFactory {
             if (outputIndices) {
                 let [U, iu] = opUniqueInternal(Tensor.analyzeOpInput(Z), false);
                 let nX = X.size;
-                // find the split point
-                let i = 0;
+                // Restore index map.
+                // If iu[i] >= nX, the corresponding element must belong to y.
+                // Subtracting it by nX to obtain the correct index in y.
                 let ix: number[] = [];
                 let iy: number[] = [];
-                for (;i < iu.length;i++) {
+                for (let i = 0;i < iu.length;i++) {
                     if (iu[i] >= nX) {
                         iy.push(iu[i] - nX);
                     } else {
@@ -306,16 +312,22 @@ export class SetOpProviderFactory {
         function opIntersect(x: OpInput, y: OpInput, outputIndices: boolean = false): Tensor | [Tensor, number[], number[]] {
             let X = coreOp.flatten(x);
             let Y = coreOp.flatten(y);
+            let Z: Tensor;
             let M: Tensor, I: Tensor, U: Tensor;
             let iRemaining: number[], iu: number[], ix: number[], iy: number[];
             let reI: ArrayLike<number>;
             let i: number;
+            let outputDType = DTypeHelper.getWiderType(X.dtype, Y.dtype);
             if (X.size < Y.size) {
                 if (outputIndices) {
                     [M, I] = opIsMember(X, Y, true);
                     iRemaining = coreOp.find(M); // indices of common elements in x
                     reI = I.realData; // indices of common elements in y
-                    [U, iu] = opUniqueInternal(Tensor.analyzeOpInput(X.get(iRemaining)), false);
+                    // Ensure the correct output data type.
+                    Z = (<Tensor>X.get(iRemaining)).asType(outputDType, false);
+                    // Remove duplicates.
+                    [U, iu] = opUniqueInternal(Tensor.analyzeOpInput(Z), false);
+                    // Restore index map.
                     iy = new Array(iu.length);
                     for (i = 0;i < iu.length;i++) {
                         iu[i] = iRemaining[iu[i]];
@@ -324,7 +336,9 @@ export class SetOpProviderFactory {
                     return [U, iu, iy];
                 } else {
                     M = opIsMember(X, Y);
-                    return opUniqueInternal(Tensor.analyzeOpInput(X.get(M)), false)[0];
+                    // Ensure the correct output data type.                    
+                    Z = (<Tensor>X.get(M)).asType(outputDType, false);
+                    return opUniqueInternal(Tensor.analyzeOpInput(Z), false)[0];
                 }
             } else {
                 // ismember() is more efficient when the first input is shorter
@@ -333,7 +347,11 @@ export class SetOpProviderFactory {
                     [M, I] = opIsMember(Y, X, true);
                     iRemaining = coreOp.find(M); // indices of common elements in y
                     reI = I.realData; // indices of common elements in x
-                    [U, iu] = opUniqueInternal(Tensor.analyzeOpInput(Y.get(iRemaining)), false);
+                    // Ensure the correct output data type.                    
+                    Z = (<Tensor>Y.get(iRemaining)).asType(outputDType, false);
+                    // Remove duplicates.
+                    [U, iu] = opUniqueInternal(Tensor.analyzeOpInput(Z), false);
+                    // Restore index map.
                     ix = new Array(iu.length);
                     for (i = 0;i < iu.length;i++) {
                         iu[i] = iRemaining[iu[i]];
@@ -342,7 +360,9 @@ export class SetOpProviderFactory {
                     return [U, ix, iu];
                 } else {
                     M = opIsMember(Y, X);
-                    return opUniqueInternal(Tensor.analyzeOpInput(X.get(M)), false)[0];
+                    // Ensure the correct output data type.
+                    Z = (<Tensor>Y.get(M)).asType(outputDType, false);
+                    return opUniqueInternal(Tensor.analyzeOpInput(Z), false)[0];
                 }
             }
         }
