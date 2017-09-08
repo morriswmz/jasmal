@@ -5,6 +5,7 @@ const T = JasmalEngine.createInstance();
 describe('unique()', () => {
     it('should find unique real numbers', () => {
         let x = T.fromArray([3, 4, 3, 2, 3, -1, NaN, -1, Infinity, NaN]);
+        let xCopy = x.copy(true);
         let expectedY = T.fromArray([-1, 2, 3, 4, Infinity, NaN, NaN]);
         let expectedIy = [5, 3, 0, 1, 8, 6, 9];
         let expectedIx = [[5, 7], [3], [0, 2, 4], [1], [8], [6], [9]];
@@ -12,11 +13,14 @@ describe('unique()', () => {
         checkTensor(actualY, expectedY);
         expect(actualIy).toEqual(expectedIy);
         expect(actualIx).toEqual(expectedIx);
+        // should not change x
+        checkTensor(x, xCopy);
     });
     it('should find unique complex numbers', () => {
         let x = T.fromArray(
             [3, 3, 3, 3, -1, -1, Infinity, NaN,   0],
             [2, 2, 5, 5, -2, -2,        0,   2, NaN]);
+        let xCopy = x.copy(true);
         let expectedY = T.fromArray(
             [-1,   0, 3, 3, Infinity, NaN],
             [-2, NaN, 2, 5,        0,   2]);
@@ -26,19 +30,21 @@ describe('unique()', () => {
         checkTensor(actualY, expectedY);
         expect(actualIy).toEqual(expectedIy);
         expect(actualIx).toEqual(expectedIx);
+        // should not change x
+        checkTensor(x, xCopy);
     });
 });
 
-describe('ismember()', () => {
-    it('should test membership for two real scalars', () => {
-        expect(T.ismember(1, 2)).toBe(false);
-        expect(T.ismember(3, 3, true)).toEqual([true, 0]);
-        expect(T.ismember(NaN, NaN)).toBe(false);
+describe('isin()', () => {
+    it('should work for two scalars', () => {
+        expect(T.isin(1, 2)).toBe(false);
+        expect(T.isin(3, 3, true)).toEqual([true, 0]);
+        expect(T.isin(NaN, NaN)).toBe(false);
     });
     it('should check if a scalar exists in a vector', () => {
-        expect(T.ismember(1, [2, 0, 1])).toBe(true);
-        expect(T.ismember(NaN, [NaN, 2, 5], true)).toEqual([false, -1]);
-        expect(T.ismember(T.complexNumber(2, 5), T.fromArray([3, 2, 1], [5, 5, 4]), true)).toEqual([true, 1]);
+        expect(T.isin(1, [2, 0, 1])).toBe(true);
+        expect(T.isin(NaN, [NaN, 2, 5], true)).toEqual([false, -1]);
+        expect(T.isin(T.complexNumber(2, 5), T.fromArray([3, 2, 1], [5, 5, 4]), true)).toEqual([true, 1]);
     });
     let A = T.fromArray([[7, 3, 3], [1, 5, 5]]);
     let B = T.fromArray([[2, 7, 8, 5], [7, 5, 1, 4]]);
@@ -50,49 +56,49 @@ describe('ismember()', () => {
         [[1, 0,  5, 0,   0], [1,   3, 1, 2, NaN]]
     );
     it('should check if each element in a real matrix is in another real matrix', () => {
-        let actual = T.ismember(A, B);
+        let actual = T.isin(A, B);
         let expected = T.fromArray([[1, 0, 0], [1, 1, 1]], [], T.LOGIC);
         checkTensor(actual, expected);
     });
     it('should check if each element in a real matrix is in another real matrix and return indices', () => {
-        let [M, I] = T.ismember(A, B, true);
+        let [M, I] = T.isin(A, B, true);
         checkTensor(M, T.fromArray([[1, 0, 0], [1, 1, 1]], [], T.LOGIC));
         checkTensor(I, T.fromArray([[1, -1, -1], [6, 3, 3]], [], T.INT32));
     });
     it('should check if each element in a real matrix is in another complex matrix', () => {
-        let actual = T.ismember(A, C);
+        let actual = T.isin(A, C);
         let expected = T.fromArray([[0, 1, 1], [0, 0, 0]], [], T.LOGIC);
         checkTensor(actual, expected);
     });
     it('should check if each element in a real matrix is in another complex matrix and return indices', () => {
-        let [M, I] = T.ismember(A, D, true);
+        let [M, I] = T.isin(A, D, true);
         checkTensor(M, T.fromArray([[1, 1, 1], [0, 0, 0]], [], T.LOGIC));
         checkTensor(I, T.fromArray([[1, 3, 3], [-1, -1, -1]], [], T.INT32));
     });
     it('should check if each element in a complex matrix is in another real matrix', () => {
-        let actual = T.ismember(C, A);
+        let actual = T.isin(C, A);
         let expected = T.fromArray([[0, 0, 0, 0], [1, 0, 0, 0]], [], T.LOGIC);
         checkTensor(actual, expected);
     });
     it('should check if each element in a complex matrix is in another real matrix and return indices', () => {
-        let [M, I] = T.ismember(D, A, true);
+        let [M, I] = T.isin(D, A, true);
         checkTensor(M, T.fromArray([[0, 1, 0, 1, 0], [0, 0, 0, 0, 0]], [], T.LOGIC));
         checkTensor(I, T.fromArray([[-1, 0, -1, 1, -1], [-1, -1, -1, -1, -1]], [], T.INT32));
     });
     it('should check if each element in a complex matrix is in another complex matrix', () => {
-        let actual = T.ismember(C, D);
+        let actual = T.isin(C, D);
         let expected = T.fromArray([[1, 0, 1, 0], [1, 0, 1, 0]], [], T.LOGIC);
         checkTensor(actual, expected);
     });
     it('should check if each element in a complex matrix is in another complex matrix and return indices', () => {
-        let [M, I] = T.ismember(C, D, true);
+        let [M, I] = T.isin(C, D, true);
         checkTensor(M, T.fromArray([[1, 0, 1, 0], [1, 0, 1, 0]], [], T.LOGIC));
         checkTensor(I, T.fromArray([[2, -1, 2, -1], [3, -1, 6, -1]], [], T.INT32));
     });
     it('should ignore the data type and check by values', () => {
         let x = T.fromArray([1, 0, 1], [], T.LOGIC);
         let y = T.fromArray([2, 3, 0, 1]);
-        checkTensor(T.ismember(x, y), T.fromArray([1, 1, 1], [], T.LOGIC));
+        checkTensor(T.isin(x, y), T.fromArray([1, 1, 1], [], T.LOGIC));
     });
 });
 
@@ -216,5 +222,12 @@ describe('setdiff()', () => {
         let actual = T.setdiff(a, b);
         let expected = T.fromArray([2, 3], [], T.INT32);
         checkTensor(actual, expected);
+    });
+    it('should not change the original set', () => {
+        let a = T.fromArray([8, 7, 6, 5]);
+        let aCopy = a.copy(true);
+        let b = T.fromArray([8, 7, 6, 5]);
+        T.setdiff(a, b);
+        checkTensor(a, aCopy);
     });
 });

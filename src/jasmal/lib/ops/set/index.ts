@@ -124,11 +124,11 @@ export class SetOpProviderFactory {
             return outputIndices ? opUniqueInternal(infoX, true) : opUniqueInternal(infoX, false)[0];
         };
 
-        function opIsMember(x: Scalar, y: OpInput, outputIndices?: false): boolean;
-        function opIsMember(x: Scalar, y: OpInput, outputIndices: true): [boolean, number];
-        function opIsMember(x: NonScalarOpInput, y: OpInput, outputIndices?: false): Tensor;
-        function opIsMember(x: NonScalarOpInput, y: OpInput, outputIndices: true): [Tensor, Tensor];
-        function opIsMember(x: OpInput, y: OpInput, outputIndices: boolean = false):
+        function opIsIn(x: Scalar, y: OpInput, outputIndices?: false): boolean;
+        function opIsIn(x: Scalar, y: OpInput, outputIndices: true): [boolean, number];
+        function opIsIn(x: NonScalarOpInput, y: OpInput, outputIndices?: false): Tensor;
+        function opIsIn(x: NonScalarOpInput, y: OpInput, outputIndices: true): [Tensor, Tensor];
+        function opIsIn(x: OpInput, y: OpInput, outputIndices: boolean = false):
             boolean | Tensor | [boolean, number] | [Tensor, Tensor]
         {
             let infoX = Tensor.analyzeOpInput(x);
@@ -320,7 +320,7 @@ export class SetOpProviderFactory {
             let outputDType = DTypeHelper.getWiderType(X.dtype, Y.dtype);
             if (X.size < Y.size) {
                 if (outputIndices) {
-                    [M, I] = opIsMember(X, Y, true);
+                    [M, I] = opIsIn(X, Y, true);
                     iRemaining = coreOp.find(M); // indices of common elements in x
                     reI = I.realData; // indices of common elements in y
                     // Ensure the correct output data type.
@@ -335,7 +335,7 @@ export class SetOpProviderFactory {
                     }
                     return [U, iu, iy];
                 } else {
-                    M = opIsMember(X, Y);
+                    M = opIsIn(X, Y);
                     // Ensure the correct output data type.                    
                     Z = (<Tensor>X.get(M)).asType(outputDType, false);
                     return opUniqueInternal(Tensor.analyzeOpInput(Z), false)[0];
@@ -344,7 +344,7 @@ export class SetOpProviderFactory {
                 // ismember() is more efficient when the first input is shorter
                 // in length ((m + n) log n < (m + n) log m if m > n).
                 if (outputIndices) {
-                    [M, I] = opIsMember(Y, X, true);
+                    [M, I] = opIsIn(Y, X, true);
                     iRemaining = coreOp.find(M); // indices of common elements in y
                     reI = I.realData; // indices of common elements in x
                     // Ensure the correct output data type.                    
@@ -359,7 +359,7 @@ export class SetOpProviderFactory {
                     }
                     return [U, ix, iu];
                 } else {
-                    M = opIsMember(Y, X);
+                    M = opIsIn(Y, X);
                     // Ensure the correct output data type.
                     Z = (<Tensor>Y.get(M)).asType(outputDType, false);
                     return opUniqueInternal(Tensor.analyzeOpInput(Z), false)[0];
@@ -374,7 +374,7 @@ export class SetOpProviderFactory {
             let Y = coreOp.flatten(y);
             let M: Tensor;
             // Masks all the elements that appear in y.
-            M = opIsMember(X, Y);
+            M = opIsIn(X, Y);
             logicCompOp.not(M, true);
             // Obtain the indices for the remaining elements.
             let iRemaining = coreOp.find(M);
@@ -392,7 +392,7 @@ export class SetOpProviderFactory {
 
         return {
             unique: opUnique,
-            ismember: opIsMember,
+            isin: opIsIn,
             union: opUnion,
             intersect: opIntersect,
             setdiff: opSetDiff

@@ -20,21 +20,21 @@ export interface ISetOpProvider {
     /**
      * Checks if x is an element in y.
      */
-    ismember(x: Scalar, y: OpInput, outputIndices?: false): boolean;
+    isin(x: Scalar, y: OpInput, outputIndices?: false): boolean;
     /**
      * Checks if x is an element in y. Also returns the index of x in y (-1 if
      * x is not in y).
      */
-    ismember(x: Scalar, y: OpInput, outputIndices: true): [boolean, number];
+    isin(x: Scalar, y: OpInput, outputIndices: true): [boolean, number];
     /**
      * For every element in x, checks if it is an element in y.
      */
-    ismember(x: NonScalarOpInput, y: OpInput, outputIndices?: false): Tensor;
+    isin(x: NonScalarOpInput, y: OpInput, outputIndices?: false): Tensor;
     /**
      * For every element in x, checks if it is an element in y. Also returns the
      * indices in y for every element in x (-1 if the element is not in y).
      */
-    ismember(x: NonScalarOpInput, y: OpInput, outputIndices: true): [Tensor, Tensor];
+    isin(x: NonScalarOpInput, y: OpInput, outputIndices: true): [Tensor, Tensor];
 
     /**
      * Obtains the union of x and y.
