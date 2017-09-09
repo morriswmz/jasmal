@@ -66,6 +66,13 @@ export class OutputDTypeResolver {
     }
 
     /**
+     * Returns INT32.
+     */
+    public static uToInt32(): DType {
+        return DType.INT32;
+    }
+
+    /**
      * Returns FLOAT64.
      */
     public static uToFloat(): DType {
@@ -93,6 +100,15 @@ export class OutputDTypeResolver {
     }
 
     /**
+     * Returns INT32 when the input data type LOGIC. Otherwise, returns the
+     * original data type.
+     * @param t 
+     */
+    public static uNoChangeExceptLogicToInt(t: DType): DType {
+        return t === DType.LOGIC ? DType.INT32 : t;
+    }
+
+    /**
      * Returns the wider data type between the two inputs.
      * @param t1 
      * @param _isComplex1 
@@ -117,9 +133,16 @@ export class OutputDTypeResolver {
     }
 
     /**
+     * Returns INT32.
+     */
+    public static bToInt32(): DType {
+        return DType.INT32;
+    }
+
+    /**
      * Returns FLOAT64.
      */
-    public static bToFloat(): DType | undefined {
+    public static bToFloat(): DType {
         return DType.FLOAT64;
     }
 

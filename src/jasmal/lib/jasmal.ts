@@ -8,6 +8,7 @@ import { IRandomOpProvider } from './ops/random/definition';
 import { MatrixModifier, IMatrixOpProvider } from './ops/matrix/definition';
 import { IMathOpProvider } from './ops/math/definition';
 import { ILogicComparisonOpProvider } from './ops/logicComp/definition';
+import { IBinaryOpProvider } from './ops/binary/definition';
 import { IDataOpProvider } from './ops/data/definition';
 import { IPolynomialOpProvider } from './ops/poly/definition';
 import { ISetOpProvider } from './ops/set/definition';
@@ -17,6 +18,7 @@ import { MathOpProviderFactory } from './ops/math';
 import { ComplexNumber } from './complexNumber';
 import { CoreOpProviderFactory } from './ops/core';
 import { LogicComparisonOpProviderFactory } from './ops/logicComp';
+import { BinaryOpProviderFactory } from './ops/binary/index';
 import { MatrixOpProviderFactory } from './ops/matrix';
 import { DataOpProviderFactory } from './ops/data';
 import { PolynomialOpProviderFactory } from './ops/poly';
@@ -35,8 +37,8 @@ export interface JasmalOptions {
  */
 export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
     IRandomOpProvider, IArithmeticOpProvider, IMathOpProvider,
-    ILogicComparisonOpProvider, IDataOpProvider, IPolynomialOpProvider,
-    ISetOpProvider {
+    ILogicComparisonOpProvider, IBinaryOpProvider, IDataOpProvider,
+    IPolynomialOpProvider, ISetOpProvider {
 
     /**
      * Logic data type.
@@ -153,6 +155,7 @@ export class JasmalEngine {
         let mathOpProvider = MathOpProviderFactory.create(elementWiseOpGen);
         let matrixOpProvider = MatrixOpProviderFactory.create(arithmeticOpProvider, mathOpProvider);
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create(elementWiseOpGen);
+        let binaryOpProvider = BinaryOpProviderFactory.create(elementWiseOpGen);
         let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, arithmeticOpProvider,
                                 mathOpProvider, matrixOpProvider, reductionOpGen);
         let polyOpProvider = PolynomialOpProviderFactory.create(coreOpProvider, matrixOpProvider);
@@ -187,6 +190,7 @@ export class JasmalEngine {
             .extend(matrixOpProvider)
             .extend(mathOpProvider)
             .extend(logicCompOpProvider)
+            .extend(binaryOpProvider)
             .extend(dataOpProvider)
             .extend(polyOpProvider)
             .extend(setOpProvider)
