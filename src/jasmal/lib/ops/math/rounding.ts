@@ -4,11 +4,33 @@ import { OpInput, OpOutput } from '../../commonTypes';
 
 export interface IRoundingMathOpSet {
 
+    /**
+     * Applies Math.floor() for every element in the input.
+     * For complex numbers, Math.floor() is applied to both the real part and
+     * the imaginary part.
+     */
     floor(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Applies Math.ceil() for every element in the input.
+     * For complex numbers, Math.ceil() is applied to both the real part and
+     * the imaginary part.
+     */
     ceil(x: OpInput, inPlace?: boolean): OpOutput;
 
+    /**
+     * Applies Math.round() for every element in the input.
+     * For complex numbers, Math.round() is applied to both the real part and
+     * the imaginary part.
+     */
     round(x: OpInput, inPlace?: boolean): OpOutput;
+
+    /**
+     * Rounds every element in the input towards zero.
+     * For complex numbers, the operation is applied to both the real part and
+     * the imaginary part.
+     */
+    fix(x: OpInput, inPlace?: boolean): OpOutput;
 
 }
 
@@ -37,10 +59,19 @@ export class RoundingMathOpSetFactory {
             outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
         });
 
+        const opFix = generator.makeUnaryOp({
+            opR: '$reY = ($reX >= 0) ? Math.floor($reX) : Math.ceil($reX);',
+            opC: '$reY = ($reX >= 0) ? Math.floor($reX) : Math.ceil($reX);\n' +
+                 '$reX = ($imX >= 0) ? Math.floor($imX) : Math.ceil($imX);'
+        }, {
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+        });
+
         return {
             floor: opFloor,
             ceil: opCeil,
-            round: opRound
+            round: opRound,
+            fix: opFix
         };
     }
 
