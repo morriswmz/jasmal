@@ -9,6 +9,7 @@
         "mathSpec.js",
         "mathSpecialSpec.js",
         "logicCompSpec.js",
+        "binarySpec.js",
         "matrixBaseSpec.js",
         "matrixDecompSpec.js",
         "dataSpec.js",
