@@ -1,6 +1,6 @@
 import { IDataOpProvider } from './definition';
 import { Tensor } from '../../tensor';
-import { OpInput, DataBlock } from '../../commonTypes';
+import { OpInput, DataBlock, RealOpInput } from '../../commonTypes';
 import { DataFunction } from './datafun';
 import { OutputDTypeResolver, DType } from '../../dtype';
 import { DataHelper } from '../../helper/dataHelper';
@@ -236,7 +236,7 @@ export class DataOpProviderFactory {
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: boolean): Tensor | [Tensor, number[]] {
             let X = x instanceof Tensor ? x : Tensor.toTensor(x);
             if (X.hasNonZeroComplexStorage()) {
-                throw new Error('Cannot order complex elements.');
+                throw new Error('Sorting complex elements is not supported.');
             }
             let n = X.size;
             let Y = Tensor.zeros([n]);
@@ -265,7 +265,7 @@ export class DataOpProviderFactory {
                 throw new Error('Matrix expected.');
             }
             if (X.hasNonZeroComplexStorage()) {
-                throw new Error('Cannot order complex elements.');
+                throw new Error('Sorting complex elements is not supported.');
             }
             let dataX = X.realData;
             let [m, n] = X.shape;
@@ -308,7 +308,7 @@ export class DataOpProviderFactory {
             return l;
         }
 
-        const opHist = (x: OpInput, nBins: number = 10): [Tensor, Tensor] => {
+        const opHist = (x: RealOpInput, nBins: number = 10): [Tensor, Tensor] => {
             let X = x instanceof Tensor ? x : Tensor.toTensor(x);
             if (X.hasNonZeroComplexStorage()) {
                 throw new Error('Input must be real.');

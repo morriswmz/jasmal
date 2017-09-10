@@ -1,4 +1,4 @@
-import { OpOutput, OpInput } from '../../commonTypes';
+import { RealOpInput, RealOpOutput } from '../../commonTypes';
 
 export interface IBinaryOpProvider {
     
@@ -12,7 +12,7 @@ export interface IBinaryOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false.
      */
-    bitwiseAnd(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    bitwiseAnd(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
     
     /**
      * Computes bitwise OR between two compatible inputs using JavaScript's
@@ -24,7 +24,7 @@ export interface IBinaryOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false. 
      */
-    bitwiseOr(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    bitwiseOr(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
     
     /**
      * Computes bitwise XOR between two compatible inputs using JavaScript's
@@ -36,7 +36,7 @@ export interface IBinaryOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false. 
      */
-    bitwiseXor(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    bitwiseXor(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
     /**
      * Computes bitwise NOT for each element in the input using JavaScript's
@@ -47,7 +47,7 @@ export interface IBinaryOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false. 
      */
-    bitwiseNot(x: OpInput, inPlace?: boolean): OpOutput;
+    bitwiseNot(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
     /**
      * Shifts the bits of x to the left by the amount specified by y using
@@ -60,7 +60,7 @@ export interface IBinaryOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false. 
      */
-    leftShift(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    leftShift(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
     /**
      * Shifts the bits of x to the right by the amount specified by y with the
@@ -73,7 +73,7 @@ export interface IBinaryOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false. 
      */
-    rightShiftSP(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    rightShiftSP(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
     /**
      * Shifts the bits of x to the right by the amount specified by y with zero
@@ -86,6 +86,6 @@ export interface IBinaryOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false. 
      */
-    rightShiftZF(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    rightShiftZF(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
 }

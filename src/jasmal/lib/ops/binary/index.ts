@@ -6,49 +6,48 @@ export class BinaryOpProviderFactory {
 
     public static create(generator: ElementWiseOpGenerator): IBinaryOpProvider {
 
-        const opBitwiseAnd = generator.makeBinaryOp({
+        const opBitwiseAnd = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = $reX & $reY;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt,
         });
 
-        const opBitwiseOr = generator.makeBinaryOp({
+        const opBitwiseOr = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = $reX | $reY;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt,
         });
 
-        const opBitwiseXor = generator.makeBinaryOp({
+        const opBitwiseXor = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = $reX ^ $reY;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt,
         });
 
-        const opBitwiseNot = generator.makeUnaryOp({
+        const opBitwiseNot = generator.makeRealOutputUnaryOp({
             opR: '$reY = ~($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uNoChangeExceptLogicToInt,
         });
 
-        const opLeftShift = generator.makeBinaryOp({
+        const opLeftShift = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX) << ($reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
         });
 
-        const opRightShiftSP= generator.makeBinaryOp({
+        const opRightShiftSP= generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX) >> ($reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
         });
 
-        const opRightShiftZF = generator.makeBinaryOp({
+        const opRightShiftZF = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX) >>> ($reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
         });
 
-        
         return {
             bitwiseAnd: opBitwiseAnd,
             bitwiseOr: opBitwiseOr,

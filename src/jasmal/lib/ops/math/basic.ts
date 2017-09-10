@@ -1,6 +1,6 @@
 import { ElementWiseOpGenerator } from '../generator';
 import { DType, OutputDTypeResolver } from '../../dtype';
-import { OpInput, OpOutput } from '../../commonTypes';
+import { OpInput, OpOutput, RealOpOutput, RealOpInput } from '../../commonTypes';
 
 export interface IBasicMathOpSet {
 
@@ -19,12 +19,12 @@ export interface IBasicMathOpSet {
     /**
      * Computes element-wise minimum between two compatible inputs.
      */
-    min2(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    min2(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
     
     /**
      * Computes element-wise maximum between two compatible inputs.
      */
-    max2(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    max2(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
     /**
      * Evaluates complex conjugate for each element in the input.
@@ -39,12 +39,12 @@ export interface IBasicMathOpSet {
     /**
      * Converts angles from radians to degrees.
      */
-    rad2deg(x: OpInput, inPlace?: boolean): OpOutput;
+    rad2deg(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
     /**
      * Converts angles from degrees to radians.
      */
-    deg2rad(x: OpInput, inPlace?: boolean): OpOutput;
+    deg2rad(x: RealOpInput, inPlace?: boolean): RealOpOutput;
     
 }
 
@@ -68,11 +68,11 @@ export class BasicMathOpSetFactory {
             outputDTypeResolver: (t, isComplex) => isComplex ? DType.FLOAT64 : t
         });
 
-        const opMin2 = generator.makeBinaryOp({
+        const opMin2 = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = Math.min($reX, $reY);'
         });
 
-        const opMax2 = generator.makeBinaryOp({
+        const opMax2 = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = Math.max($reX, $reY);'
         });
 
@@ -88,13 +88,13 @@ export class BasicMathOpSetFactory {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opRad2Deg = generator.makeUnaryOp({
+        const opRad2Deg = generator.makeRealOutputUnaryOp({
             opR: '$reY = 180 / Math.PI * $reX;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat
         });
 
-        const opDeg2Rad = generator.makeUnaryOp({
+        const opDeg2Rad = generator.makeRealOutputUnaryOp({
             opR: '$reY = Math.PI / 180 * $reX;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat

@@ -1,29 +1,65 @@
-import { OpOutput, OpInput } from '../../commonTypes';
+import { OpInput, RealOpOutput, RealOpInput } from '../../commonTypes';
 
 export interface ILogicComparisonOpProvider {
 
-    eq(x: OpInput, y: OpInput): OpOutput;
+    /**
+     * Evaluates `x === y` element-wise for two compatible inputs x and y.
+     */
+    eq(x: OpInput, y: OpInput): RealOpOutput;
 
-    neq(x: OpInput, y: OpInput): OpOutput;
+    /**
+     * Evaluates `x !== y` element-wise for two compatible inputs x and y.
+     */
+    neq(x: OpInput, y: OpInput): RealOpOutput;
 
-    gt(x: OpInput, y: OpInput): OpOutput;
+    /**
+     * Evaluates `x > y` element-wise for two compatible inputs x and y.
+     */
+    gt(x: RealOpInput, y: RealOpInput): RealOpOutput;
 
-    ge(x: OpInput, y: OpInput): OpOutput;
+    /**
+     * Evaluates `x >= y` element-wise for two compatible inputs x and y.
+     */
+    ge(x: RealOpInput, y: RealOpInput): RealOpOutput;
 
-    lt(x: OpInput, y: OpInput): OpOutput;
+    /**
+     * Evaluates `x < y` element-wise for two compatible inputs x and y.
+     */
+    lt(x: RealOpInput, y: RealOpInput): RealOpOutput;
 
-    le(x: OpInput, y: OpInput): OpOutput;
+    /**
+     * Evaluates `x <= y` element-wise for two compatible inputs x and y.
+     */
+    le(x: RealOpInput, y: RealOpInput): RealOpOutput;
 
-    and(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    /**
+     * Evaluates `(x !== 0) && (y !== 0)` element-wise for two compatible inputs x and y.
+     */
+    and(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
-    or(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    /**
+     * Evaluates `(x !== 0) || (y !== 0)` element-wise for two compatible inputs x and y.
+     */
+    or(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
-    xor(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    /**
+     * Evaluates `(x !== 0) ^ (y !== 0)` element-wise for two compatible inputs x and y.
+     */
+    xor(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
-    not(x: OpInput, inPlace?: boolean): OpOutput;
+    /**
+     * Evaluates `!(x !== 0)` element-wise.
+     */
+    not(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
+    /**
+     * Returns true only if all the elements in the input are non-zero.
+     */
     all(x: OpInput): boolean;
 
-    any(x: OpInput): boolean;            
+    /**
+     * Returns true if any of the elements in the input is non-zero.
+     */
+    any(x: OpInput): boolean;
 
 }

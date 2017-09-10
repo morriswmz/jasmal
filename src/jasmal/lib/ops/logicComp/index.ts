@@ -9,7 +9,7 @@ export class LogicComparisonOpProviderFactory {
     
     public static create(generator: ElementWiseOpGenerator): ILogicComparisonOpProvider {
 
-        const opEq = generator.makeBinaryOp({
+        const opEq = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX === $reY) ? 1 : 0;',
             opRC: '$reZ = ($reX === $reY && $imY === 0) ? 1 : 0;',
             opCR: '$reZ = ($reX === $reY && $imX === 0) ? 1 : 0;',
@@ -19,7 +19,7 @@ export class LogicComparisonOpProviderFactory {
             noInPlaceOperation: true
         });
 
-        const opNeq = generator.makeBinaryOp({
+        const opNeq = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX !== $reY) ? 1 : 0;',
             opRC: '$reZ = ($reX !== $reY || $imY !== 0) ? 1 : 0;',
             opCR: '$reZ = ($reX !== $reY || $imX !== 0) ? 1 : 0;',
@@ -29,53 +29,53 @@ export class LogicComparisonOpProviderFactory {
             noInPlaceOperation: true
         });
 
-        const opGt = generator.makeBinaryOp({
+        const opGt = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX > $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opGe = generator.makeBinaryOp({
+        const opGe = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX >= $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opLt = generator.makeBinaryOp({
+        const opLt = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX < $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opLe = generator.makeBinaryOp({
+        const opLe = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX <= $reY) ? 1 : 0;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
             noInPlaceOperation: true
         });
 
-        const opAnd = generator.makeBinaryOp({
+        const opAnd = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX !== 0) & ($reY !== 0);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
         });
 
-        const opOr = generator.makeBinaryOp({
+        const opOr = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX !== 0) | ($reY !== 0);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
         });
 
-        const opXor = generator.makeBinaryOp({
+        const opXor = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX !== 0) ^ ($reY !== 0);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToLogicRealOnly,
         });
 
-        const opNot = generator.makeUnaryOp({
+        const opNot = generator.makeRealOutputUnaryOp({
             opR: '$reY = ($reX !== 0) ? 0 : 1;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToLogicRealOnly,
@@ -134,7 +134,7 @@ export class LogicComparisonOpProviderFactory {
             not: opNot,
             all: opAll,
             any: opAny
-        }
+        };
 
     }
 }

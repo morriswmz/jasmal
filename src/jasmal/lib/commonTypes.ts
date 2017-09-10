@@ -33,14 +33,29 @@ export type NonScalarOpInput = any[] | TypedArray | Tensor;
 export type OpInput = number | ComplexNumber | any[] | TypedArray | Tensor;
 
 /**
+ * A real input can be a number, an array (possibly nested), or a tensor.
+ */
+export type RealOpInput = number | any[] | TypedArray | Tensor;
+
+/**
  * An output can be a number, a complex number, or a tensor.
  */
 export type OpOutput = number | ComplexNumber | Tensor;
 
 /**
+ * An real output can be a number, or a tensor.
+ */
+export type RealOpOutput = number | Tensor;
+
+/**
  * An output with both value and index.
  */
 export type OpOutputWithIndex = [number | ComplexNumber, number] | [Tensor, Tensor];
+
+/**
+ * A real output with both value and index.
+ */
+export type RealOpOutputWithIndex = [number, number] | [Tensor, Tensor];
 
 /**
  * Describes types of inputs.

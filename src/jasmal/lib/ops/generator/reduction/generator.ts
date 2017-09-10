@@ -1,5 +1,5 @@
 import { OpGeneratorBase } from '../generatorBase';
-import { OpInput, OpOutput, OpOutputWithIndex } from '../../../commonTypes';
+import { OpInput, OpOutput, RealOpOutput, RealOpOutputWithIndex } from '../../../commonTypes';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../../dtype';
 import { Tensor } from '../../../tensor';
 import { ComplexNumber } from '../../../complexNumber';
@@ -9,9 +9,9 @@ import { T_R_BLOCK_TEMPLATE, T_C_BLOCK_TEMPLATE, REDUCTION_OP_TEMPLATE,
          S_BLOCK_TEMPLATE, T_BLOCK_TEMPLATE } from './templates';
 import { ObjectHelper } from '../../../helper/objHelper';
 
-export type GenericReductionOp = (x: OpInput, axis?: number, keepDims?: boolean) => OpOutput;
+export type ReductionOp<TOut> = (x: OpInput, axis?: number, keepDims?: boolean) => TOut;
 
-export type ReductionOpWithIndexOutput = (x: OpInput, axis?: number, keepDims?: boolean) => OpOutputWithIndex;
+export type ReductionOpWithIndexOutput<TOut> = (x: OpInput, axis?: number, keepDims?: boolean) => TOut;
 
 export interface ReductionOpDependencies {
     Tensor: Function;
@@ -46,7 +46,7 @@ export class ReductionOpGenerator extends OpGeneratorBase {
         return ReductionOpGenerator._instance;
     }
 
-    public makeRealOnlyOp(fReal: RIROReducer, config: ReductionOpConfig = {}): GenericReductionOp {
+    public makeRealOnlyOp(fReal: RIROReducer, config: ReductionOpConfig = {}): ReductionOp<RealOpOutput> {
         let deps = this._getDependencies(config);
         let funcBody = this.generateOpFuncBody({
             NO_COMPLEX_INPUT: true,
@@ -58,7 +58,9 @@ export class ReductionOpGenerator extends OpGeneratorBase {
         return fn(deps, fReal);
     }
 
-    public makeRealOnlyOpWithIndexOutput(fReal: RIRIOReducer, config?: ReductionOpConfig): ReductionOpWithIndexOutput {
+    public makeRealOnlyOpWithIndexOutput(fReal: RIRIOReducer,
+                                         config?: ReductionOpConfig): ReductionOpWithIndexOutput<RealOpOutputWithIndex>
+    {
         let deps = this._getDependencies(config);
         let funcBody = this.generateOpFuncBody({
             NO_COMPLEX_INPUT: true,
@@ -72,13 +74,13 @@ export class ReductionOpGenerator extends OpGeneratorBase {
 
     public makeOp(fReal: RIROReducer, fComplex: CICOReducer,
                   outputComplexWhenInputIsComplex: true,
-                  config?: ReductionOpConfig): GenericReductionOp;
+                  config?: ReductionOpConfig): ReductionOp<OpOutput>;
     public makeOp(fReal: RIROReducer, fComplex: CIROReducer,
                   outputComplexWhenInputIsComplex: false,
-                  config?: ReductionOpConfig): GenericReductionOp
+                  config?: ReductionOpConfig): ReductionOp<OpOutput>
     public makeOp(fReal: RIROReducer, fComplex: CICOReducer | CIROReducer,
                   outputComplexWhenInputIsComplex: boolean,
-                  config?: ReductionOpConfig): GenericReductionOp {
+                  config?: ReductionOpConfig): ReductionOp<OpOutput> {
         let deps = this._getDependencies(config);
         let funcBody = this.generateOpFuncBody({
             NO_COMPLEX_INPUT: false,

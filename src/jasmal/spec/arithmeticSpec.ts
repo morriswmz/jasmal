@@ -284,7 +284,7 @@ describe('rem()', () => {
         checkTensor(actual, expected, EPSILON);
     });
     it('should throw when any of the inputs is complex', () => {
-        let case1 = () => { T.rem(1, new ComplexNumber(2, 3)); };
+        let case1 = () => { T.rem(1, <any>(new ComplexNumber(2, 3))); };
         let case2 = () => { T.rem(T.fromArray([1, 2], [-2, 1]), [3, 2]); };
         expect(case1).toThrow();
         expect(case2).toThrow();

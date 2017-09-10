@@ -1,5 +1,5 @@
 import { ElementWiseOpGenerator } from '../generator';
-import { OpInput, OpOutput } from '../../commonTypes';
+import { RealOpInput, RealOpOutput } from '../../commonTypes';
 import { OutputDTypeResolver } from '../../dtype';
 import { SpecialFunction } from '../../math/special';
 
@@ -8,17 +8,17 @@ import { SpecialFunction } from '../../math/special';
  */
 export interface ISpecialFunctionOpSet {
 
-    gammaln(x: OpInput, inPlace?: boolean): OpOutput;
+    gammaln(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
-    gamma(x: OpInput, inPlace?: boolean): OpOutput;
+    gamma(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
-    factorial(x: OpInput, inPlace?: boolean): OpOutput;
+    factorial(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
-    erf(x: OpInput, inPlace?: boolean): OpOutput;
+    erf(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
-    erfc(x: OpInput, inPlace?: boolean): OpOutput;
+    erfc(x: RealOpInput, inPlace?: boolean): RealOpOutput;
     
-    erfcx(x: OpInput, inPlace?: boolean): OpOutput;
+    erfcx(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
 }
 
@@ -26,42 +26,42 @@ export class SpecialFunctionOpSetFactory {
 
     public static create(generator: ElementWiseOpGenerator): ISpecialFunctionOpSet {
 
-        const opGammaLn = generator.makeUnaryOp({
+        const opGammaLn = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.gammaln($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
-        const opGamma = generator.makeUnaryOp({
+        const opGamma = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.gamma($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
-        const opFactorial = generator.makeUnaryOp({
+        const opFactorial = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.factorial($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
-        const opErf = generator.makeUnaryOp({
+        const opErf = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.erf($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
-        const opErfc = generator.makeUnaryOp({
+        const opErfc = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.erfc($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
-        const opErfcx = generator.makeUnaryOp({
+        const opErfcx = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.erfcx($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uToFloat,

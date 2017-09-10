@@ -1,5 +1,5 @@
 import { OpGeneratorBase } from '../generatorBase';
-import { OpInputInternal, OpOutput } from '../../../commonTypes';
+import { OpInputInternal, OpOutput, RealOpOutput } from '../../../commonTypes';
 import { DType, OutputDTypeResolver, DTypeHelper } from '../../../dtype';
 import { ShapeHelper } from '../../../helper/shapeHelper';
 import { Tensor } from '../../../tensor';
@@ -20,15 +20,15 @@ import { ObjectHelper } from '../../../helper/objHelper';
 /**
  * Represents a binary operation.
  */
-export type GenericBinaryOp = (x: OpInputInternal, y: OpInputInternal, inPlace?: boolean) => OpOutput;
+export type GenericBinaryOp<TOut> = (x: OpInputInternal, y: OpInputInternal, inPlace?: boolean) => TOut;
 /**
  * Represents a unary operation.
  */
-export type GenericUnaryOp = (x: OpInputInternal, inPlace?: boolean) => OpOutput;
+export type GenericUnaryOp<TOut> = (x: OpInputInternal, inPlace?: boolean) => TOut;
 /**
  * Represents a unary operation with a parameter.
  */
-export type OneParamUnaryOp = (x: OpInputInternal, p: number, inPlace?: boolean) => OpOutput;
+export type OneParamUnaryOp<TOut> = (x: OpInputInternal, p: number, inPlace?: boolean) => TOut;
 
 /**
  * Defines the core operations.
@@ -145,15 +145,23 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
     }
 
     public makeUnaryOp(opTemplate: UnaryOpTemplate,
-                       opConfig?: UnaryOpConfig): GenericUnaryOp {
+                       opConfig?: UnaryOpConfig): GenericUnaryOp<OpOutput> {
         let deps = this._getUnaryOpDependencies(opConfig);
         let funcBody = this.generateUnaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), opConfig);
         let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
         return fn;
     }
 
+    public makeRealOutputUnaryOp(opTemplate: UnaryOpTemplate,
+                                 opConfig?: UnaryOpConfig): GenericUnaryOp<RealOpOutput> {
+        let deps = this._getUnaryOpDependencies(opConfig);
+        let funcBody = this.generateUnaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), opConfig, false, true);
+        let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
+        return fn;
+    }
+
     public makeOneParamUnaryOp(opTemplate: UnaryOpTemplate,
-                               opConfig?: UnaryOpConfig): OneParamUnaryOp {
+                               opConfig?: UnaryOpConfig): OneParamUnaryOp<OpOutput> {
         let deps = this._getUnaryOpDependencies(opConfig);
         let funcBody = this.generateUnaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), opConfig, true);
         let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
@@ -178,7 +186,8 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
     public generateUnaryOpFuncBody(opTemplate: UnaryOpTemplate,
                                    depNames: string[],
                                    opConfig?: UnaryOpConfig,
-                                   hasParam?: boolean): string {
+                                   hasParam?: boolean,
+                                   forceRealOutput?: boolean): string {
         // check templates
         // we allow complex input by default
         let realInputOnly = opTemplate.opC == undefined;
@@ -200,6 +209,11 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
         }
         if (opCSymbols.indexOf('$imY') >= 0) {
             templateConfig['OUTPUT_C_COMPLEX'] = true;
+        }
+        if (forceRealOutput) {
+            if (templateConfig['OUTPUT_R_COMPLEX'] || templateConfig['OUTPUT_C_COMPLEX']) {
+                throw new Error('Specified templates generates complex outputs when only real outputs are allowed.');
+            }
         }
         const symbolMapScalar = {
             '$reX': 'reXScalar',
@@ -245,9 +259,17 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
     }
 
     public makeBinaryOp(opTemplate: BinaryOpTemplate,
-                        config?: BinaryOpConfig): GenericBinaryOp {
+                        config?: BinaryOpConfig): GenericBinaryOp<OpOutput> {
         let deps = this._getBinaryOpDependencies(config);
         let funcBody = this.generateBinaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), config);
+        let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
+        return fn;
+    }
+
+    public makeRealOutputBinaryOp(opTemplate: BinaryOpTemplate,
+                                  config?: BinaryOpConfig): GenericBinaryOp<RealOpOutput> {
+        let deps = this._getBinaryOpDependencies(config);
+        let funcBody = this.generateBinaryOpFuncBody(opTemplate, ObjectHelper.properties(deps), config, true);
         let fn = (new Function(this.DEP_OBJ_NAME, funcBody))(deps);
         return fn;
     }
@@ -269,7 +291,8 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
             : base;
     }
 
-    public generateBinaryOpFuncBody(opTemplate: BinaryOpTemplate, depNames: string[], opConfig?: BinaryOpConfig): string {
+    public generateBinaryOpFuncBody(opTemplate: BinaryOpTemplate, depNames: string[],
+                                    opConfig?: BinaryOpConfig, forceRealOutput?: boolean): string {
         let realInputOnly = false;
         if (opTemplate.opCR == undefined && opTemplate.opRC == undefined && opTemplate.opCC == undefined) {
             realInputOnly = true;
@@ -297,6 +320,13 @@ export class ElementWiseOpGenerator extends OpGeneratorBase {
             }
             if (this._checkUsedSymbols(<string>opTemplate.opCC, symbolSetCC).indexOf('$imZ') >= 0) {
                 templateConfig['OUTPUT_CC_COMPLEX'] = true;
+            }
+        }
+        if (forceRealOutput) {
+            if (templateConfig['OUTPUT_RR_COMPLEX'] || templateConfig['OUTPUT_RC_COMPLEX'] ||
+                templateConfig['OUTPUT_CR_COMPLEX'] || templateConfig['OUTPUT_CC_COMPLEX'])
+            {
+                throw new Error('Specified templates generates complex outputs when only real outputs are allowed.');
             }
         }
         const blockMap = {

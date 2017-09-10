@@ -1,4 +1,4 @@
-import { OpInput, OpOutput } from '../../commonTypes';
+import { OpInput, OpOutput, RealOpInput, RealOpOutput } from '../../commonTypes';
 
 export interface IArithmeticOpProvider {
 
@@ -67,7 +67,7 @@ export interface IArithmeticOpProvider {
     reciprocal(x: OpInput, inPlace?: boolean): OpOutput;
 
     /**
-     * Evaluates remainder after division (using JavaScript's % operator)
+     * Evaluates remainder after division (using JavaScript's `%` operator)
      * between two compatible inputs.
      * Note: this is **not** modulo.
      * @param x
@@ -76,6 +76,6 @@ export interface IArithmeticOpProvider {
      *                of a new tensor. `x` must be a tensor with compatible
      *                shape and DType. Default value is false. 
      */
-    rem(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    rem(x: RealOpInput, y: RealOpInput, inPlace?: boolean): RealOpOutput;
 
 }

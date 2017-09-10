@@ -1,4 +1,4 @@
-import { OpInput, OpOutputWithIndex, OpOutput } from '../../commonTypes';
+import { OpInput, OpOutput, RealOpInput, RealOpOutputWithIndex, RealOpOutput } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 
 export interface IDataOpProvider {
@@ -19,13 +19,13 @@ export interface IDataOpProvider {
      *          only when `axis` is set to -1 or `x` is a 1D vector, and
      *          `keepDims` is set to false. 
      */
-    min(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
+    min(x: RealOpInput, axis?: number, keepDims?: boolean): RealOpOutputWithIndex;
 
     /**
      * Finds the maximum elements and their indices along the specified axis.
      * Note: NaN is treated as the largest number (larger than Infinity).
      */
-    max(x: OpInput, axis?: number, keepDims?: boolean): OpOutputWithIndex;
+    max(x: RealOpInput, axis?: number, keepDims?: boolean): RealOpOutputWithIndex;
 
     /**
      * Sums the elements along the specified axis.
@@ -50,14 +50,14 @@ export interface IDataOpProvider {
     /**
      * Computes the median of the elements along the specified axis.
      */
-    median(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
+    median(x: RealOpInput, axis?: number, keepDims?: boolean): RealOpOutput;
 
     /**
      * Computes the mode of the elements along the specified axis.
      * Note: NaNs will be ignored when determining the mode. If there are
      *       multiple modes, the smallest will be returned.
      */
-    mode(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
+    mode(x: RealOpInput, axis?: number, keepDims?: boolean): RealOpOutput;
 
     /**
      * Computes the sample variance (divided by N - 1) of the elements along the
@@ -144,7 +144,7 @@ export interface IDataOpProvider {
      * @param x
      * @param nbin (Optional) Number of bins. Default value is 10.
      */
-    hist(x: OpInput, nBins?: number): [Tensor, Tensor];
+    hist(x: RealOpInput, nBins?: number): [Tensor, Tensor];
 
     /**
      * Fast Fourier transform.

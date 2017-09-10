@@ -51,7 +51,7 @@ export class ArithmeticOpProviderFactory {
             }, {
                 outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
             }),
-            rem: generator.makeBinaryOp({
+            rem: generator.makeRealOutputBinaryOp({
                 opRR: '$reZ = $reX % $reY;'
             }, {
                 outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
