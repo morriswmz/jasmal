@@ -190,7 +190,14 @@ let C2 = T.mul(T.tile([[1], [2], [3]], [1, 3]), X);
 ## Math functions
 
 JASMAL supports various math functions. Many of them also accepts complex
-inputs.
+inputs. You can check the definitions in the following files:
+
+* [Basic math functions](src/jasmal/lib/ops/math/basic.ts)
+* [Logarithm and exponential functions](src/jasmal/lib/ops/math/logexp.ts)
+* [Power functions](src/jasmal/lib/ops/math/pow.ts)
+* [Rounding functions](src/jasmal/lib/ops/math/rounding.ts)
+* [Trigonometry functions](src/jasmal/lib/ops/math/trigonometry.ts)
+* [Special functions](src/jasmal/lib/ops/math/special.ts)
 
 ``` JavaScript
 // Absolute value
@@ -280,9 +287,15 @@ let sums = T.sum(A, 1, true);
 // Sorts all the elements in A in descending order and return the indices I
 // such that As is given by `A.get(I)`.
 let [As, I] = T.sort(A, 'desc', true);
+// Histogram (10 bins by default).
+let [H, E] = T.hist(T.randn([1000])); // H stores the frequencies and E stores
+                                      // the edges of the bins.
 ```
 
 ## Polynomial functions
+
+JASMAL supports polynomial evaluation and polynomial root finding. For details,
+see the definitions [here](src/jasmal/lib/ops/poly/definition.ts).
 
 ``` JavaScript
 // Evaluates x^2+2x+3 at 2 and 4.
@@ -295,6 +308,24 @@ let y = T.sin(x);
 let p = T.polyfit(x, y);
 // Finds roots of x^3 + x + 1 = 0.
 let r = T.roots([1, 0, 1, 1]);
+```
+
+## Set functions
+
+JASMAL includes commonly used set functions such as `union()`, `intersect()`, 
+and `setdiff()`. For details, see the definitions [here](src/jasmal/lib/ops/set/definition.ts).
+
+``` JavaScript
+let A = T.fromArray([5, 4, 4, 3, 0]);
+let B = T.fromArray([1, 1, 3, 3]);
+// Finds the unique elements in A
+let C = T.unique(A); // [0, 3, 4, 5]
+// Union of sets.
+let U = T.union(A, B); // [0, 1, 3, 4, 5]
+// Checks membership.
+let M = T.isin(B, A); // Returns a logic vector [0, 0, 1, 1]
+// Computes set difference.
+let D = T.setdiff(A, B); // [0, 4, 5]
 ```
 
 # Performance

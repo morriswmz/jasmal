@@ -8,16 +8,34 @@ import { SpecialFunction } from '../../math/special';
  */
 export interface ISpecialFunctionOpSet {
 
+    /**
+     * Logarithm of gamma function.
+     */
     gammaln(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
+    /**
+     * Gamma function.
+     */
     gamma(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
+    /**
+     * Factorial function.
+     */
     factorial(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
+    /**
+     * Error function.
+     */
     erf(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
+    /**
+     * Complementary error function.
+     */
     erfc(x: RealOpInput, inPlace?: boolean): RealOpOutput;
     
+    /**
+     * Scaled complementary error function: exp(x^2) * erfc(x).
+     */
     erfcx(x: RealOpInput, inPlace?: boolean): RealOpOutput;
 
 }
