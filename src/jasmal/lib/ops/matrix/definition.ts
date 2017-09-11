@@ -154,25 +154,34 @@ export interface IMatrixOpProvider {
     norm(x: OpInput, p: number | 'fro'): number;
 
     /**
+     * Performs LUP decomposition and return the results in the full form.
+     * @param x Input matrix.
+     */
+    lu(x: OpInput, compact?: false): [Tensor, Tensor, Tensor];
+    /**
      * Performs LUP decomposition and return the results in the compact form.
      * @param x Input matrix.
      */
     lu(x: OpInput, compact: true): [Tensor, number[]];
-    /**
-     * Performs LUP decomposition and return the results in the full form.
-     * @param x Input matrix.
-     */
-    lu(x: OpInput, compact: false): [Tensor, Tensor, Tensor];
 
     /**
      * Computes the singular value decomposition.
      * Returns a 3-item tuple [U, S, V] such that x = USV^H.
      * Let the shape of x be m x n, then the shapes of U, S, V, are
-     * m x min(m,n), min(m,n) x n, n x n, respectively. 
+     * m x min(m,n), min(m,n) x n, n x n, respectively.
      * @param x Input matrix x.
      * @returns A 3-item tuple [U, S, V] such that x = USV^H.
      */
-    svd(x: OpInput): [Tensor, Tensor, Tensor];
+    svd(x: OpInput, svOnly?: false): [Tensor, Tensor, Tensor];
+    /**
+     * Computes only the singular values of the input matrix.
+     * @param x Input matrix x.
+     * @returns A 1D tensor object storing the singular values in descending
+     * order. Let the shape of x be m x n, then the size of the returned tensor
+     * object will be min(m, n).
+     */
+    svd(x: OpInput, svOnly: true): Tensor;
+
 
     /**
      * Estimates the rank of the input matrix via from its singular values.
@@ -203,15 +212,7 @@ export interface IMatrixOpProvider {
      * general matrices E is unnormalized.
      * @param x Input matrix.
      */
-    eig(x: OpInput): [Tensor, Tensor];
-    /**
-     * Computes the eigendecomposition of the input matrix.
-     * Returns a 2-item tuple [E, L] such that x E = E L.
-     * If the input matrix is symmetric/Hermitian, E will be unitary. For
-     * general matrices E is unnormalized.
-     * @param x Input matrix.
-     */
-    eig(x: OpInput, evOnly: false): [Tensor, Tensor];
+    eig(x: OpInput, evOnly?: false): [Tensor, Tensor];
     /**
      * Computes the eigenvalues. Returns a vector of eigenvalues.
      * @param x Input matrix.
@@ -228,7 +229,7 @@ export interface IMatrixOpProvider {
      * @param x Input matrix.
      * @returns A lower triangular matrix L such that L*L' produces the original
      *          matrix.
-     * @throws Throws an error when the input matrix is not positive definite. 
+     * @throws Throws an error when the input matrix is not positive definite.
      */
     chol(x: OpInput): Tensor;
 
@@ -246,7 +247,7 @@ export interface IMatrixOpProvider {
      * square solution.
      * If m < n or A is rank deficient, the solution cannot be trusted.
      * @param a Matrix A.
-     * @param b Matrix B. 
+     * @param b Matrix B.
      */
     linsolve(a: OpInput, b: OpInput): Tensor;
 

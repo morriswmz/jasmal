@@ -22,17 +22,17 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
         this._chunkSize = chunkSize;
     }
 
-    public mmul(dims: [number, number, number], opB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
-        if (opB === 2) {
+    public mmul(dims: [number, number, number], modB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
+        if (modB === 2) {
             // Hermitian is equivalent to transpose for real matrices.
-            opB = 1;
+            modB = 1;
         }
         if (dims[1] === 1) {
             this._mmul_vv(dims, A, B, C);
         } else if (dims[0] === 1) {
-            this._mmul_vm(dims, opB, A, B, C);
+            this._mmul_vm(dims, modB, A, B, C);
         } else {
-            this._mmul_mm(dims, opB, A, B, C);
+            this._mmul_mm(dims, modB, A, B, C);
         }
     }
 
@@ -45,9 +45,9 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
         }
     }
 
-    private _mmul_vm(dims: [number, number, number], opB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
+    private _mmul_vm(dims: [number, number, number], mobB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
         let n = dims[1], p = dims[2];
-        if (opB === 0) {
+        if (mobB === 0) {
             // B: n x p
             for (let j = 0;j < p;j++) {
                 C[j] = A[0] * B[j];
@@ -57,7 +57,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
                     C[j] += A[i] * B[i * p + j];
                 }
             }
-        } else if (opB === 1) {
+        } else if (mobB === 1) {
             // B: p x n
             for (let i = 0;i < p;i++) {
                 let acc = A[0] * B[i * n];
@@ -69,9 +69,9 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
         }
     }
 
-    private _mmul_mm(dims: [number, number, number], opB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
+    private _mmul_mm(dims: [number, number, number], modB: number, A: DataBlock, B: DataBlock, C: DataBlock): void {
         let [m, n, p] = dims;
-        if (opB === 0) {
+        if (modB === 0) {
             // A*B where A: m x n, B: n x p
             let columnCache: DataBlock = p === 1 ? B : new Array(n);
             for (let j = 0;j < p;j++) {
@@ -97,7 +97,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
                     C[i * p + j] = acc;
                 }
             }
-        } else if (opB === 1) {
+        } else if (modB === 1) {
             // A*B^T where A: m x n, B: p x n
             // no need to cache columns here
             for (let i = 0;i < m;i++) {
@@ -113,24 +113,24 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
         }
     }
 
-    public cmmul(dims: [number, number, number], opB: number, reA: DataBlock, imA: DataBlock,
+    public cmmul(dims: [number, number, number], modB: number, reA: DataBlock, imA: DataBlock,
                  reB: DataBlock, imB: DataBlock, reC: DataBlock, imC: DataBlock): void {
-        if (opB !== 0 && opB !== 1 && opB !== 2) {
-            throw new Error(`Unsupported operation id ${opB} over matrix B.`);
+        if (modB !== 0 && modB !== 1 && modB !== 2) {
+            throw new Error(`Unsupported operation id ${modB} over matrix B.`);
         }
         if (dims[1] === 1) {
-            this._cmmul_vv(dims, opB, reA, imA, reB, imB, reC, imC);
+            this._cmmul_vv(dims, modB, reA, imA, reB, imB, reC, imC);
         } else if (dims[0] === 1) {
-            this._cmmul_vm(dims, opB, reA, imA, reB, imB, reC, imC);
+            this._cmmul_vm(dims, modB, reA, imA, reB, imB, reC, imC);
         } else {
-            this._cmmul_mm(dims, opB, reA, imA, reB, imB, reC, imC);
+            this._cmmul_mm(dims, modB, reA, imA, reB, imB, reC, imC);
         }
     }
 
-    private _cmmul_vv(dims: [number, number, number], opB: number, reA: DataBlock, imA: DataBlock,
+    private _cmmul_vv(dims: [number, number, number], modB: number, reA: DataBlock, imA: DataBlock,
                       reB: DataBlock, imB: DataBlock, reC: DataBlock, imC: DataBlock): void {
         let m = dims[0], p = dims[2];
-        if (opB === 0) {
+        if (modB === 0) {
             // a*b, a*b^T
             for (let i = 0;i < m;i++) {
                 for (let j = 0;j < p;j++) {
@@ -138,7 +138,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
                     imC[i * p + j] = reA[i] * imB[j] + imA[i] * reB[j]; 
                 }
             }
-        } else if (opB === 2) {
+        } else if (modB === 2) {
             // a*b^H, imB -> -imB
             for (let i = 0;i < m;i++) {
                 for (let j = 0;j < p;j++) {
@@ -149,10 +149,10 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
         }
     }
 
-    private _cmmul_vm(dims: [number, number, number], opB: number, reA: DataBlock, imA: DataBlock,
+    private _cmmul_vm(dims: [number, number, number], modB: number, reA: DataBlock, imA: DataBlock,
                       reB: DataBlock, imB: DataBlock, reC: DataBlock, imC: DataBlock): void {
         let n = dims[1], p = dims[2];
-        if (opB === 0) {
+        if (modB === 0) {
             // a*B where a: 1 x n, B: n x p
             for (let j = 0;j < p;j++) {
                 reC[j] = reA[0] * reB[j] - imA[0] * imB[j];
@@ -164,7 +164,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
                     reC[j] += reA[i] * imB[i * p + j] + imA[i] * reB[i * p + j];
                 }
             }
-        } else if (opB === 1) {
+        } else if (modB === 1) {
             // a*B^T where a: 1 x n, B: p x n
             for (let j = 0;j < p;j++) {
                 let accRe = reA[0] * reB[j * n] - imA[0] * imB[j * n];
@@ -187,10 +187,10 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
         }
     }
 
-    private _cmmul_mm(dims: [number, number, number], opB: number, reA: DataBlock, imA: DataBlock,
+    private _cmmul_mm(dims: [number, number, number], modB: number, reA: DataBlock, imA: DataBlock,
                       reB: DataBlock, imB: DataBlock, reC: DataBlock, imC: DataBlock): void {
         let [m, n, p] = dims;
-        if (opB === 0) {
+        if (modB === 0) {
             // A*B where, A: m x n, B: n x p
             let columnCacheRe: DataBlock = p === 1 ? reB : new Array(n);
             let columnCacheIm: DataBlock = p === 1 ? imB : new Array(n);
@@ -214,7 +214,7 @@ export class BuiltInMBS implements IMatrixBasicSubroutines {
                     imC[i * p + j] = accIm;
                 }
             }
-        } else if (opB === 1) {
+        } else if (modB === 1) {
             // A*B^T where, A: m x n, B: p x n
             for (let i = 0;i < m;i++) {
                 // evaluate j-th column of C

@@ -98,7 +98,7 @@ describe('inv()', () => {
     });
     it('should computes the inverse for complex matrices', () => {
         let A = T.fromArray([[1,2], [3,4]], [[-1, 0], [0, -1]]);
-        let ACopy = A.copy(true);        
+        let ACopy = A.copy(true);
         let actual = <Tensor>T.matmul(A, T.inv(A));
         let expected = T.eye(2).ensureComplexStorage();
         checkTensor(actual, expected, 1e-12);
@@ -138,10 +138,14 @@ describe('svd()', () => {
     let A: Tensor, U: Tensor, S: Tensor, V: Tensor;
     let shapes = [[2, 4], [10, 15], [20, 30], [40, 30], [50, 50]];
     it('should perform SVD for a zero matrix', () => {
-        [U, S, V] = T.svd(T.zeros([4, 3]));
+        let Z = T.zeros([4, 3]);
+        [U, S, V] = T.svd(Z);
         checkTensor(U, T.eye(4, 3));
         checkTensor(S, T.zeros([3, 3]));
-        checkTensor(V, T.eye(3))
+        checkTensor(V, T.eye(3));
+        // singular values should match in both modes
+        let s = T.svd(Z, true);
+        checkTensor(s, T.zeros([3]));
     });
     it('should perform SVD for a simple real matrix', () => {
         A = T.fromArray([[1,2,3],[4,5,6]]);
@@ -149,37 +153,51 @@ describe('svd()', () => {
         [U, S, V] = T.svd(A);
         validateSVD(A, U, S, V);
         checkTensor(A, ACopy); // should not change anything
+        // singular values should match in both modes
+        let s = T.svd(A, true);
+        checkTensor(s, T.diag(S));
     });
     for (let i = 5;i < 20;i += 5) {
         it(`should perform SVD for a ${i}x${i} Hilbert matrix`, () => {
             A = T.hilb(i);
             [U, S, V] = T.svd(A);
             validateSVD(A, U, S, V);
+            // singular values should match in both modes
+            let s = T.svd(A, true);
+            checkTensor(s, T.diag(S));
         });
     }
     for (let i = 0;i < shapes.length;i++) {
         it(`should perform SVD for a ${shapes[i][0]}x${shapes[i][1]} random matrix`, () => {
             A = T.randn(shapes[i]);
             [U, S, V] = T.svd(A);
-            validateSVD(A, U, S, V);    
+            validateSVD(A, U, S, V);
+            // singular values should match in both modes
+            let s = T.svd(A, true);
+            checkTensor(s, T.diag(S));
         });
     }
     it('should perform SVD for a simple complex matrix', () => {
         A = T.fromArray([[2, 1, 1], [1, 1, 0], [1, 0, 1]],
                         [[1, 1, 0], [1, 1, 0], [1, 0, 0]]);
-        let ACopy = A.copy(true);        
+        let ACopy = A.copy(true);
         [U, S, V] = T.svd(A);
         validateSVD(A, U, S, V);
         checkTensor(A, ACopy); // should not change anything
+        // singular values should match in both modes
+        let s = T.svd(A, true);
+        checkTensor(s, T.diag(S));
     });
     for (let i = 0;i < shapes.length;i++) {
         it(`should perform SVD for a ${shapes[i][0]}x${shapes[i][1]} random complex matrix`, () => {
             A = T.complex(T.randn(shapes[i]), T.randn(shapes[i]));
             [U, S, V] = T.svd(A);
             validateSVD(A, U, S, V);
+            // singular values should match in both modes
+            let s = T.svd(A, true);
+            checkTensor(s, T.diag(S));
         });
     }
-    
 });
 
 describe('rank()', () => {
@@ -271,7 +289,7 @@ describe('eig()', () => {
         let v = T.eig(A, true);
         checkTensor(v, T.diag(V), 14, false);
     });
-    for (let i = 0;i < shapes.length;i++) { 
+    for (let i = 0;i < shapes.length;i++) {
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} real symmetrical matrix`, () => {
             let A = T.rand(shapes[i]);
             T.add(A, T.transpose(A), true);
@@ -298,7 +316,7 @@ describe('eig()', () => {
         let v = T.eig(A, true);
         checkTensor(v, T.diag(V), 1e-15);
     });
-    for (let i = 0;i < shapes.length;i++) { 
+    for (let i = 0;i < shapes.length;i++) {
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} complex Hermitian matrix`, () => {
             let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
             T.add(A, T.hermitian(A), true);
@@ -342,7 +360,7 @@ describe('eig()', () => {
         let v = T.eig(A, true);
         checkTensor(v, T.diag(V), 7, false);
     });
-    for (let i = 0;i < shapes.length;i++) { 
+    for (let i = 0;i < shapes.length;i++) {
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} general real matrix`, () => {
             let A = T.rand(shapes[i]);
             let [E, V] = T.eig(A);
@@ -386,7 +404,7 @@ describe('eig()', () => {
         let v = T.eig(A, true);
         checkTensor(v, T.diag(V), 14, false);
     });
-    for (let i = 0;i < shapes.length;i++) { 
+    for (let i = 0;i < shapes.length;i++) {
         it(`should perform eigendecomposition for a ${shapes[i][0]} x ${shapes[i][0]} general complex matrix`, () => {
             let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
             let [E, V] = T.eig(A);
@@ -515,7 +533,7 @@ describe('sqrtm()', () => {
         // should not change A
         checkTensor(A, ACopy);
     });
-    for (let i = 0;i < shapes.length;i++) { 
+    for (let i = 0;i < shapes.length;i++) {
         it(`should compute the square root of a ${shapes[i][0]} x ${shapes[i][0]} real symmetric matrix`, () => {
             let A = T.rand(shapes[i]);
             T.add(A, T.transpose(A), true);
@@ -526,7 +544,7 @@ describe('sqrtm()', () => {
             checkTensor(A, ACopy);
         });
     }
-    for (let i = 0;i < shapes.length;i++) { 
+    for (let i = 0;i < shapes.length;i++) {
         it(`should compute the square root of a ${shapes[i][0]} x ${shapes[i][0]} complex Hermitian matrix`, () => {
             let A = T.complex(T.rand(shapes[i]), T.rand(shapes[i]));
             T.add(A, T.hermitian(A), true);

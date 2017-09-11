@@ -539,8 +539,8 @@ export class MatrixOpProviderFactory {
             return [X, p, sign];
         }
 
+        function opLu(x: OpInput, compact?: false): [Tensor, Tensor, Tensor];
         function opLu(x: OpInput, compact: true): [Tensor, number[]];
-        function opLu(x: OpInput, compact: false): [Tensor, Tensor, Tensor];
         function opLu(x: OpInput, compact: boolean = false): [Tensor, number[]] | [Tensor, Tensor, Tensor] {
             let [X, p, ] = doCompactLU(x);            
             if (compact) {
@@ -618,7 +618,9 @@ export class MatrixOpProviderFactory {
             return [Q, X, P];
         };
 
-        const opSvd = (x: OpInput): [Tensor, Tensor, Tensor] => {
+        function opSvd(x: OpInput, svOnly?: false): [Tensor, Tensor, Tensor];
+        function opSvd(x: OpInput, svOnly: true): Tensor;
+        function opSvd(x: OpInput, svOnly: boolean = false): Tensor | [Tensor, Tensor, Tensor] {
             // We need to make a copy here because svd procedure will override
             // the original matrix.
             let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
@@ -626,29 +628,41 @@ export class MatrixOpProviderFactory {
             if (shapeX.length !== 2) {
                 throw new Error('Matrix expected.');
             }
-            let s = new Array(shapeX[1]);
+            let s = Tensor.zeros([shapeX[1]]);
             let ns = Math.min(shapeX[0], shapeX[1]);
-            let V = Tensor.zeros([shapeX[1], shapeX[1]]);
-            if (X.hasNonZeroComplexStorage()) {
-                V.ensureComplexStorage();
-                SVD.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s, V.realData, V.imagData);
-            } else {
-                SVD.svd(shapeX[0], shapeX[1], true, X.realData, s, V.realData);
-                X.trimImaginaryPart();
-            }
-            // m <  n : U - m x m, S - m x n, V - n x n
-            // m >= n : U - m x n, S - n x n, V - n x n
-            if (ns < shapeX[1]) {
-                let S = Tensor.zeros(shapeX);
-                let reS = S.realData;
-                for (let i = 0;i < ns;i++) {
-                    reS[i * shapeX[1] + i] = s[i];
+            if (svOnly) {
+                if (X.hasNonZeroComplexStorage()) {
+                    SVD.csvd(shapeX[0], shapeX[1], false, X.realData, X.imagData, s.realData, [], []);
+                } else {
+                    SVD.svd(shapeX[0], shapeX[1], false, X.realData, s.realData, []);
                 }
-                return [<Tensor>X.get(':', ':' + ns, true), S, V];
+                if (ns !== s.size) {
+                    s = <Tensor>s.get(`:${ns}`);
+                }
+                return s;
             } else {
-                return [X, opDiag(s), V];
+                let V = Tensor.zeros([shapeX[1], shapeX[1]]);
+                if (X.hasNonZeroComplexStorage()) {
+                    V.ensureComplexStorage();
+                    SVD.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s.realData, V.realData, V.imagData);
+                } else {
+                    SVD.svd(shapeX[0], shapeX[1], true, X.realData, s.realData, V.realData);
+                    X.trimImaginaryPart();
+                }
+                // m <  n : U - m x m, S - m x n, V - n x n
+                // m >= n : U - m x n, S - n x n, V - n x n
+                if (ns < shapeX[1]) {
+                    let S = Tensor.zeros(shapeX);
+                    let reS = S.realData;
+                    for (let i = 0;i < ns;i++) {
+                        reS[i * shapeX[1] + i] = s.realData[i];
+                    }
+                    return [<Tensor>X.get(':', ':' + ns, true), S, V];
+                } else {
+                    return [X, opDiag(s), V];
+                }
             }
-        };
+        }
 
         const opRank = (x: OpInput, tol?: number): number => {
             // We need to make a copy here because svd procedure will override
@@ -726,10 +740,9 @@ export class MatrixOpProviderFactory {
             return opMatMul(Z, X.get(':',':' + r, true), MatrixModifier.Hermitian);
         };
 
-        function opEig(x: OpInput): [Tensor, Tensor];
+        function opEig(x: OpInput, evOnly?: false): [Tensor, Tensor];
         function opEig(x: OpInput, evOnly: true): Tensor;
-        function opEig(x: OpInput, evOnly: false): [Tensor, Tensor];
-        function opEig(x: OpInput, evOnly?: boolean): Tensor | [Tensor, Tensor] {
+        function opEig(x: OpInput, evOnly: boolean = false): Tensor | [Tensor, Tensor] {
             let X: Tensor;
             // We need to keep track of this because the eigendecomposition
             // subroutine for real symmetric matrices does not override the
@@ -824,6 +837,7 @@ export class MatrixOpProviderFactory {
             return X;
         };
 
+        // TODO: Add support special structured matrices (e.g., diagonal, triangular)
         const opLinsolve = (a: OpInput, b: OpInput): Tensor => {
             let A = a instanceof Tensor ? a.asType(DType.FLOAT64, true) : Tensor.toTensor(a);
             let B = b instanceof Tensor ? b.asType(DType.FLOAT64, true) : Tensor.toTensor(b);
