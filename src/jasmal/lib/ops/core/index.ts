@@ -3,7 +3,7 @@ import { Tensor } from '../../tensor';
 import { ShapeHelper } from '../../helper/shapeHelper';
 import { DataHelper } from '../../helper/dataHelper';
 import { OutputDTypeResolver, DTypeHelper } from '../../dtype';
-import { OpInput, DataBlock } from '../../commonTypes';
+import { OpInput, DataBlock, RealOpInput } from '../../commonTypes';
 import { ElementWiseOpGenerator } from '../generator';
 import { ComplexNumber } from '../../complexNumber';
 import { ObjectHelper } from '../../helper/objHelper';
@@ -478,6 +478,12 @@ export class CoreOpProviderFactory {
             return Y;
         };
 
+        const opMeshgrid = (x: RealOpInput, y: RealOpInput): [Tensor, Tensor] => {
+            let xv = opFlatten(x); // row vector
+            let yv = opVec(y); // column vector
+            return [opTile(xv, [yv.size, 1]), opTile(yv, [1, xv.size])];
+        };
+
         return {
             reshape: opReshape,
             flatten: opFlatten,
@@ -490,6 +496,7 @@ export class CoreOpProviderFactory {
             appendAxis: opAppendAxis,
             linspace: opLinspace,
             logspace: opLogspace,
+            meshgrid: opMeshgrid,
             real: opReal,
             imag: opImag,
             isempty: opIsEmpty,

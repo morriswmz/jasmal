@@ -1,4 +1,4 @@
-import { OpInput, OpOutput } from '../../commonTypes';
+import { OpInput, OpOutput, RealOpInput } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 
 /**
@@ -150,6 +150,18 @@ export interface ICoreOpProvider {
      * @param base (Optional) Default value is 10.
      */
     logspace(x1: number, x2: number, n: number, base?: number): Tensor;
+
+    /**
+     * Creates coordinate matrices from coordinate vectors. If any of the inputs
+     * is not an 1D vector, its flattened version will be considered.
+     * @param x Coordinates along the x-axis.
+     * @param y Coordinates along the y-axis.
+     * @returns A tuple [X, Y]. Let the size of x be m and the size of y be n.
+     * Then X and Y are n x m matrices such that the (i,j)-th element of X
+     * is given by the j-th element in x, and the (i,j)-th element of Y is given
+     * by the i-th element in y.
+     */
+    meshgrid(x: RealOpInput, y: RealOpInput): [Tensor, Tensor];
 
     /**
      * Returns the indices of the elements that satisfy the specified condition.

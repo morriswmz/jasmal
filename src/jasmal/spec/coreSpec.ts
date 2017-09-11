@@ -408,6 +408,23 @@ describe('logspace()', () => {
     });
 });
 
+describe('meshgrid()', () => {
+    it('should create a 2D meshgrid', () => {
+        let [actualX, actualY] = T.meshgrid([1, 2, 4, 8], T.fromArray([-3, -5], [], T.INT32));
+        let expectedX = T.fromArray(
+            [[1, 2, 4, 8],
+             [1, 2, 4, 8]]
+        );
+        let expectedY = T.fromArray(
+            [[-3, -3, -3, -3],
+             [-5, -5, -5, -5]],
+            [], T.INT32
+        );
+        checkTensor(actualX, expectedX);
+        checkTensor(actualY, expectedY);
+    });
+});
+
 describe('find()', () => {
     it('should find non zeros elements for a real tensor', () => {
         let actual = T.find([0, 1, 0, NaN, -2, Infinity, 0, 0]);
