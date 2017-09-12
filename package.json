@@ -1,6 +1,6 @@
 {
   "name": "jasmal",
-  "version": "0.6.6",
+  "version": "0.7.0",
   "description": "Just another JavaScript matrix/tensor library (with full complex number support).",
   "author": {
     "name": "Mianzhi Wang",
