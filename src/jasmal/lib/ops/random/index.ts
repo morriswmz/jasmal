@@ -125,7 +125,7 @@ export class RandomOpProviderFactory {
         }
 
         return {
-            seed: s => engine.seed(s),
+            seed: s => { engine.seed(s); return; },
             rand: rand,
             randi: randi,
             randn: randn
