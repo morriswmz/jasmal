@@ -42,6 +42,23 @@ describe('abs()', () => {
         let expected = T.fromArray([1, 4, Math.sqrt(2)], [0, 0, 0]);
         checkTensor(x, expected);
     });
+    it('should calculate the absolute values of real numbers in place after reference copy', () => {
+        let arr = [-1, -2, -3];
+        let x = T.fromArray(arr);
+        let y = x.copy();
+        T.abs(y, true);
+        checkTensor(y, T.fromArray([1, 2, 3]));
+        checkTensor(x, T.fromArray(arr));
+    });
+    it('should calculate the absolute values of complex numbers in place after reference copy', () => {
+        let arrRe = [-1, 2, 0];
+        let arrIm = [1, 2, 3];
+        let x = T.fromArray(arrRe, arrIm);
+        let y = x.copy();
+        T.abs(y, true);
+        checkTensor(y, T.fromArray([Math.sqrt(2), Math.sqrt(8), 3], [0, 0, 0]));
+        checkTensor(x, T.fromArray(arrRe, arrIm));
+    });
     it('should throw if in place calculation is not possible', () => {
         // input is a scalar
         let case1 = () => { T.abs(1, true); };
@@ -105,7 +122,7 @@ describe('square()', () => {
         let expected = T.fromArray([1, 1.5*1.5, 9]);
         checkTensor(actual, expected);
     });
-    it('should compute the squares of real numbers in place', () => {
+    it('should compute the squares of real numbers in-place', () => {
         let x = T.fromArray([-2, Infinity, 0.5]);
         T.square(x, true);
         let expected = T.fromArray([4, Infinity, 0.5*0.5]);
@@ -115,6 +132,12 @@ describe('square()', () => {
         let x = T.fromArray([-1, 5], [2.5, 3]);
         let actual = T.square(x);
         let expected = T.fromArray([-5.25, 16], [-5, 30]);
+        checkTensor(actual, expected);
+    });
+    it('should return the squares of complex numbers in-place', () => {
+        let x = T.fromArray([-0.5, 4], [6, -3]);
+        let actual = T.square(x, true);
+        let expected = T.fromArray([-35.75, 7], [-6, -24]);
         checkTensor(actual, expected);
     });
 });

@@ -33,4 +33,14 @@ describe('Composite problems', () => {
         let expected = T.ones(x.shape);
         checkTensor(actual, expected, EPSILON);
     });
+    it('z * z = z^2', () => {
+        let x = T.complex(T.randn([100]), T.randn([100]));
+        let xCopy = x.copy(true);
+        let y1 = x.copy();
+        T.mul(y1, y1, true);
+        let y2 = x.copy();
+        T.square(y2, true);
+        checkTensor(x, xCopy);
+        checkTensor(y1, y2);
+    });
 });

@@ -29,11 +29,12 @@ export class ArithmeticOpProviderFactory {
             }),
             mul: generator.makeBinaryOp({
                 opRR: '$reZ = $reX * $reY;',
-                // calculate the imaginary part first so no temporary variable
-                // is needed.
+                // For the RC and CR case, x and y cannot be the same.
+                // We calculate the imaginary part first so no temporary
+                // variable is needed.
                 opRC: '$imZ = $reX * $imY; $reZ = $reX * $reY;',
                 opCR: '$reZ = $reX * $reY; $imZ = $imX * $reY;',
-                opCC: '$tmp1 = $reX; $reZ = $tmp1 * $reY - $imX * $imY; $imZ = $tmp1 * $imY + $imX * $reY;'
+                opCC: '$tmp1 = $reX; $tmp2 = $reY; $reZ = $tmp1 * $tmp2 - $imX * $imY; $imZ = $tmp1 * $imY + $imX * $tmp2;'
             }, {
                 outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
             }),

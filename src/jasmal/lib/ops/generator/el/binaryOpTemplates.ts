@@ -257,8 +257,9 @@ if (infoY.isComplex) {
         }
 #if !NO_IN_PLACE && !OUTPUT_CC_COMPLEX
         if (inPlace) {
-            for (i = 0;i < imX.length;i++) {
-                imX[i] = 0;
+            imZ = imZ || z.imagData;
+            for (i = 0;i < imZ.length;i++) {
+                imZ[i] = 0;
             }
         }
 #endif
@@ -284,8 +285,9 @@ if (infoY.isComplex) {
         }
 #if !NO_IN_PLACE && !OUTPUT_CR_COMPLEX
         if (inPlace) {
-            for (i = 0;i < imX.length;i++) {
-                imX[i] = 0;
+            imZ = imZ || z.imagData;
+            for (i = 0;i < imZ.length;i++) {
+                imZ[i] = 0;
             }
         }
 #endif
@@ -392,8 +394,9 @@ if (infoX.isComplex) {
     }
 #if !NO_IN_PLACE && (!OUTPUT_CC_COMPLEX || !OUTPUT_CR_COMPLEX)
     if (inPlace) {
-        for (i = 0;i < imX.length;i++) {
-            imX[i] = 0;
+        imZ = imZ || z.imagData;
+        for (i = 0;i < imZ.length;i++) {
+            imZ[i] = 0;
         }
     }
 #endif
@@ -460,8 +463,9 @@ if (infoX.isComplex) {
     }
 #if !NO_IN_PLACE && (!OUTPUT_CC_COMPLEX || !OUTPUT_CR_COMPLEX)
     if (inPlace) {
-        for (i = 0;i < imX.length;i++) {
-            imX[i] = 0;
+        imZ = imZ || z.imagData;
+        for (i = 0;i < imZ.length;i++) {
+            imZ[i] = 0;
         }
     }
 #endif

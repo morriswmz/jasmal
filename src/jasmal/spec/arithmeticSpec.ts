@@ -146,6 +146,60 @@ describe('sub()', () => {
         checkTensor(actual, expected);
     });
 
+    it('should be able to handle real matrix - real matrix with inPlace = true while the first operand is a ref copy', () => {
+        let arr = [[0, 8], [3, 1]];
+        let E = T.fromArray(arr);
+        let E1 = E.copy();
+        let actual = T.sub(E1, C, true);
+        let expected = T.fromArray([[-2, 2], [-4, 0]]);
+        expect(actual === E1).toBe(true);
+        checkTensor(actual, expected);
+        checkTensor(E, T.fromArray(arr));
+    });
+    it('should be able to handle real matrix - complex matrix with inPlace = true while the first operand is a ref copy', () => {
+        let arr = [[1, 2], [0, -4]];
+        let E = T.fromArray(arr);
+        let E1 = E.copy();
+        let actual = T.sub(E1, B, true);
+        let expected = T.fromArray([[0, 0], [-3, -8]], [[4, 3], [2, 1]]);
+        expect(actual === E1).toBe(true);
+        checkTensor(actual, expected);
+        checkTensor(E, T.fromArray(arr));
+    });
+    it('should be able to handle complex matrix - real matrix with inPlace = true while the first operand is a ref copy', () => {
+        let arrRe = [[4, 7], [1, 2]];
+        let arrIm = [[2, -1], [5, 3]];
+        let E = T.fromArray(arrRe, arrIm, T.INT32);
+        let E1 = E.copy();
+        let actual = T.sub(E1, C.asType(T.INT32), true);
+        let expected = T.fromArray([[2, 1], [-6, 1]], arrIm, T.INT32);
+        expect(actual === E1).toBe(true);
+        checkTensor(actual, expected);
+        checkTensor(E, T.fromArray(arrRe, arrIm, T.INT32));
+    });
+    it('should be able to handle complex matrix - complex matrix with inPlace = true while the first operand is a ref copy', () => {
+        let arrRe = [[0, 2], [4, 6]];
+        let arrIm = [[5, 1], [3, 8]];
+        let E = T.fromArray(arrRe, arrIm);
+        let E1 = E.copy();
+        let actual = T.sub(E1, B, true);
+        let expected = T.fromArray([[-1, 0], [1, 2]], [[9, 4], [5, 9]]);
+        expect(actual === E1).toBe(true);
+        checkTensor(actual, expected);
+        checkTensor(E, T.fromArray(arrRe, arrIm));
+    });
+
+    it('should return a zero matrix with both operands ref copies from the same matrix with inPlace = true', () => {
+        let arr = [[1, 8], [3, 2]];
+        let E = T.fromArray(arr);
+        let E1 = E.copy();
+        let E2 = E.copy();
+        T.sub(E1, E2, true);
+        checkTensor(E1, T.zeros(E.shape));
+        checkTensor(E2, T.fromArray(arr));
+        checkTensor(E, T.fromArray(arr));
+    });
+
     it('should handle real column vector - real row vector via broadcasting', () => {
         let actual = T.sub(T.fromArray([[1], [2]]), T.fromArray([3, 4]));
         let expected = T.fromArray([[-2, -3], [-1, -2]]);
@@ -227,10 +281,28 @@ describe('mul()', () => {
 
     let C = T.fromArray([3.2, 4, -1], [-0.5, 2, 3]);
     let D = T.fromArray([0.8, -1, 3], [64, 101, -42]);
+    let CD = T.fromArray([34.56, -206, 123], [204.4, 402, 51]);
     it('should perform the element-wise multiplication between two complex vectors', () => {
         let actual = T.mul(C, D);
-        let expected = T.fromArray([34.56, -206, 123], [204.4, 402, 51]);
+        let expected = CD;
         checkTensor(actual, expected, EPSILON);
+    });
+    it('should correctly perform the in-place operation for complex inputs', () => {
+        let CCopy = C.copy(true);
+        T.mul(CCopy, D, true);
+        checkTensor(CCopy, CD);
+    });
+    it('should correctly perform the in-place operation for complex inputs when the first operand is a ref copy', () => {
+        let E = C.copy();
+        let CCopy = C.copy(true);
+        T.mul(E, D, true);
+        checkTensor(E, CD);
+        checkTensor(C, CCopy);
+    });
+    it('should correctly perform the in-place operation if the second operand is set to the first one', () => {
+        let x = T.fromArray([1, 2], [-3, 5]);
+        T.mul(x, x, true);
+        checkTensor(x, T.fromArray([-8, -21], [-6, 20]));
     });
 });
 

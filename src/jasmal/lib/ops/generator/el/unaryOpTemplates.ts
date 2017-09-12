@@ -104,9 +104,10 @@ if (infoX.isComplex) {
 #ifnot OUTPUT_C_COMPLEX
     // in place operation for a complex tensor but output is real
     // we need set imaginary part to 0
-    if (inPlace && y.hasComplexStorage()) {
-        for (i = 0;i < imX.length;i++) {
-            imX[i] = 0;
+    if (inPlace) {
+        imY = imY || y.imagData;
+        for (i = 0;i < imY.length;i++) {
+            imY[i] = 0;
         }
     } 
 #endif

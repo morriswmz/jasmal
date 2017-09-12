@@ -60,7 +60,7 @@ export class PowerMathOpSetFactory {
 
         const opSquare = generator.makeUnaryOp({
             opR: '$reY = $reX * $reX;',
-            opC: '$reY = $reX * $reX - $imX * $imX; $tmp1 = $reX * $imX; $imY = $tmp1 + $tmp1;'
+            opC: '$tmp1 = $reX * $reX - $imX * $imX; $tmp2 = $reX * $imX; $reY = $tmp1; $imY = $tmp2 + $tmp2;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
         });
