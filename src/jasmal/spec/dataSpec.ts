@@ -201,6 +201,19 @@ describe('mean()', () => {
     });
 });
 
+describe('median()', () => {
+    it('should return the median of each row for a real matrix', () => {
+        let A = T.fromArray(
+            [[3, 1, 8, 1, 5, 2],
+             [5, 1, 2, 3, 1, Infinity],
+             [NaN, 2, NaN, NaN, NaN, NaN]]
+        );
+        let expected = T.fromArray([[2.5], [2.5], [NaN]]);
+        let actual = <Tensor>T.median(A, 1, true);
+        checkTensor(actual, expected);
+    });
+});
+
 describe('mode()', () => {
     it('should return the mode of a real vector', () => {
         expect(T.mode([1, 1, 2, 3, 5, 7])).toBe(1);
@@ -233,16 +246,23 @@ describe('var()', () => {
     });
 });
 
-describe('median()', () => {
-    it('should return the median of each row for a real matrix', () => {
+describe('std()', () => {
+    it('should compute the standard deviation for a real vector', () => {
+        expect(T.std([1, 1, 2, 3, 5, 8])).toEqual(2.7325202042558927);
+    });
+    it('should return the standard deviation of each column for a complex matrix', () => {
         let A = T.fromArray(
-            [[3, 1, 8, 1, 5, 2],
-             [5, 1, 2, 3, 1, Infinity],
-             [NaN, 2, NaN, NaN, NaN, NaN]]
+            [[1, 2, 3],
+             [1, 3, 5],
+             [1, 2, 7]],
+            [[1, 1, 6],
+             [1, 2, 5],
+             [1, 4, 5]],
+            T.INT32
         );
-        let expected = T.fromArray([[2.5], [2.5], [NaN]]);
-        let actual = <Tensor>T.median(A, 1, true);
-        checkTensor(actual, expected);
+        let actual = T.std(A, 0, true);
+        let expected = T.fromArray([[0, 1.6329931618554521, 2.0816659994661326]]);
+        checkTensor(actual, expected, 15, false);
     });
 });
 

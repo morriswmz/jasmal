@@ -367,8 +367,8 @@ export class LU {
      * @param P (Output) Storage for the permutation matrix P.
      */
     public static permutationToFull(p: ArrayLike<number>, P: DataBlock): void {
-        for (let i = 0; i < p.length; i++) {
-            P[p[i] * p.length + i] = 1;
+        for (let i = 0, n = p.length; i < n; i++) {
+            P[i * n + p[i]] = 1;
         }
     }
 

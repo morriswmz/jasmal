@@ -3,6 +3,7 @@ import { Tensor } from '../lib/tensor';
 import { checkTensor, checkComplex, testUnaryOpInBatch, checkNumber } from './testHelper';
 import { EPSILON } from '../lib/constant';
 const T = JasmalEngine.createInstance();
+const CN = T.complexNumber;
 
 describe('abs()', () => {
     it('should return a scalar if the input is a scalar', () => {
@@ -72,6 +73,48 @@ describe('abs()', () => {
     });
 });
 
+describe('sign()', () => {
+    it('should evaluate the sign function for a real vector', () => {
+        testUnaryOpInBatch(T.sign, [
+            [-Infinity, -1, 0],
+            [0.2, 1, 0],
+            [0, 0, 0],
+            [NaN, NaN, 0],
+            [-2, -1, 0],
+            [Infinity, 1, 0]
+        ], true)
+    });
+    it('should evaluate the sign function for a complex vector', () => {
+        testUnaryOpInBatch(T.sign, [
+            [CN(1, -2), CN(4.4721359549995793e-1, -8.9442719099991586e-1), 14],
+            [CN(-2, 5), CN(-3.7139067635410372e-1, 9.2847669088525941e-1), 14],
+            [CN(3, 8), CN(3.5112344158839170e-1, 9.3632917756904455e-1), 14]
+        ], false);
+    });
+});
+
+describe('min2()', () => {
+    it('should compute the minimum element-wise', () => {
+        let actual = T.min2([[-1], [2]], [-3, -1]);
+        let expected = T.fromArray([[-3, -1], [-3, -1]]);
+        checkTensor(actual, expected);
+    });
+    it('should work for complex vectors with zero imaginary parts', () => {
+        let x = T.fromArray([1, 2, 3], [0, 0, 0]);
+        let actual = T.min2(x, [2, 1, 0]);
+        let expected = T.fromArray([1, 1, 0]);
+        checkTensor(actual, expected);
+    });
+});
+
+describe('max2()', () => {
+    it('should compute the maximum element-wise', () => {
+        let actual = T.max2([[1], [2]], [3, -1]);
+        let expected = T.fromArray([[3, 1], [3, 2]]);
+        checkTensor(actual, expected);
+    });
+});
+
 describe('conj()', () => {
     it('should return the same value for real numbers', () => {
         let actual = T.conj(T.fromArray([1, -3.14, NaN, Infinity]));
@@ -82,6 +125,86 @@ describe('conj()', () => {
         let actual = T.conj(T.fromArray([1, -3.14, 1e9], [-1, Infinity, 1e8]));
         let expected = T.fromArray([1, -3.14, 1e9], [1, -Infinity, -1e8]);
         checkTensor(actual, expected);
+    });
+});
+
+describe('angle()', () => {
+    it('should return zero for real numbers', () => {
+        testUnaryOpInBatch(T.angle, [
+            [0, 0, 0],
+            [1, 0, 0],
+            [-22, 0, 0]
+        ], true);
+    });
+    it('should return the angle for complex numbers', () => {
+        testUnaryOpInBatch(T.angle, [
+            [CN(1, 2), Math.atan2(2, 1), 0],
+            [CN(-3, 0.5), Math.atan2(0.5, -3), 0],
+            [CN(4, -2), Math.atan2(-2, 4), 0]
+        ], true);
+    });
+});
+
+describe('rad2deg()', () => {
+    it('should convert radians to degrees', () => {
+        testUnaryOpInBatch(T.rad2deg, [
+            [0, 0, 0],
+            [2, 2 * 180/Math.PI, 0],
+            [-1.5, -1.5 * 180/Math.PI, 0]
+        ], true);
+    });
+});
+
+describe('deg2rad()', () => {
+    it('should convert degrees to radians', () => {
+        testUnaryOpInBatch(T.deg2rad, [
+            [0, 0, 0],
+            [60, 60/180*Math.PI, 0],
+            [-36, -36/180*Math.PI, 0]
+        ], true);
+    });
+});
+
+
+describe('exp()', () => {
+    it('should compute the exponentiation of real numbers', () => {
+        let actual = T.exp([0, -2, 3.3, -Infinity, Infinity]);
+        let expected = T.fromArray([1, Math.exp(-2), Math.exp(3.3), 0, Infinity]);
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the exponentiation of complex numbers', () => {
+        let z = T.fromArray([0, 2, 4], [-1, -0.1, 2]);
+        let actual = T.exp(z);
+        let expected = T.fromArray(
+            [ 0.54030230586813977,  7.35214159590899640, -22.720847417619233],
+            [-0.84147098480789650, -0.73767471615133029,  49.645957334580565]
+        );
+        checkTensor(actual, expected, EPSILON * 50);
+    });
+});
+
+describe('log()', () => {
+    it('should compute the logarithm of positive numbers', () => {
+        let actual = T.log([0.1, 1, Math.E, 1e12]);
+        let expected = T.fromArray([Math.log(0.1), 0, 1, Math.log(1e12)]);
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the logarithm of real numbers', () => {
+        let actual = T.log([0, -1, -Math.E, -1e12]);
+        let expected = T.fromArray(
+            [-Infinity, 0, 1, Math.log(1e12)],
+            [0, Math.PI, Math.PI, Math.PI]
+        );
+        checkTensor(actual, expected, EPSILON);
+    });
+    it('should compute the logarithm of complex numbers', () => {
+        let z = T.fromArray([0, 0.5, -3], [-1, 0.8, 9]);
+        let actual = T.log(z);
+        let expected = T.fromArray(
+            [0, -5.8266908127975671e-2, 2.2499048351651325],
+            [-1.5707963267948966, 1.0121970114513341, 1.8925468811915389]
+        );
+        checkTensor(actual, expected, 1e-14);
     });
 });
 
@@ -142,49 +265,7 @@ describe('square()', () => {
     });
 });
 
-describe('exp()', () => {
-    it('should compute the exponentiation of real numbers', () => {
-        let actual = T.exp([0, -2, 3.3, -Infinity, Infinity]);
-        let expected = T.fromArray([1, Math.exp(-2), Math.exp(3.3), 0, Infinity]);
-        checkTensor(actual, expected, EPSILON);
-    });
-    it('should compute the exponentiation of complex numbers', () => {
-        let z = T.fromArray([0, 2, 4], [-1, -0.1, 2]);
-        let actual = T.exp(z);
-        let expected = T.fromArray(
-            [ 0.54030230586813977,  7.35214159590899640, -22.720847417619233],
-            [-0.84147098480789650, -0.73767471615133029,  49.645957334580565]
-        );
-        checkTensor(actual, expected, EPSILON * 50);
-    });
-});
-
-describe('log()', () => {
-    it('should compute the logarithm of positive numbers', () => {
-        let actual = T.log([0.1, 1, Math.E, 1e12]);
-        let expected = T.fromArray([Math.log(0.1), 0, 1, Math.log(1e12)]);
-        checkTensor(actual, expected, EPSILON);
-    });
-    it('should compute the logarithm of real numbers', () => {
-        let actual = T.log([0, -1, -Math.E, -1e12]);
-        let expected = T.fromArray(
-            [-Infinity, 0, 1, Math.log(1e12)],
-            [0, Math.PI, Math.PI, Math.PI]
-        );
-        checkTensor(actual, expected, EPSILON);
-    });
-    it('should compute the logarithm of complex numbers', () => {
-        let z = T.fromArray([0, 0.5, -3], [-1, 0.8, 9]);
-        let actual = T.log(z);
-        let expected = T.fromArray(
-            [0, -5.8266908127975671e-2, 2.2499048351651325],
-            [-1.5707963267948966, 1.0121970114513341, 1.8925468811915389]
-        );
-        checkTensor(actual, expected, 1e-14);
-    });
-});
-
-describe('pow2', () => {
+describe('pow()', () => {
     it('should compute the power for real numbers', () => {
         let x = T.fromArray([1, 2, 3.3, -3]);
         let y = T.fromArray([2, -1.2, 4.4, -2]);
@@ -238,11 +319,67 @@ describe('pow2', () => {
     });
 });
 
+describe('realpow()', () => {
+    it('should return the same values as Math.pow()', () => {
+        let x = [0, 2, 55, -2, -3];
+        let y = [1, 4, 3.5, -0.4, -2];
+        let expectedArr = new Array<number>(x.length);
+        for (let i = 0;i < x.length;i++) {
+            expectedArr[i] = Math.pow(x[i], y[i]);
+        }
+        let actual = T.realpow(x, y);
+        let expected = T.fromArray(expectedArr);
+        checkTensor(actual, expected);
+    });
+});
+
+describe('floor()', () => {
+    it('should evaluate the floor function for every element', () => {
+        testUnaryOpInBatch(T.floor, [
+            [9.3, 9, 0],
+            [0, 0, 0],
+            [0.6, 0, 0],
+            [-0.2, -1, 0]
+        ], true);
+    });
+});
+
+describe('ceil()', () => {
+    it('should evaluate the ceil function for every element', () => {
+        testUnaryOpInBatch(T.ceil, [
+            [9.3, 10, 0],
+            [0, 0, 0],
+            [-0.2, 0, 0]
+        ], true);
+    });
+});
+
+describe('round()', () => {
+    it('should evaluate the round function for every element', () => {
+        testUnaryOpInBatch(T.round, [
+            [9.3, 9, 0],
+            [0.55, 1, 0],
+            [0, 0, 0],
+            [-0.2, 0, 0],
+            [-0.51, -1, 0]
+        ], true);
+    });
+});
+
+describe('fix()', () => {
+    it('should evaluate the fix function for every element', () => {
+        testUnaryOpInBatch(T.fix, [
+            [1.55, 1, 0],
+            [0, 0, 0],
+            [-0.2, 0, 0],
+            [-3.8, -3, 0]
+        ], true);
+    });
+});
+
 /**
  * Trigonometry
  */
-
- let CN = T.complexNumber;
  
 describe('sin()', () => {
     it('should compute the sine of real numbers', () => {

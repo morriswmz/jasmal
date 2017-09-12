@@ -425,22 +425,23 @@ export class MatrixOpProviderFactory {
         };
 
         const opTrace = (x: OpInput): Scalar => {
-            let v = Tensor.analyzeOpInput(x);
-            if (v.hasOnlyOneElement) {
-                return v.isComplex ? new ComplexNumber(v.re, v.im) : v.re;
+            let infoX = Tensor.analyzeOpInput(x);
+            if (infoX.hasOnlyOneElement) {
+                return infoX.isComplex ? new ComplexNumber(infoX.re, infoX.im) : infoX.re;
             } else {
-                if (v.originalShape.length !== 2 || v.originalShape[0] !== v.originalShape[1]) {
+                if (infoX.originalShape.length !== 2 || infoX.originalShape[0] !== infoX.originalShape[1]) {
                     throw new Error('Square matrix expected.');
                 }
-                let re = v.reArr;
-                let im = v.reArr;
+                let re = infoX.reArr;
+                let im = infoX.imArr;
+                let n = infoX.originalShape[0];
                 let accRe = 0, accIm = 0;
-                for (let i = 0;i < re.length;i += v.originalShape[0]) {
-                    accRe += re[i];
+                for (let i = 0;i < n;i++) {
+                    accRe += re[i * n + i];
                 }
-                if (v.isComplex) {
-                    for (let i = 0;i < im.length;i += v.originalShape[0]) {
-                        accIm += im[i];
+                if (infoX.isComplex) {
+                    for (let i = 0;i < n;i++) {
+                        accIm += im[i * n + i];
                     }
                 }
                 return accIm === 0 ? accRe : new ComplexNumber(accRe, accIm);

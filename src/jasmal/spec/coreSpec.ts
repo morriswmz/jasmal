@@ -47,55 +47,116 @@ describe('reshape()', () => {
     });
 });
 
-describe('prependAxis()', () => {
-    it('should prepend a new axis to a complex number', () => {
-        let Y = T.prependAxis(T.complexNumber(-3, 27));
-        expect(Y.shape).toEqual([1, 1]);
-        expect(Y.strides).toEqual([1, 1]);
-        expect(Y.realData[0]).toBe(-3);
-        expect(Y.imagData[0]).toBe(27);
-    });
-    it('should prepend a new axis to an array', () => {
-        let arr = [1, 2, 5.5];
-        let Y = T.prependAxis(arr);
-        expect(Y.shape).toEqual([1, 3]);
-        expect(Y.strides).toEqual([3, 1]);
-        checkArrayLike(Y.realData, arr);
-    });
-    it('should prepend a new axis to a tensor', () => {
-        let X = T.rand([2, 3, 3]);
-        let Y = T.prependAxis(X);
-        expect(Y.shape).toEqual([1, 2, 3, 3]);
-        expect(Y.strides).toEqual([18, 9, 3, 1]);
+describe('flatten()', () => {
+    it('should flatten a real matrix', () => {
+        let M = T.fromArray([[1, 2, 3], [4, 5, 6]]);
+        let m = T.flatten(M);
+        expect(m.shape).toEqual([6]);
+        expect(m.dtype).toBe(M.dtype);
         // should be a reference copy
-        expect(X === Y).toBe(false);
-        expect(Y.realData).toBe(X.realData);
+        expect(m.realData).toBe(M.realData);
+        expect(() => m.imagData).toThrow();
+    });
+    it('should flatten a complex tensor', () => {
+        let M = T.fromArray([[[1, 2]], [[3, 4]]], [[[5, 6]], [[7, 8]]], T.INT32);
+        let m = T.flatten(M);
+        expect(m.shape).toEqual([4]);
+        expect(m.dtype).toBe(M.dtype);
+        // should be a reference copy
+        expect(m.realData).toBe(M.realData);
+        expect(m.imagData).toBe(M.imagData);
     });
 });
 
-describe('appendAxis()', () => {
-    it('should append a new axis to a complex number', () => {
-        let Y = T.appendAxis(T.complexNumber(1.5, -9));
-        expect(Y.shape).toEqual([1, 1]);
-        expect(Y.strides).toEqual([1, 1]);
-        expect(Y.realData[0]).toBe(1.5);
-        expect(Y.imagData[0]).toBe(-9);
+describe('squeeze()', () => {
+    it('should remove singleton dimension for a array input', () => {
+        let actual = T.squeeze([[[1], [2]]]);
+        let expected = T.fromArray([1, 2]);
+        checkTensor(actual, expected);
     });
-    it('should append a new axis to an array', () => {
-        let arr = [6, -1, 3];
-        let Y = T.appendAxis(arr);
-        expect(Y.shape).toEqual([3, 1]);
-        expect(Y.strides).toEqual([1, 1]);
-        checkArrayLike(Y.realData, arr);
+    it('should remove singleton dimensions from a complex tensor', () => {
+        let M = T.fromArray([[[[1], [2]], [[3], [4]]]], [[[[5], [6]], [[7], [8]]]], T.INT32);
+        let actual = T.squeeze(M);
+        expect(actual.shape).toEqual([2, 2]);
+        expect(actual.strides).toEqual([2, 1]);
+        expect(actual.dtype).toBe(M.dtype);
+        // should be a reference copy        
+        expect(actual.realData).toBe(M.realData);
+        expect(actual.imagData).toBe(M.imagData);
     });
-    it('should append a new axis to a tensor', () => {
-        let X = T.rand([3, 2, 4]);
-        let Y = T.appendAxis(X);
-        expect(Y.shape).toEqual([3, 2, 4, 1]);
-        expect(Y.strides).toEqual([8, 4, 1, 1]);
+    it('should not remove the last singleton dimension', () => {
+        let x = T.squeeze([[[1]]]);
+        checkTensor(x, T.ones([1]));
+    });
+});
+
+describe('vec()', () => {
+    it('should vectorize a real matrix', () => {
+        let M = T.fromArray([[1, 2], [3, 4], [5, 6]]);
+        let m = T.vec(M);
+        expect(m.shape).toEqual([6, 1]);
+        expect(m.dtype).toBe(M.dtype);
         // should be a reference copy
-        expect(X === Y).toBe(false);
-        expect(Y.realData).toBe(X.realData);
+        expect(m.realData).toBe(M.realData);
+        expect(() => m.imagData).toThrow();
+    });
+    it('should flatten a complex tensor', () => {
+        let M = T.fromArray([[[1], [2], [3]]], [[[4], [5], [6]]],T.INT32);
+        let m = T.vec(M);
+        expect(m.shape).toEqual([3, 1]);
+        expect(m.dtype).toBe(M.dtype);
+        // should be a reference copy
+        expect(m.realData).toBe(M.realData);
+        expect(m.imagData).toBe(M.imagData);
+    });
+});
+
+
+describe('concat()', () => {
+    it('should concat scalars (not very efficiently)', () => {
+        let inputs = [1, -3, new ComplexNumber(1.5, -Math.PI), Infinity];
+        let expectedRe = [1, -3, 1.5, Infinity];
+        let expectedIm = [0, 0, -Math.PI, 0];
+        let actual = T.concat(inputs);
+        expect(actual.dtype).toBe(T.FLOAT64);
+        expect(actual.hasComplexStorage()).toBeTruthy();
+        expect(actual.shape).toEqual([4]);
+        checkArrayLike(actual.realData, expectedRe);
+        checkArrayLike(actual.imagData, expectedIm);
+    });
+    it('should concat arrays', () => {
+        let inputs = [[1, 2], [3, 4, 5], [6]];
+        let expectedRe = [1, 2, 3, 4, 5, 6];
+        let actual = T.concat(inputs);
+        expect(actual.hasComplexStorage()).toBeFalsy();
+        checkArrayLike(actual.realData, expectedRe);
+    });
+
+    let A = T.fromArray([[1, 2], [4, 8]]);
+    let B = T.fromArray([[-1, -2], [-4, -8]], [[3.2, 3.1], [-0.2, 3]]);
+    it('should concat matrices horizontally', () => {
+        let expected = T.fromArray(
+            [[1, 2, -1, -2],
+             [4, 8, -4, -8]],
+            [[0, 0, 3.2, 3.1],
+             [0, 0, -0.2, 3]]);
+        let actual = T.concat([A, B], 1);
+        checkTensor(actual, expected);
+    });
+    it('should concat matrices vertically', () => {
+        let expected = T.fromArray(
+            [[1, 2], [4, 8], [-1, -2], [-4, -8], [10, 20]],
+            [[0, 0], [0, 0], [3.2, 3.1], [-0.2, 3], [0, 0]]);
+        let actual = T.concat([A, B, [[10, 20]]], 0);
+        checkTensor(actual, expected);
+    });
+    it('should work when one of the matrix is empty', () => {
+        let actual = T.concat([A, T.zeros([2, 0]), [[99], [98]]], 1);
+        let expected = T.fromArray(
+            [[1, 2, 99],
+             [4, 8, 98]]
+        );
+        checkTensor(actual, expected);
     });
 });
 
@@ -155,53 +216,6 @@ describe('tile()', () => {
     });
 });
 
-describe('concat()', () => {
-    it('should concat scalars (not very efficiently)', () => {
-        let inputs = [1, -3, new ComplexNumber(1.5, -Math.PI), Infinity];
-        let expectedRe = [1, -3, 1.5, Infinity];
-        let expectedIm = [0, 0, -Math.PI, 0];
-        let actual = T.concat(inputs);
-        expect(actual.dtype).toBe(T.FLOAT64);
-        expect(actual.hasComplexStorage()).toBeTruthy();
-        expect(actual.shape).toEqual([4]);
-        checkArrayLike(actual.realData, expectedRe);
-        checkArrayLike(actual.imagData, expectedIm);
-    });
-    it('should concat arrays', () => {
-        let inputs = [[1, 2], [3, 4, 5], [6]];
-        let expectedRe = [1, 2, 3, 4, 5, 6];
-        let actual = T.concat(inputs);
-        expect(actual.hasComplexStorage()).toBeFalsy();
-        checkArrayLike(actual.realData, expectedRe);
-    });
-
-    let A = T.fromArray([[1, 2], [4, 8]]);
-    let B = T.fromArray([[-1, -2], [-4, -8]], [[3.2, 3.1], [-0.2, 3]]);
-    it('should concat matrices horizontally', () => {
-        let expected = T.fromArray(
-            [[1, 2, -1, -2],
-             [4, 8, -4, -8]],
-            [[0, 0, 3.2, 3.1],
-             [0, 0, -0.2, 3]]);
-        let actual = T.concat([A, B], 1);
-        checkTensor(actual, expected);
-    });
-    it('should concat matrices vertically', () => {
-        let expected = T.fromArray(
-            [[1, 2], [4, 8], [-1, -2], [-4, -8], [10, 20]],
-            [[0, 0], [0, 0], [3.2, 3.1], [-0.2, 3], [0, 0]]);
-        let actual = T.concat([A, B, [[10, 20]]], 0);
-        checkTensor(actual, expected);
-    });
-    it('should work when one of the matrix is empty', () => {
-        let actual = T.concat([A, T.zeros([2, 0]), [[99], [98]]], 1);
-        let expected = T.fromArray(
-            [[1, 2, 99],
-             [4, 8, 98]]
-        );
-        checkTensor(actual, expected);
-    });
-});
 
 describe('permuteAxis()', () => {
     it('should do nothing for 1D arrays', () => {
@@ -249,6 +263,58 @@ describe('permuteAxis()', () => {
         let actual = T.permuteAxis(X, [2, 1, 0]);
         let expected = T.ones([4, 2, 0]);
         checkTensor(actual, expected);
+    });
+});
+
+describe('prependAxis()', () => {
+    it('should prepend a new axis to a complex number', () => {
+        let Y = T.prependAxis(T.complexNumber(-3, 27));
+        expect(Y.shape).toEqual([1, 1]);
+        expect(Y.strides).toEqual([1, 1]);
+        expect(Y.realData[0]).toBe(-3);
+        expect(Y.imagData[0]).toBe(27);
+    });
+    it('should prepend a new axis to an array', () => {
+        let arr = [1, 2, 5.5];
+        let Y = T.prependAxis(arr);
+        expect(Y.shape).toEqual([1, 3]);
+        expect(Y.strides).toEqual([3, 1]);
+        checkArrayLike(Y.realData, arr);
+    });
+    it('should prepend a new axis to a tensor', () => {
+        let X = T.rand([2, 3, 3]);
+        let Y = T.prependAxis(X);
+        expect(Y.shape).toEqual([1, 2, 3, 3]);
+        expect(Y.strides).toEqual([18, 9, 3, 1]);
+        // should be a reference copy
+        expect(X === Y).toBe(false);
+        expect(Y.realData).toBe(X.realData);
+    });
+});
+
+describe('appendAxis()', () => {
+    it('should append a new axis to a complex number', () => {
+        let Y = T.appendAxis(T.complexNumber(1.5, -9));
+        expect(Y.shape).toEqual([1, 1]);
+        expect(Y.strides).toEqual([1, 1]);
+        expect(Y.realData[0]).toBe(1.5);
+        expect(Y.imagData[0]).toBe(-9);
+    });
+    it('should append a new axis to an array', () => {
+        let arr = [6, -1, 3];
+        let Y = T.appendAxis(arr);
+        expect(Y.shape).toEqual([3, 1]);
+        expect(Y.strides).toEqual([1, 1]);
+        checkArrayLike(Y.realData, arr);
+    });
+    it('should append a new axis to a tensor', () => {
+        let X = T.rand([3, 2, 4]);
+        let Y = T.appendAxis(X);
+        expect(Y.shape).toEqual([3, 2, 4, 1]);
+        expect(Y.strides).toEqual([8, 4, 1, 1]);
+        // should be a reference copy
+        expect(X === Y).toBe(false);
+        expect(Y.realData).toBe(X.realData);
     });
 });
 

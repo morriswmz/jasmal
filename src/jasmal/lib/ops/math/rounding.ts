@@ -5,23 +5,24 @@ import { OpInput, OpOutput } from '../../commonTypes';
 export interface IRoundingMathOpSet {
 
     /**
-     * Applies Math.floor() for every element in the input.
-     * For complex numbers, Math.floor() is applied to both the real part and
+     * Applies `Math.floor()` for every element in the input.
+     * For complex numbers, `Math.floor()` is applied to both the real part and
      * the imaginary part.
      */
     floor(x: OpInput, inPlace?: boolean): OpOutput;
 
     /**
-     * Applies Math.ceil() for every element in the input.
-     * For complex numbers, Math.ceil() is applied to both the real part and
+     * Applies `Math.ceil()` for every element in the input.
+     * For complex numbers, `Math.ceil()` is applied to both the real part and
      * the imaginary part.
      */
     ceil(x: OpInput, inPlace?: boolean): OpOutput;
 
     /**
-     * Applies Math.round() for every element in the input.
-     * For complex numbers, Math.round() is applied to both the real part and
+     * Applies `Math.round()` for every element in the input.
+     * For complex numbers, `Math.round()` is applied to both the real part and
      * the imaginary part.
+     * Note: in JavaScript, `Math.round(-0.5)` gives -0, `Math.round(0.5)` give 1.
      */
     round(x: OpInput, inPlace?: boolean): OpOutput;
 
