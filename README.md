@@ -4,6 +4,12 @@
 or **JA**va**S**cript **MA**trix **L**ibrary. This is a **work-in-progress**
 library I used to create interactive simulations on my
 [blog](http://research.wmz.ninja/articles/2017/07/music-in-the-browser.html).
+Initially, I thought it should be a small project. Later, I realized that I
+need to implement much more functionalities to make it possible to run the
+even the classical DOA estimation algorithms. It was a good learning progress,
+especially for numerical algorithms in matrix computations. Because this project
+is open source, I hope you find it useful when looking for implementations of
+algorithms in matrix computations.
 
 Despite its name, JASMAL can actually handle multi-dimensional arrays. It also has
 
@@ -15,10 +21,25 @@ Despite its name, JASMAL can actually handle multi-dimensional arrays. It also h
   `linsolve()`, `rank()`, `kron()`.
 * subroutines for LU decomposition, QR decomposition, singular value
   decomposition, and eigendecomposition for both real and complex matrices 
+* set functions such as `union()`, `intersect()`, and `setdiff()`
 
 # Basic Usage
 
 To access the JASMAL engine, simply use `const T = require('jasmal').JasmalEngine.createInstance()`.
+
+For browsers, you can build a standalone version with `tsconfig.client.json` and
+import it using [SystemJS](https://github.com/systemjs/systemjs):
+
+``` HTML
+<script type="text/javascript" src="system-production.js"></script>
+<script type="text/javascript" src="jasmal.js"></script>
+<script type="text/javascript">
+    System.import('jasmal/index').then(function (jasmal) {
+        var T = jasmal.JasmalEngine.createInstance();
+        console.log(T.eye(3).toString());
+    });
+</script>
+```
 
 ## Tensor objects and complex numbers
 
