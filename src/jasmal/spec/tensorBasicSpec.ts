@@ -1,7 +1,7 @@
 import { JasmalEngine } from '../index';
 import { ComplexNumber } from '../lib/complexNumber';
 import { Tensor } from '../lib/tensor';
-import { checkArrayLike } from './testHelper';
+import { checkArrayLike, checkTensor } from './testHelper';
 import { DType } from '../lib/dtype';
 import { TensorStorage } from '../lib/storage';
 const T = JasmalEngine.createInstance();
@@ -95,6 +95,64 @@ describe('Tensor creation', () => {
             expect(case4).toThrow();
         });
     });
+
+    describe('complex()', () => {
+        it('should combine two real tensors of the same shape to a complex tensor', () => {
+            let re = T.fromArray([[1, 5]]);
+            let im = T.fromArray([[3, 4]]);
+            let z = T.complex(re, im);
+            checkTensor(z, T.fromArray([[1, 5]], [[3, 4]]));
+        });
+        it('should copy the shape array', () => {
+            let re = T.fromArray([2, 3]);
+            let im = T.fromArray([6, 9]);
+            let z = T.complex(re, im);
+            z.prependAxis();
+            expect(re.shape).toEqual([2]);
+            expect(im.shape).toEqual([2]);
+        });
+    });
+
+    describe('zeros()', () => {
+        it('[2x2 FLOAT64]', () => {
+            let x = T.zeros([2, 2], T.FLOAT64);
+            expect(x.shape).toEqual([2, 2]);
+            expect(x.dtype).toBe(T.FLOAT64);
+            expect(x.hasComplexStorage()).toBe(false);
+            let re = x.realData;
+            for (let i = 0;i < re.length;i++) {
+                expect(re[i]).toBe(0);
+            }
+        });
+        it('should copy the shape parameter', () => {
+            let shape = [3, 4];
+            let x = T.zeros(shape);
+            shape[1] = 10;
+            expect(x.shape).toEqual([3, 4]);
+        });
+    });
+    describe('ones()', () => {
+        it('[2x3x4 INT32]', () => {
+            let x = T.ones([2, 3, 4], T.INT32);
+            expect(x.shape).toEqual([2, 3, 4]);
+            expect(x.dtype).toBe(T.INT32);
+            expect(x.hasComplexStorage()).toBe(false);
+            let re = x.realData;
+            for (let i = 0;i < re.length;i++) {
+                expect(re[i]).toBe(1);
+            }
+        });
+        it('should copy the shape parameter', () => {
+            let shape = [2, 3, 5];
+            let x = T.ones(shape);
+            shape[1] = 10;
+            expect(x.shape).toEqual([2, 3, 5]);
+        });
+    });
+});
+
+describe('Tensor basic methods', () => {
+
     describe('toArray()', () => {
         it('should return the same array for the real part (with realOnly = true)', () => {
             let arr = [[1, 2], [3, 4]];
@@ -114,33 +172,7 @@ describe('Tensor creation', () => {
             expect(converted[1]).toEqual(arrIm);
         });
     });
-    describe('zeros()', () => {
-        it('[2x2 FLOAT64]', () => {
-            let x = T.zeros([2, 2], T.FLOAT64);
-            expect(x.shape).toEqual([2, 2]);
-            expect(x.dtype).toBe(T.FLOAT64);
-            expect(x.hasComplexStorage()).toBe(false);
-            let re = x.realData;
-            for (let i = 0;i < re.length;i++) {
-                expect(re[i]).toBe(0);
-            }
-        });
-    });
-    describe('ones()', () => {
-        it('[2x3x4 INT32]', () => {
-            let x = T.ones([2, 3, 4], T.INT32);
-            expect(x.shape).toEqual([2, 3, 4]);
-            expect(x.dtype).toBe(T.INT32);
-            expect(x.hasComplexStorage()).toBe(false);
-            let re = x.realData;
-            for (let i = 0;i < re.length;i++) {
-                expect(re[i]).toBe(1);
-            }
-        });
-    });
-});
 
-describe('Tensor basic methods', () => {
     describe('ensureComplexStorage()', () => {
         it('should create the complex storage with the correct DType', () => {
             let A = T.ones([3, 4], T.INT32);
@@ -222,6 +254,25 @@ describe('Tensor basic methods', () => {
             expect(Tensor.isApproximatelyEqual(A1, C2, 0.005)).toBeFalsy();
         });
     });
+
+    describe('real()', () => {
+        it('should copy the shape array', () => {
+            let x = T.fromArray([1, 2, 3, 4]);
+            let reX = x.real();
+            reX.appendAxis();
+            expect(x.shape).toEqual([4]);
+        });
+    });
+
+    describe('imag()', () => {
+        it('should copy the shape array', () => {
+            let x = T.fromArray([1, 2], [3, 4]);
+            let imX = x.imag();
+            imX.appendAxis();
+            expect(x.shape).toEqual([2]);
+        });
+    });
+
     describe('copy()', () => {
         let x = T.fromArray([[1, 2, 3]], [[-1, -2, -3]]);
         it('it should return a "reference" copy by default', () => {
@@ -250,5 +301,62 @@ describe('Tensor basic methods', () => {
             expect(x.realData[1]).toBe(2);
             expect(x.imagData[1]).toBe(-2);
         });
+        it('should copy the shape array', () => {
+            let a = T.zeros([2, 3]);
+            let b = a.copy();
+            a.prependAxis(); // a: [1, 2, 3]
+            // should not affect b
+            expect(b.shape).toEqual([2, 3]);
+            b.appendAxis(); // b: [2, 3, 1]
+            // should not affect a
+            expect(a.shape).toEqual([1, 2, 3]);
+            let c = b.copy(true);
+            b.prependAxis(); // b: [1, 2, 3, 1]
+            // should not affect c
+            expect(c.shape).toEqual([2, 3, 1]);
+            c.appendAxis(); // c: [2, 3, 1, 1]
+            // should not affect b
+            expect(b.shape).toEqual([1, 2, 3, 1]);
+        });
     });
+
+    describe('asType()', () => {
+        it('should make a copy in a different data type', () => {
+            let x = T.fromArray([1, 2, 3], [], T.INT32);
+            let y = x.asType(T.FLOAT64);
+            expect(y.shape).toEqual(x.shape);
+            expect(y.dtype).toBe(T.FLOAT64);
+            checkArrayLike(y.realData, x.realData);
+        });
+        it('should cast non logic data to logic data', () => {
+            let x = T.fromArray([0, 1.2, -3, 0, 0]);
+            let y = x.asType(T.LOGIC);
+            expect(y.shape).toEqual(x.shape);
+            expect(y.dtype).toBe(T.LOGIC);
+            checkArrayLike(y.realData, [0, 1, 1, 0, 0]);
+        });
+        it('should throw when converting NaNs to logical values', () => {
+            let x = T.fromArray([1, 0, NaN]);
+            expect(() => x.asType(T.LOGIC)).toThrow();
+        });
+        it('should copy the shape array', () => {
+            let x = T.ones([3, 3]);
+            let y = x.asType(T.FLOAT64);
+            let z = x.asType(T.INT32);
+            x.prependAxis();
+            expect(y.shape).toEqual([3, 3]);
+            expect(z.shape).toEqual([3, 3]);
+        });
+    });
+
+    describe('getReshapedCopy()', () => {
+        it('should copy the new shape array', () => {
+            let x = T.ones([3, 4]);
+            let newShape = [2, 2, 3];
+            let y = x.getReshapedCopy(newShape);
+            newShape[0] = 5;
+            expect(y.shape).toEqual([2, 2, 3]);
+        });
+    });
+
 });

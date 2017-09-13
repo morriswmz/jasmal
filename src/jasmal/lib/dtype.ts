@@ -3,7 +3,7 @@ import { ObjectHelper } from './helper/objHelper';
 /**
  * Data type.
  */
-export enum DType {
+export const enum DType {
     LOGIC = 0,
     INT32 = 1,
     FLOAT64 = 3

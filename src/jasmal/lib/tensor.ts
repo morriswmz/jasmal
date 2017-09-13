@@ -17,9 +17,9 @@ class OffsetCalculatorFactory {
         if (!OffsetCalculatorFactory._cached[dim]) {
             let funcBody = '\'use strict\'; return ';
             for (let i = 0; i < dim - 1;i++) {
-                funcBody += `(indices[${i}]|0) * (strides[${i}]|0) + `
+                funcBody += `indices[${i}] * strides[${i}] + `
             }
-            funcBody += `(indices[${dim - 1}]|0);`;
+            funcBody += `indices[${dim - 1}];`;
             OffsetCalculatorFactory._cached[dim] = <OffsetCalculator>(new Function('indices', 'strides', funcBody));
         }
         return OffsetCalculatorFactory._cached[dim];
@@ -66,8 +66,11 @@ export class Tensor {
 
     /**
      * Internal constructor for Tensor objects.
-     * Note: the refCount of the input parameters will be automatically
+     * Note: 1. The refCount of the input parameters will be automatically
      *       increased.
+     *       2. The shape array should NOT come from any external source. The
+     *       constructor does not make a copy of the shape array input. If it
+     *       can be modified elsewhere, MAKE A COPY before passing it in.
      * @param re 
      * @param im 
      * @param shape 
@@ -104,7 +107,8 @@ export class Tensor {
         if (!ShapeHelper.compareShape(re._shape, im._shape)) {
             throw new Error('Real part and imaginary part must share the same shape.');
         }
-        return new Tensor(re._re, im._re, re._shape);
+        // Note: the shape array needs to be copied here.
+        return new Tensor(re._re, im._re, re.shape);
     }
 
     /**
@@ -155,7 +159,8 @@ export class Tensor {
     public static zeros(shape: ArrayLike<number>, dtype: DType = DType.FLOAT64): Tensor {
         ShapeHelper.validateShape(shape);
         let re = TensorStorage.create(ShapeHelper.getSizeFromShape(shape), dtype);
-        return new Tensor(re, TensorStorage.Empty, Array.isArray(shape) ? shape : Array.prototype.slice.call(shape));
+        // Always copy the shape since it may be modified elsewhere.
+        return new Tensor(re, TensorStorage.Empty, Array.isArray(shape) ? shape.slice() : Array.prototype.slice.call(shape));
     }
 
     /**
@@ -169,7 +174,8 @@ export class Tensor {
         for (let i = 0;i < re.data.length;i++) {
             re.data[i] = 1;
         }
-        return new Tensor(re, TensorStorage.Empty, Array.isArray(shape) ? shape : Array.prototype.slice.call(shape));
+        // Always copy the shape array since it can be modified elsewhere.
+        return new Tensor(re, TensorStorage.Empty, Array.isArray(shape) ? shape.slice() : Array.prototype.slice.call(shape));
     }
 
     /**
@@ -1770,7 +1776,9 @@ export class Tensor {
      * Retrieves the real part.
      */
     public real(): Tensor {
-        return new Tensor(this._re, TensorStorage.Empty, this._shape);
+        // Copy the shape array so that the modification of this tensor's shape
+        // will not affected the new tensor's shape.
+        return new Tensor(this._re, TensorStorage.Empty, this.shape);
     }
 
     /**
@@ -1778,7 +1786,9 @@ export class Tensor {
      */
     public imag(): Tensor {
         if (this.hasComplexStorage()) {
-            return new Tensor(this._im, TensorStorage.Empty, this._shape);
+            // Copy the shape array so that the modification of this tensor's shape
+            // will not affected the new tensor's shape.
+            return new Tensor(this._im, TensorStorage.Empty, this.shape);
         } else {
             return Tensor.zeros(this._shape, this.dtype);
         }
@@ -1878,12 +1888,13 @@ export class Tensor {
     }
 
     /**
-     * Calculates the new shape for reshaping. If no modification is performed
-     * on the input array, it will be returned. Otherwise a modified copy will
-     * be returned.
-     * @param newShape New shape.
+     * Calculates the new shape for reshaping.
+     * @param newShape New shape. If no changes are made, a copy of the original
+     *                 shape array is returned.
      */
     private _calculateNewShape(newShape: number[]): number[] {
+        // We make a copy here because it may be used elsewhere.
+        newShape = newShape.slice();
         // Check if -1 exists.
         let idxM1 = -1,
             ns = 1;
@@ -1903,9 +1914,6 @@ export class Tensor {
         }
         if (idxM1 >= 0) {
             // -1 exists, infer the length of this dimension
-            // We do not want to modify the original array because it may be
-            // used elsewhere.
-            newShape = newShape.slice();
             newShape[idxM1] = this.size / ns;
             if (!isFinite(newShape[idxM1]) || (newShape[idxM1] | 0) !== newShape[idxM1]) {
                 throw new Error('The inferred length of the unknown dimension is not an integer.');
@@ -1925,12 +1933,15 @@ export class Tensor {
      *      storage will be duplicated immediately. Default value is false.
      */
     public copy(copyStorageImmediately: boolean = false): Tensor {
+        // We copy the shape array so that the modification of this tensor's
+        // shape will not affected the new tensor's shape.
         if (copyStorageImmediately) {
+            
             return new Tensor(this._re.dataCopy(), 
                 this._im !== TensorStorage.Empty ? this._im.dataCopy() : TensorStorage.Empty,
-                this._shape);
+                this.shape);
         } else {
-            return new Tensor(this._re, this._im, this._shape);
+            return new Tensor(this._re, this._im, this.shape);
         }
     }
 
@@ -1945,17 +1956,19 @@ export class Tensor {
      */
     public asType(dtype: DType, alwaysCopy: boolean = false): Tensor {
         if (dtype === this._re.dtype) {
-            // just make a quick copy
+            // Just make a quick copy here.
             return this.copy(alwaysCopy);
         } else if (dtype === DType.LOGIC) {
             if (this.hasComplexStorage()) {
                 throw new Error('Cannot convert a complex tensor to a logic tensor.');
             }
-            return new Tensor(this._re.copyAsType(DType.LOGIC), TensorStorage.Empty, this._shape);
+            // Remember to copy the shape.
+            return new Tensor(this._re.copyAsType(DType.LOGIC), TensorStorage.Empty, this.shape);
         } else {
             let re = this._re.copyAsType(dtype),
                 im = this._im === TensorStorage.Empty ? TensorStorage.Empty : this._im.copyAsType(dtype);
-            return new Tensor(re, im, this._shape);
+            // Remember to copy the shape.                
+            return new Tensor(re, im, this.shape);
         }
     }
 
