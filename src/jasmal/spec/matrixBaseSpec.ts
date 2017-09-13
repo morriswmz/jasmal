@@ -1,6 +1,7 @@
 import { JasmalEngine } from '../index';
 import { checkTensor, checkNumber, checkComplex } from './testHelper';
 import { EPSILON } from '../lib/constant';
+import { Tensor } from '../lib/tensor';
 const T = JasmalEngine.createInstance();
 
 
@@ -336,6 +337,9 @@ describe('matmul()', () => {
     let M = T.fromArray([[8, 1, 6], [3, 5, 7], [4, 9, 2]]);
     let N = T.fromArray([[8, 1, 6], [3, 5, 7], [4, 9, 2]],
                         [[1, 2, 3], [1, 4, 9], [1, 8, 27]]);
+    let Q = T.fromArray([[2, 7], [3, 5], [8, 4]]);
+    let v1 = T.fromArray([-4, 11, 7]);
+    let v2 = T.fromArray([5, -9]);
 
     it('should handle real scalar x real scalar', () => {
         checkTensor(T.matmul(3, 5), T.fromArray([[15]]));
@@ -362,33 +366,62 @@ describe('matmul()', () => {
         checkTensor(T.matmul(T.complexNumber(2, 5), T.complexNumber(-1, 2)), T.fromArray([[-12]], [[-1]]));
     });
 
-    it('should handle real x real', () => {
+    it('should handle real vector x real vector', () => {
+        let actual = T.matmul(T.vec(v1), v2);
+        let expected = <Tensor>T.mul(T.vec(v1), v2);
+        checkTensor(actual, expected);
+    });
+    it('should handle real vector x real matrix', () => {
+        let actual = T.matmul(v1, Q);
+        let expected = T.fromArray([[81, 55]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle real vector x real matrix with the "transposed/Hermitian" modifier', () => {
+        let actual1 = T.matmul(v2, Q, T.MM_TRANSPOSED);
+        let actual2 = T.matmul(v2, Q, T.MM_HERMITIAN);
+        let expected = T.fromArray([[-53, -30, 4]]);
+        checkTensor(actual1, expected);
+        checkTensor(actual2, expected);
+    });
+    it('should handle real matrix x real vector', () => {
+        let actual = T.matmul(Q, T.vec(v2));
+        let expected = T.fromArray([[-53], [-30], [4]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle real matrix x real matrix', () => {
         let actual = T.matmul(M, M);
         let expected = T.fromArray([[91, 67, 67], [67, 91, 67], [67, 67, 91]]);
         checkTensor(actual, expected);
     });
-
-    it('should handle real x real with the "transposed" modifier', () => {
-        let actual = T.matmul(M, M, T.MM_TRANSPOSED);
+    it('should handle real matrix x real matrix with the "transposed/Hermitian" modifier', () => {
+        let actual1 = T.matmul(M, M, T.MM_TRANSPOSED);
+        let actual2 = T.matmul(M, M, T.MM_HERMITIAN);
         let expected = T.fromArray([[101, 71, 53], [71, 83, 71], [53, 71, 101]]);
+        checkTensor(actual1, expected);
+        checkTensor(actual2, expected);
+    });
+
+    it('should handle real matrix x complex vector', () => {
+        let actual = T.matmul(M, z2);
+        let expected = T.fromArray([[8], [12], [40]], [[34], [36], [50]]);
         checkTensor(actual, expected);
     });
 
-    it('should handle real x complex', () => {
+    it('should handle real matrix x complex matrix', () => {
         let actual = T.matmul(M, N);
         let expected = T.fromArray([[91, 67, 67], [67, 91, 67], [67, 67, 91]],
                                    [[15, 68, 195], [15, 82, 243], [15, 60, 147]]);
         checkTensor(actual, expected);
     });
 
-    it('should handle real x complex with the "transposed" modifier', () => {
+    it('should handle real matrix x complex matrix with the "transposed" modifier', () => {
         let actual = T.matmul(M, N, T.MM_TRANSPOSED);
         let expected = T.fromArray([[101, 71, 53], [71, 83, 71], [53, 71, 101]],
                                    [[28, 66, 178], [34, 86, 232], [28, 58, 130]]);
         checkTensor(actual, expected);
     });
 
-    it('should handle real x complex with the "Hermitian" modifier', () => {
+    it('should handle real matrix x complex matrix with the "Hermitian" modifier', () => {
         let actual = T.matmul(M, N, T.MM_HERMITIAN);
         let expected = T.fromArray([[101, 71, 53], [71, 83, 71], [53, 71, 101]],
                                    [[-28, -66, -178], [-34, -86, -232], [-28, -58, -130]]);
@@ -399,11 +432,94 @@ describe('matmul()', () => {
                         [[8, 11, -17], [-2, -9, 8], [-7, 1, 6]]);
     let B = T.fromArray([[23, 3], [-3, 7], [2, -1]],
                         [[2, -2], [5, 10], [0, 1]]);
+    let z1 = T.fromArray([1, 2, 3], [-2, 5, 0]);
+    let z2 = T.fromArray([[2], [4], [-2]], [[3], [4], [1]]);
+         
+    it('should handle real vector x complex matrix', () => {
+        let actual = T.matmul(v1, A);
+        let expected = T.fromArray([[46, -103, 29]], [[-103, -136, 198]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle real vector x complex matrix with the "transposed" modifier', () => {
+        let actual = T.matmul(v1, A, T.MM_TRANSPOSED);
+        let expected = T.fromArray([[103, -123, 93]], [[-30, -35, 81]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle real vector x complex matrix with the "Hermitian" modifier', () => {
+        let actual = T.matmul(v1, A, T.MM_HERMITIAN);
+        let expected = T.fromArray([[103, -123, 93]], [[30, 35, -81]]);
+        checkTensor(actual, expected);
+    });
 
-    it('should handle complex x complex multiplications', () => {
+    it('should handle complex vector x real matrix', () => {
+        let actual = T.matmul(z1, M);
+        let expected = T.fromArray([[26, 38, 26]], [[-1, 23, 23]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle complex vector x real matrix with the "transposed/Hermitian" modifier', () => {
+        let actual1 = T.matmul(z1, M, T.MM_TRANSPOSED);
+        let actual2 = T.matmul(z1, M, T.MM_HERMITIAN);
+        let expected = T.fromArray([[28, 34, 28]], [[-11, 19, 37]]);
+        checkTensor(actual1, expected);
+        checkTensor(actual2, expected);
+    });
+
+    it('should handle complex vector x complex vector', () => {
+        let actual = T.matmul(z2, z1);
+        let expected = <Tensor>T.mul(z2, z1);
+        checkTensor(actual, expected);
+    });
+
+    it('should handle complex vector x complex matrix', () => {
+        let actual = T.matmul(z1, A);
+        let expected = T.fromArray([[43, 69, -48]], [[-9, -77, 19]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle complex vector x complex matrix with the "transposed" modifier', () => {
+        let actual = T.matmul(z1, A, T.MM_TRANSPOSED);
+        let expected = T.fromArray([[-3, 29, 10]], [[-3, -65, 45]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle complex vector x complex matrix with the "Hermitian" modifier', () => {
+        let actual = T.matmul(z1, A, T.MM_HERMITIAN);
+        let expected = T.fromArray([[75, -53, 48]], [[39, -73, 19]]);
+        checkTensor(actual, expected);
+    });
+
+    it('should handle complex matrix x complex vector', () => {
+        let actual = T.matmul(A, z2);
+        let expected = T.fromArray([[-51], [-22], [45]], [[122], [-98], [25]]);
+        checkTensor(actual, expected);
+    });
+
+    it('should handle complex matrix x complex matrix', () => {
         let actual = T.matmul(A, B);
         let expected = T.fromArray([[-42, -55], [142, -11], [83, 35]],
                                    [[139, 165], [-64, -207], [-104, 55]]);
+        checkTensor(actual, expected);
+    });
+    it('should handle complex matrix x complex matrix with the "transposed" modifier', () => {
+        let actual = T.matmul(A, A, T.MM_TRANSPOSED);
+        let expected = T.fromArray(
+            [[-376,  237,  210],
+             [ 237,   40, -137],
+             [ 210, -137,    3]],
+            [[-202, -161, 120],
+             [-161,  290, -59],
+             [ 120,  -59,  -4]]
+        );
+        checkTensor(actual, expected);
+    });
+    it('should handle complex matrix x complex matrix with the "Hermitian" modifier', () => {
+        let actual = T.matmul(A, A, T.MM_HERMITIAN);
+        let expected = T.fromArray(
+            [[ 572, -265, -84],
+             [-265,  338, -31],
+             [ -84,  -31, 175]],
+            [[  0, -229,  18],
+             [229,    0, -53],
+             [-18,   53,   0]]
+        );
         checkTensor(actual, expected);
     });
 
@@ -501,6 +617,12 @@ describe('transpose()', () => {
 });
 
 describe('hermitian()', () => {
+    it('should return the hermitian of a row vector', () => {
+        let z = T.fromArray([1, 2], [-1, -2]);
+        let actual = T.hermitian(z);
+        let expected = T.fromArray([[1], [2]], [[1], [2]]);
+        checkTensor(actual, expected);
+    });
     it('should return the transpose of a real matrix', () => {
         let A = T.fromArray([[1, 2], [4, 8], [9, 9]]);
         let actual = T.hermitian(A);

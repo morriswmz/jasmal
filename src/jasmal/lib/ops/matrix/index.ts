@@ -4,7 +4,8 @@ import { OpInput, Scalar, DataBlock } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 import { ComplexNumber } from '../../complexNumber';
 import { DType, OutputDTypeResolver } from '../../dtype';
-import { IMatrixBasicSubroutines, BuiltInMBS } from './mbs';
+import { BuiltInMMB, IMatrixMultiplicationBackend } from './matmul';
+import { IMatrixTransposeBackend, BuiltInMTB } from './transpose';
 import { LU } from './decomp/lu';
 import { SVD } from './decomp/svd';
 import { Eigen } from './decomp/eigen';
@@ -20,7 +21,9 @@ export class MatrixOpProviderFactory {
 
     // tslint:disable-next-line:max-line-length
     public static create(arithmOp: IArithmeticOpProvider, mathOp: IMathOpProvider,
-                         mbs: IMatrixBasicSubroutines = new BuiltInMBS()): IMatrixOpProvider {
+                         mmb: IMatrixMultiplicationBackend = new BuiltInMMB(),
+                         mtb: IMatrixTransposeBackend = new BuiltInMTB()): IMatrixOpProvider
+    {
 
         const opEye = (m: number, n?: number, dtype: DType = DType.FLOAT64): Tensor => {
             if (n == undefined) n = m;
@@ -322,7 +325,6 @@ export class MatrixOpProviderFactory {
             if (n1 !== n2) {
                 throw new Error(`Matrix dimensions (${m}, ${n1}) and (${n2}, ${p}) are not compatible.`);
             }
-            let dims: [number, number, number] = [m, n1, p];
             let Z = Tensor.zeros([m, p],
                 matMulOutputTypeResolver(vx.originalDType, vx.isComplex, vy.originalDType, vy.isComplex));
             if (vx.reArr.length === 0 || vy.reArr.length === 0) {
@@ -332,28 +334,28 @@ export class MatrixOpProviderFactory {
             if (vx.isComplex) {
                 Z.ensureComplexStorage();
                 if (vy.isComplex) {
-                    mbs.cmmul(dims, yModifier, vx.reArr, vx.imArr,
+                    mmb.cmulmm(m, n1, p, yModifier, vx.reArr, vx.imArr,
                         vy.reArr, vy.imArr, Z.realData, Z.imagData);
                 } else {
-                    mbs.mmul(dims, yModifier, vx.reArr, vy.reArr, Z.realData);
-                    mbs.mmul(dims, yModifier, vx.imArr, vy.reArr, Z.imagData);
+                    mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.reArr, Z.realData);
+                    mmb.mulmm(m, n1, p, yModifier, vx.imArr, vy.reArr, Z.imagData);
                 }
             } else {
                 if (vy.isComplex) {
                     Z.ensureComplexStorage();
                     if (yModifier === MatrixModifier.Hermitian) {
-                        mbs.mmul(dims, MatrixModifier.Transposed, vx.reArr, vy.reArr, Z.realData);
-                        mbs.mmul(dims, MatrixModifier.Transposed, vx.reArr, vy.imArr, Z.imagData);
+                        mmb.mulmm(m, n1, p, MatrixModifier.Transposed, vx.reArr, vy.reArr, Z.realData);
+                        mmb.mulmm(m, n1, p, MatrixModifier.Transposed, vx.reArr, vy.imArr, Z.imagData);
                         let reZ = Z.imagData;
                         for (let i = 0;i < reZ.length;i++) {
                             reZ[i] = -reZ[i];
                         }
                     } else {
-                        mbs.mmul(dims, yModifier, vx.reArr, vy.reArr, Z.realData);
-                        mbs.mmul(dims, yModifier, vx.reArr, vy.imArr, Z.imagData);  
+                        mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.reArr, Z.realData);
+                        mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.imArr, Z.imagData);  
                     }  
                 } else {
-                    mbs.mmul(dims, yModifier, vx.reArr, vy.reArr, Z.realData);   
+                    mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.reArr, Z.realData);   
                 }
             }
             return Z;
@@ -384,10 +386,10 @@ export class MatrixOpProviderFactory {
                 return X.getReshapedCopy([-1, 1]);
             } else if (shapeX.length === 2) {
                 let Y = Tensor.zeros([shapeX[1], shapeX[0]], X.dtype);
-                mbs.transpose(<[number, number]>shapeX, X.realData, Y.realData);
+                mtb.transpose(<[number, number]>shapeX, X.realData, Y.realData);
                 if (X.hasComplexStorage()) {
                     Y.ensureComplexStorage();
-                    mbs.transpose(<[number, number]>shapeX, X.imagData, Y.imagData);
+                    mtb.transpose(<[number, number]>shapeX, X.imagData, Y.imagData);
                 }
                 return Y;
             } else {
@@ -414,9 +416,9 @@ export class MatrixOpProviderFactory {
                 let Y = Tensor.zeros([shapeX[1], shapeX[0]], X.dtype);
                 if (X.hasComplexStorage()) {
                     Y.ensureComplexStorage();
-                    mbs.hermitian(<[number, number]>shapeX, X.realData, X.imagData, Y.realData, Y.imagData);
+                    mtb.hermitian(<[number, number]>shapeX, X.realData, X.imagData, Y.realData, Y.imagData);
                 } else {
-                    mbs.transpose(<[number, number]>shapeX, X.realData, Y.realData);
+                    mtb.transpose(<[number, number]>shapeX, X.realData, Y.realData);
                 }
                 return Y;
             } else {
