@@ -23,6 +23,9 @@ Despite its name, JASMAL can actually handle multi-dimensional arrays. It also h
   decomposition, and eigendecomposition for both real and complex matrices 
 * set functions such as `union()`, `intersect()`, and `setdiff()`
 
+**Important:** Although many of the operations have been [tested](src/jasmal/spec/)
+for common inputs, there may be still many bugs.
+
 # Basic Usage
 
 To access the JASMAL engine, simply use `const T = require('jasmal').JasmalEngine.createInstance()`.
@@ -60,11 +63,31 @@ let a = A.toArray(true); // real part only, arr = [[1, 2], [3, 4]]
 let [reC, imC] = C.toArray(false); // convert both real and imaginary parts
                                    // reC = [[1, 2], [3, 4]];
                                    // imC = [[-1, -2], [-3, -4]];
-
+// Check if the given object is an instance of Tensor.
+T.isTensor(A); // true
+T.isTensor([1, 2]); // false
 ```
 
 Note that during the conversions the data are **always copied** because JASMAL
 cannot be sure whether you will modify the array elements in the future.
+
+JASMAL uses `Float64Array` as the underlying storage by default, which is marked
+with `T.FLOAT64`. Another two data types supported by JASMAL are `T.INT32` and
+`T.LOGIC`, which are backed by `Int32Array` and `Uint8Array`, respectively.
+You can convert between different data types via `asType()`:
+
+``` JavaScript
+let a = T.fromArray([1, 2, 3], [], T.INT32);
+// INT32 -> FLOAT64
+let b = A.asType(T.FLOAT64);
+
+let z = T.fromArray([1, 2, 3], [3, 4, 5], T.FLOAT64);
+// FLOAT64 -> INT32, down casting is handled by typed arrays
+// Here m is a complex vector whose real part and imaginary parts are integers.
+let m = z.asType(T.INT32);
+// You CANNOT convert complex numbers to logic values.
+let n = z.asType(T.LOGIC); // Will throw an error!
+```
 
 JASMAL also includes a built-in [ComplexNumber](src/jasmal/lib/complexNumber.ts)
 type to support complex scalars. Complex numbers can be created with the
@@ -354,6 +377,10 @@ let D = T.setdiff(A, B); // [0, 4, 5]
 Unfortunately, JavaScript is relatively slow for dense numerical computations.
 Therefore, multiply two 1000 x 1000 matrices or performing the singular value
 decomposition of a 500 x 500 matrix may take several seconds in the browser.
+Nevertheless, JASMAL is still useful in demonstrating small scale numeric
+problems.
+
+## Vectorization and indexing
 
 For vectorized operations, JASMAL's performance should not deviate too far
 from that of the native JavaScript. However, for scalar operations, JASMAL can
@@ -373,7 +400,19 @@ for (let i = 0;i < m;i++) {
 }
 ```
 
-### Accessing the underlying data storage directly
+## Reference copy
+
+For reshaping operations `reshape()`, `flatten()`, and `vec()`, data are not
+copied immediately to avoid unnecessary memory allocations:
+
+``` JavaScript
+let A = T.randn([200, 200]);
+let B = T.reshape([100, 400]); // Now A and B share the same underlying storage.
+B.set(0, 0, 100); // A copy of the data in A is made before setting the element at (0, 0),
+                  // A and B no longer share the same underlying storage.
+```
+
+## Accessing the underlying data storage directly
 
 JASMAL stores multi-dimensional arrays in the row major order. If you want to 
 completely bypass the indexing overhead of JASMAL's indexing functions, you can
