@@ -244,7 +244,12 @@ describe('sub()', () => {
         let expected = T.fromArray([0.5, 4, 3 - y[2]]);
         checkTensor(actual, expected);
     })
-
+    it('should work for empty array inputs', () => {
+        checkTensor(T.sub([[], []], 2), T.zeros([2, 0]));
+        let x = T.zeros([2, 0, 3]);
+        let y = T.ones([2, 0, 1]);
+        checkTensor(T.sub(x, y), T.zeros([2, 0, 3]));
+    });
     it('should throw when in-place operation is not possible', () => {
         // first operand is not a tensor
         let case1 = () => { T.sub(1, 2, true); };
@@ -257,6 +262,13 @@ describe('sub()', () => {
         expect(case2).toThrow();
         expect(case3).toThrow();
         expect(case4).toThrow();
+    });
+
+    it('should throw for incompatible broadcasts', () => {
+        expect(() => T.sub(T.ones([2, 3]), T.ones([2, 4]))).toThrow();
+        expect(() => T.sub(T.zeros([2, 0]), [2])).toThrow();
+        expect(() => T.sub([3], T.zeros([0, 3]))).toThrow();
+        expect(() => T.sub(T.zeros([2, 0]), T.zeros([3, 0]))).toThrow();
     });
 });
 

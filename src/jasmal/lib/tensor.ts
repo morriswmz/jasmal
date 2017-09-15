@@ -2095,6 +2095,4 @@ export class Tensor {
         }
     }
 
-    
-
 }

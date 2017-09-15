@@ -60,6 +60,10 @@ describe('abs()', () => {
         checkTensor(y, T.fromArray([Math.sqrt(2), Math.sqrt(8), 3], [0, 0, 0]));
         checkTensor(x, T.fromArray(arrRe, arrIm));
     });
+    it('should work for empty arrays', () => {
+        checkTensor(T.abs([[], []]), T.zeros([2, 0]));
+        checkTensor(T.abs(T.ones([2, 0, 3])), T.zeros([2, 0, 3]));
+    });
     it('should throw if in place calculation is not possible', () => {
         // input is a scalar
         let case1 = () => { T.abs(1, true); };

@@ -124,7 +124,10 @@ export class ShapeHelper {
         let exact = true;
         for (let i = 0;i < shapeXIn.length;i++) {
             if (shapeXIn[i] !== shapeYIn[i]) {
-                if (shapeXIn[i] !== 1 && shapeYIn[i] !== 1) {
+                if ((shapeXIn[i] !== 1 && shapeYIn[i] !== 1) ||
+                    (shapeXIn[i] === 0 && shapeYIn[i] !== 0) ||
+                    (shapeXIn[i] !== 0 && shapeYIn[i] === 0))
+                {
                     throw new Error('Incompatible shape.')
                 }
                 exact = false;
