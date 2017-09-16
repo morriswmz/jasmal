@@ -27,9 +27,20 @@ export class RandomOpProviderFactory {
         let randnNeedNewPair = true;
         let randnNumber2 = 0;
 
-        function rand(): number;
-        function rand(shape: ArrayLike<number>): Tensor;
-        function rand(shape?: ArrayLike<number>): number | Tensor {
+        function opSeed(s: number): void;
+        function opSeed(): number;
+        function opSeed(s?: number): number | void {
+            if (s == undefined) {
+                return engine.getSeed();
+            } else {
+                engine.setSeed(s);
+                return;
+            }
+        }
+
+        function opRand(): number;
+        function opRand(shape: ArrayLike<number>): Tensor;
+        function opRand(shape?: ArrayLike<number>): number | Tensor {
             if (shape) {
                 let t = Tensor.zeros(shape),
                     re = t.realData;
@@ -42,9 +53,9 @@ export class RandomOpProviderFactory {
             }
         };
 
-        function randn(): number;
-        function randn(shape: ArrayLike<number>): Tensor;
-        function randn(shape?: ArrayLike<number>): number | Tensor {
+        function opRandn(): number;
+        function opRandn(shape: ArrayLike<number>): Tensor;
+        function opRandn(shape?: ArrayLike<number>): number | Tensor {
             if (shape) {
                 let t = Tensor.zeros(shape),
                     re = t.realData;
@@ -75,10 +86,10 @@ export class RandomOpProviderFactory {
             }
         }
 
-        function randi(high: number): number;
-        function randi(low: number, high: number): number;
-        function randi(low: number, high: number, shape: ArrayLike<number>): Tensor;
-        function randi(low: number, high?: number, shape?: ArrayLike<number> | undefined): number | Tensor {
+        function opRandi(high: number): number;
+        function opRandi(low: number, high: number): number;
+        function opRandi(low: number, high: number, shape: ArrayLike<number>): Tensor;
+        function opRandi(low: number, high?: number, shape?: ArrayLike<number> | undefined): number | Tensor {
             if (high == undefined) {
                 high = low;
                 low = 0;
@@ -125,10 +136,10 @@ export class RandomOpProviderFactory {
         }
 
         return {
-            seed: s => { engine.seed(s); return; },
-            rand: rand,
-            randi: randi,
-            randn: randn
+            seed: opSeed,
+            rand: opRand,
+            randi: opRandi,
+            randn: opRandn
         };
     }
 }

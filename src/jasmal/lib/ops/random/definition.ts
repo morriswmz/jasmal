@@ -6,6 +6,10 @@ export interface IRandomOpProvider {
      * Specifies the seed for the pseudo random number generator.
      */
     seed(s: number): void;
+    /**
+     * Retrieves the current seed.
+     */
+    seed(): number;
 
     /**
      * Obtains a pseudo random number between 0 and 1 (both exclusive).

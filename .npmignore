@@ -1,0 +1,10 @@
+*.js.map
+.vscode
+src/
+scratch/
+tsconfig.json
+tsconfig.client.json
+tslint.json
+dist/jasmal/client/
+dist/jasmal/benchmark/*.d.ts
+dist/jasmal/spec/*.d.ts

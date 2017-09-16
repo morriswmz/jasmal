@@ -77,7 +77,7 @@ export class ReductionOpGenerator extends OpGeneratorBase {
                   config?: ReductionOpConfig): ReductionOp<OpOutput>;
     public makeOp(fReal: RIROReducer, fComplex: CIROReducer,
                   outputComplexWhenInputIsComplex: false,
-                  config?: ReductionOpConfig): ReductionOp<OpOutput>
+                  config?: ReductionOpConfig): ReductionOp<RealOpOutput>
     public makeOp(fReal: RIROReducer, fComplex: CICOReducer | CIROReducer,
                   outputComplexWhenInputIsComplex: boolean,
                   config?: ReductionOpConfig): ReductionOp<OpOutput> {

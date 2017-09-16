@@ -63,13 +63,13 @@ export interface IDataOpProvider {
      * Computes the sample variance (divided by N - 1) of the elements along the
      * specified axis.
      */
-    var(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
+    var(x: OpInput, axis?: number, keepDims?: boolean): RealOpOutput;
 
     /**
      * Computes the standard deviation (divided by N - 1) of the elements along
      * the specified axis.
      */
-    std(x: OpInput, axis?: number, keepDims?: boolean): OpOutput;
+    std(x: OpInput, axis?: number, keepDims?: boolean): RealOpOutput;
 
     /**
      * Estimates the (cross-)covariance matrix from samples. Assuming samples

@@ -1,7 +1,0 @@
-*.map.js
-.vscode
-src/
-scratch/
-tsconfig.json
-tsconfig.client.json
-tslint.json

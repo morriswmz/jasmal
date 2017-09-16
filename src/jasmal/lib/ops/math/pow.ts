@@ -1,5 +1,5 @@
 import { ElementWiseOpGenerator } from '../generator';
-import { OpOutput, OpInput } from '../../commonTypes';
+import { OpOutput, OpInput, RealOpInput, RealOpOutput } from '../../commonTypes';
 import { OutputDTypeResolver, DType } from '../../dtype';
 import { Tensor } from '../../tensor';
 import { DataHelper } from '../../helper/dataHelper';
@@ -28,7 +28,7 @@ export interface IPowerMathOpSet {
      * real inputs. In addition, NaN is produced when x^y is complex.
      * This operation should behave the same as `Math.pow` in JavaScript.
      */
-    realpow(x: OpInput, y: OpInput, inPlace?: boolean): OpOutput;
+    realpow(x: RealOpInput, y: OpInput, inPlace?: boolean): RealOpOutput;
 
 }
 
@@ -65,7 +65,7 @@ export class PowerMathOpSetFactory {
             outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
         });
 
-        const opPowR = generator.makeBinaryOp({
+        const opPowR = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = Math.pow($reX, $reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bToFloat

@@ -7,7 +7,12 @@ export interface IRandomEngine {
      * @param {number} x
      * @returns
      */
-    seed(x: number): IRandomEngine;
+    setSeed(x: number): IRandomEngine;
+
+    /**
+     * Retrieves the seed of the RNG engine.
+     */
+    getSeed(): number;
 
     /**
      * Retrieves an unsigned 32-bit integer.
@@ -42,14 +47,20 @@ export class MT19937Engine implements IRandomEngine {
 
     private _mt = new Array<number>(624);
     private _mti = 625;
+    private _seed;
 
-    public seed(x: number): IRandomEngine {
-        this._mt[0] = x >>> 0;
+    public setSeed(x: number): IRandomEngine {
+        this._seed = x >>> 0;
+        this._mt[0] = this._seed;
         for (this._mti = 1; this._mti < 624; this._mti++) {
             let d = this._mt[this._mti - 1] ^ (this._mt[this._mti - 1] >>> 30);
             this._mt[this._mti] = (mulUint32(d, 1812433253) + this._mti) >>> 0;
         }
         return this;
+    }
+
+    public getSeed(): number {
+        return this._seed;
     }
 
     public nextUint32(): number {
@@ -58,7 +69,7 @@ export class MT19937Engine implements IRandomEngine {
         if (this._mti >= 624) {
             if (this._mti === 625) {
                 // not initialized
-                this.seed(5489);
+                this.setSeed(5489);
             }
             let kk = 0;
             for (; kk < 624 - 397; kk++) {
@@ -136,9 +147,13 @@ export class MT19937Engine implements IRandomEngine {
  */
 export class NativeEngine implements IRandomEngine {
 
-    public seed(_x: number): IRandomEngine {
+    public setSeed(_x: number): IRandomEngine {
         // we cannot specify the seed for Math.random().
-        throw new Error('Seeding is not supported with the native random engine.')
+        throw new Error('Seeding is not supported with the native random engine.');
+    }
+
+    public getSeed(): number {
+        throw new Error('Seeding is not supported with the native random engine.');
     }
 
     public nextDouble(): number {
