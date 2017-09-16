@@ -23,6 +23,10 @@ Despite its name, JASMAL can actually handle multi-dimensional arrays. It also h
   decomposition, and eigendecomposition for both real and complex matrices 
 * set functions such as `union()`, `intersect()`, and `setdiff()`
 
+Here is a [live demo](http://research.wmz.ninja/projects/jasmal-notebook/doa-with-music.html)
+with the code I used in my blog to demonstrate the MUSIC DOA estimation
+algorithm in the browser.
+
 **Important:** Although many of the operations have been [tested](src/jasmal/spec/)
 for common inputs, there may be still many bugs.
 

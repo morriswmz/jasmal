@@ -1316,6 +1316,7 @@ export class Tensor {
                     throw new Error('Indices cannot be complex');
                 }
                 if (ind.dtype === DType.LOGIC) {
+                    // Logic mask vector.
                     if (ind.ndim !== 1 || ind.size !== this._shape[i]) {
                         throw new Error(`1D logic tensor of size ${this._shape[i]} expected for dimension ${i+1}.`);
                     }
@@ -1324,11 +1325,18 @@ export class Tensor {
                         indices: DataHelper.findReal(ind.realData)
                     });
                 } else {
+                    if (ind.ndim > 1) {
+                        throw new Error(`1D vector of indices expected form for dimension ${i+1}.`
+                            + `Got a ${ShapeHelper.shapeToString(ind.shape)} tensor.`);
+                    }
                     iterDefs.push(this._parseSignedIndices(ind.realData, i));
                 }
                 allAreConstantType = false;
             } else if (Array.isArray(ind)) {
                 // no nested arrays allowed here
+                if (ind.length > 0 && Array.isArray(ind[0])) {
+                    throw new Error(`Expecting a 1D array of indices for ${i+1}. Got a nested array.`);
+                }
                 iterDefs.push(this._parseSignedIndices(<ArrayLike<number>>ind, i));
                 allAreConstantType = false;
             } else if (typeof ind === 'string') {
