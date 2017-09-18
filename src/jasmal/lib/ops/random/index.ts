@@ -43,8 +43,10 @@ export class RandomOpProviderFactory {
         function opRand(shape?: ArrayLike<number>): number | Tensor {
             if (shape) {
                 let t = Tensor.zeros(shape),
-                    re = t.realData;
-                for (let i = 0;i < t.size;i++) {
+                    re = t.realData,
+                    i: number,
+                    n = t.size;
+                for (i = 0;i < n;i++) {
                     re[i] = engine.nextDouble();
                 }
                 return t;
@@ -58,8 +60,10 @@ export class RandomOpProviderFactory {
         function opRandn(shape?: ArrayLike<number>): number | Tensor {
             if (shape) {
                 let t = Tensor.zeros(shape),
-                    re = t.realData;
-                for (let i = 0;i < t.size;i++) {
+                    re = t.realData,
+                    i: number,
+                    n = t.size;
+                for (i = 0;i < n;i++) {
                     re[i] = _nextRandn();
                 }
                 return t;
@@ -107,12 +111,13 @@ export class RandomOpProviderFactory {
             if (shape) {
                 let t = Tensor.zeros(shape),
                     re = t.realData;
+                let i: number, n = t.size;
                 if (range === 0) {
-                    for (let i = 0;i < t.size;i++) {
+                    for (i = 0;i < n;i++) {
                         re[i] = low;
                     }
                 } else {
-                    for (let i = 0;i < t.size;i++) {
+                    for (i = 0;i < n;i++) {
                         re[i] = low + _nextRandi(range);
                     }
                 }
