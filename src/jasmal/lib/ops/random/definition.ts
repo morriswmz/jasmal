@@ -47,4 +47,14 @@ export interface IRandomOpProvider {
      */
     randi(low: number, high: number, shape: ArrayLike<number>): Tensor;
 
+    /**
+     * Generates a pseudo random real number within (low, high).
+     */
+    unifrnd(low: number, high: number): number;
+    /**
+     * Obtains a tensor of the specified shape filled with pseudo random real
+     * numbers within (low, high).
+     */
+    unifrnd(low: number, high: number, shape: ArrayLike<number>): Tensor;
+
 }

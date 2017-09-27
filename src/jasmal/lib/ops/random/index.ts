@@ -140,11 +140,33 @@ export class RandomOpProviderFactory {
             }
         }
 
+        function opUnifrnd(low: number, high: number): number;
+        function opUnifrnd(low: number, high: number, shape?: ArrayLike<number>): Tensor;
+        function opUnifrnd(low: number, high: number, shape?: ArrayLike<number>): number | Tensor {
+            if (!isFinite(low) || !isFinite(high)) {
+                throw new Error('Lower bound and upper bound must be finite.');
+            }
+            if (low > high) {
+                throw new Error('Lower bound cannot be greater than the upper bound.');
+            }
+            if (shape == undefined) {
+                return low + (high - low) * engine.nextDouble();
+            } else {
+                let X = Tensor.zeros(shape);
+                let reX = X.realData;
+                for (let i = 0;i < reX.length;i++) {
+                    reX[i] = low + (high - low) * engine.nextDouble();
+                }
+                return X;
+            }
+        }
+
         return {
             seed: opSeed,
             rand: opRand,
             randi: opRandi,
-            randn: opRandn
+            randn: opRandn,
+            unifrnd: opUnifrnd
         };
     }
 }
