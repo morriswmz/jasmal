@@ -898,6 +898,14 @@ export class MatrixOpProviderFactory {
             }
         };
 
+        const opMLDivide = (a: OpInput, b: OpInput): Tensor => {
+            return opLinsolve(a, b);
+        };
+
+        const opMRDivide = (a: OpInput, b: OpInput): Tensor => {
+            return opTranspose(opLinsolve(opTranspose(b), opTranspose(a)));
+        };
+
         const opSqrtm = (x: OpInput): Tensor => {
             let X: Tensor = x instanceof Tensor ? x : Tensor.toTensor(x);
             let shapeX = X.shape;
@@ -959,6 +967,8 @@ export class MatrixOpProviderFactory {
             chol: opChol,
             qr: opQr,
             linsolve: opLinsolve,
+            mldivide: opMLDivide,
+            mrdivide: opMRDivide,
             sqrtm: opSqrtm
         };
     }

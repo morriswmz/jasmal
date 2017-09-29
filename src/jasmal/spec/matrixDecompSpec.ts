@@ -546,7 +546,7 @@ describe('linsolve()', () => {
             let X = T.linsolve(A, B);
             let lhs = T.matmul(T.matmul(T.transpose(A), A), X);
             let rhs = T.matmul(T.transpose(A), B);
-            checkTensor(lhs, <Tensor>rhs, 1e-13 * Math.max(shapes[i][0], shapes[i][1]));
+            checkTensor(lhs, rhs, 1e-13 * Math.max(shapes[i][0], shapes[i][1]));
         });
     }
     for (let i = 0;i < shapes.length;i++) {
@@ -556,7 +556,34 @@ describe('linsolve()', () => {
             let X = T.linsolve(A, B);
             let lhs = T.matmul(T.matmul(T.hermitian(A), A), X);
             let rhs = T.matmul(T.hermitian(A), B);
-            checkTensor(lhs, <Tensor>rhs, 1e-13 * Math.max(shapes[i][0], shapes[i][1]));
+            checkTensor(lhs, rhs, 1e-13 * Math.max(shapes[i][0], shapes[i][1]));
+        });
+    }
+});
+
+describe('mrdivide()', () => {
+    let shapesA = [[3, 5], [20, 10], [15, 15], [9, 22]];
+    let shapesB = [[5, 5], [10, 10], [15, 15], [22, 22]];
+    for (let i = 0;i < shapesA.length;i++) {
+        it(`should solve a real linear system with a random ${shapesA[i][0]} x ${shapesA[i][1]} A` +
+            ` and ${shapesB[i][0]} x ${shapesB[i][1]} B`, () => {
+            let A = T.randn(shapesA[i]);
+            let B = T.randn(shapesB[i]);
+            let X = T.mrdivide(A, B);
+            let lhs = T.matmul(X, T.matmul(B, B, T.MM_TRANSPOSED));
+            let rhs = T.matmul(A, B, T.MM_TRANSPOSED);
+            checkTensor(lhs, rhs, 1e-14 * Math.max(shapesA[i][0], shapesA[i][1]));
+        });
+    }
+    for (let i = 0;i < shapesA.length;i++) {
+        it(`should solve a complex linear system with a random ${shapesA[i][0]} x ${shapesA[i][1]} A` +
+            ` and ${shapesB[i][0]} x ${shapesB[i][1]} B`, () => {
+            let A = T.complex(T.randn(shapesA[i]), T.randn(shapesA[i]));
+            let B = T.complex(T.randn(shapesB[i]), T.randn(shapesB[i]));
+            let X = T.mrdivide(A, B);
+            let lhs = T.matmul(X, T.matmul(B, B, T.MM_HERMITIAN));
+            let rhs = T.matmul(A, B, T.MM_HERMITIAN);
+            checkTensor(lhs, rhs, 1e-14 * Math.max(shapesA[i][0], shapesA[i][1]));
         });
     }
 });

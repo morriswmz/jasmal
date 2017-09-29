@@ -252,6 +252,20 @@ export interface IMatrixOpProvider {
     linsolve(a: OpInput, b: OpInput): Tensor;
 
     /**
+     * Solves AX = B. Uses linsolve() internally.
+     * @param a Matrix A.
+     * @param b Matrix B.
+     */
+    mldivide(a: OpInput, b: OpInput): Tensor;
+
+    /**
+     * Solves XB = A. Uses linsolve() internally.
+     * @param a Matrix A.
+     * @param b Matrix B.
+     */
+    mrdivide(a: OpInput, b: OpInput): Tensor;
+
+    /**
      * Computes the square root of the input matrix.
      * Currently only Hermitian matrices are supported.
      * @param x Matrix input.
