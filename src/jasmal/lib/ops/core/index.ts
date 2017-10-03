@@ -237,9 +237,9 @@ export class CoreOpProviderFactory {
                 let offset = 0;
                 for (let i = 0;i < tensors.length;i++) {
                     if (!tensors[i].isEmpty()) {
-                        DataHelper.copy(tensors[i].realData, Y.realData, offset);
+                        DataHelper.copy(tensors[i].realData, Y.realData, 0, offset);
                         if (tensors[i].hasComplexStorage()) {
-                            DataHelper.copy(tensors[i].imagData, Y.imagData, offset);
+                            DataHelper.copy(tensors[i].imagData, Y.imagData, 0, offset);
                         }
                         offset += tensors[i].size;
                     }

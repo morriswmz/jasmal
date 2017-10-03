@@ -7,7 +7,6 @@ import { DataHelper } from '../../helper/dataHelper';
 import { ICoreOpProvider } from '../core/definition';
 import { ReductionOpGenerator } from '../generator';
 import { ComparisonHelper } from '../../helper/comparisonHelper';
-import { SpecialFunction } from '../../math/special';
 import { FFT } from './fft';
 import { IArithmeticOpProvider } from '../arithmetic/definition';
 import { IMatrixOpProvider, MatrixModifier } from '../matrix/definition';
@@ -176,38 +175,35 @@ export class DataOpProviderFactory {
             return C;
         };
 
-        const opFFTFB = (x: OpInput, forward: boolean = true, axis: number = -1): Tensor => {
+        const opInPlaceComplexTransform = (x: OpInput, f: (re: DataBlock, im: DataBlock) => void, axis: number): Tensor => {
             let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);
             X.ensureComplexStorage();
             if (axis < 0 || (axis === 0 && X.ndim === 1)) {
-                if (SpecialFunction.isPowerOfTwoN(X.size)) {
-                    FFT.FFT(X.realData, X.imagData, forward);
-                } else {
-                    FFT.FFTNoPT(X.realData, X.imagData, forward);
-                }
+                f(X.realData, X.imagData);
             } else {
                 if (axis >= X.ndim) {
                     throw new Error(`Invalid axis number ${axis}.`);
                 }
                 let shapeX = X.shape;
                 let n = shapeX[axis];
-                let FFTFunc = SpecialFunction.isPowerOfTwoN(n) ? FFT.FFT : FFT.FFTNoPT;
                 let tmpReArr = DataHelper.allocateFloat64Array(n);
                 let tmpImArr = DataHelper.allocateFloat64Array(n);
                 let strides = X.strides;
                 let strideAtAxis = strides[axis];
                 let maxLevel = X.ndim - 1;
-                let doFFT = (re: DataBlock, im: DataBlock, level: number, offset: number): void => {
+                let doTransform = (re: DataBlock, im: DataBlock, level: number, offset: number): void => {
+                    let i: number;
+                    let maxI = level === axis ? 1 : shapeX[level];
                     if (level === maxLevel) {
-                        for (let i = 0;i < shapeX[level];i++) {
-                            // copy data to tmp array
+                        for (i = 0;i < maxI;i++) {
+                            // Copy data to tmp array
                             for (let k = 0;k < n;k++) {
                                 tmpReArr[k] = re[strideAtAxis * k + offset];
                                 tmpImArr[k] = im[strideAtAxis * k + offset];
                             }
-                            // do FFT
-                            FFTFunc(tmpReArr, tmpImArr, forward);
-                            // copy back
+                            // Do tranform
+                            f(tmpReArr, tmpImArr);
+                            // Copy back
                             for (let k = 0;k < n;k++) {
                                 re[strideAtAxis * k + offset] = tmpReArr[k];
                                 im[strideAtAxis * k + offset] = tmpImArr[k];
@@ -215,21 +211,25 @@ export class DataOpProviderFactory {
                             offset++;
                         }
                     } else {
-                        // recursive calling
-                        let maxI = level === axis ? 1 : shapeX[level];
-                        for (let i = 0;i < maxI;i++) {
-                            doFFT(re, im, level + 1, offset);
+                        // Recursive calling
+                        for (i = 0;i < maxI;i++) {
+                            doTransform(re, im, level + 1, offset);
                             offset += strides[level];
                         }
                     }
                 }
-                doFFT(X.realData, X.imagData, 0, 0);
+                doTransform(X.realData, X.imagData, 0, 0);
             }
             return X;
         };
 
-        const opFFT = (x: OpInput, axis: number = -1): Tensor => opFFTFB(x, true, axis);
-        const opIFFT = (x: OpInput, axis: number = -1): Tensor => opFFTFB(x, false, axis);
+        const opFFT = (x: OpInput, axis: number = -1): Tensor => {
+            return opInPlaceComplexTransform(x, (re, im) => FFT.FFT(re, im, true), axis);
+        };
+
+        const opIFFT = (x: OpInput, axis: number = -1): Tensor => {
+            return opInPlaceComplexTransform(x, (re, im) => FFT.FFT(re, im, false), axis);
+        };
 
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: false): Tensor;
         function opSort(x: OpInput, dir: 'asc' | 'desc', outputIndices: true): [Tensor, number[]];

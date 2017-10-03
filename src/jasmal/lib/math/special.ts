@@ -1,3 +1,5 @@
+import { LOGE2 } from '../constant';
+
 export class FactorialTable {
 
     /**
@@ -34,6 +36,18 @@ export class SpecialFunction {
      */
     public static isPowerOfTwoN(n: number): boolean {
         return ((n !== 0) && !(n & (n - 1)));
+    }
+
+    /**
+     * Finds the next power of two that is closet to x.
+     * @param x 
+     */
+    public static nextPowerOfTwo(x: number): number {
+        if (x < 0) {
+            return 0;
+        } else {
+            return Math.pow(2, Math.ceil(Math.log(x) / LOGE2));
+        }
     }
     
     /**

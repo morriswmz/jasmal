@@ -164,12 +164,21 @@ export class DataHelper {
         return indices;
     }
     
-    public static copy(from: ArrayLike<number>, to: DataBlock, offset: number = 0) {
-        if (from.length + offset > to.length) {
-            throw new Error('Not enough space.');
+    public static copy(from: ArrayLike<number>, to: DataBlock, offsetFrom: number = 0, offsetTo: number = 0, n: number = from.length) {
+        if (offsetFrom < 0 || offsetTo < 0) {
+            throw new Error('Offset cannot be negative');
         }
-        for (let i = 0;i < from.length;i++) {
-            to[i + offset] = from[i];
+        if (n < 0) {
+            throw new Error('Number of elements cannot be negative.');
+        }
+        if (n + offsetFrom > from.length) {
+            throw new Error('Number of elements to be copied is greater than the number of elements available in the source array.');
+        }
+        if (n + offsetTo > to.length) {
+            throw new Error('Not enough space in the target array.');
+        }
+        for (let i = 0;i < n;i++) {
+            to[i + offsetTo] = from[i + offsetFrom];
         }
     }
 
