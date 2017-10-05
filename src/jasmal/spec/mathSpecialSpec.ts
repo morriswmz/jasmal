@@ -173,3 +173,32 @@ describe('erf()/erfc()/erfcx()', () => {
         checkTensor(actual, expected, 14, false);
     });
 });
+
+describe('isPrime()', () => {
+    it('should check if the input integer is a prime number', () => {
+        expect(T.isPrime(2)).toBe(1);
+        expect(T.isPrime(3)).toBe(1);
+        expect(T.isPrime(121)).toBe(0);
+    });
+    it('should check if each element is a prime number', () => {
+        let X = T.fromArray([
+            [1, 9, 37, 113],
+            [998, 16387, 4999, 2499002]
+        ]);
+        let actual = T.isPrime(X);
+        let expected = T.fromArray([[0, 0, 1, 1], [0, 0, 1, 0]], [], T.LOGIC);
+        checkTensor(actual, expected);
+    });
+});
+
+describe('factor()', () => {
+    it('should return the prime number itself', () => {
+        checkTensor(T.factor(131), T.fromArray([131]));
+        checkTensor(T.factor(4999), T.fromArray([4999]));
+    });
+    it('should factorize composite numbers', () => {
+        checkTensor(T.factor(65536), T.tile(2, [16]));
+        checkTensor(T.factor(126904023), T.fromArray([3, 3, 3, 131, 35879]));
+        checkTensor(T.factor(998877665544), T.fromArray([2, 2, 2, 3, 11, 569, 6649609]));
+    });
+});
