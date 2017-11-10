@@ -1,12 +1,7 @@
 import { OpInput, Scalar } from '../../commonTypes';
 import { DType } from '../../dtype';
 import { Tensor } from '../../tensor';
-
-export const enum MatrixModifier {
-    None = 0,
-    Transposed = 1,
-    Hermitian = 2
-}
+import { MatrixModifier } from '../../linalg/modifiers';
 
 export interface IMatrixOpProvider {
 

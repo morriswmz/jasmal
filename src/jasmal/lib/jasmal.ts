@@ -5,7 +5,7 @@ import { IRandomEngine } from './ops/random/engine';
 import { ICoreOpProvider } from './ops/core/definition';
 import { IArithmeticOpProvider } from './ops/arithmetic/definition';
 import { IRandomOpProvider } from './ops/random/definition';
-import { MatrixModifier, IMatrixOpProvider } from './ops/matrix/definition';
+import { IMatrixOpProvider } from './ops/matrix/definition';
 import { IMathOpProvider } from './ops/math/definition';
 import { ILogicComparisonOpProvider } from './ops/logicComp/definition';
 import { IBinaryOpProvider } from './ops/binary/definition';
@@ -26,20 +26,36 @@ import { SetOpProviderFactory } from './ops/set/index';
 import { ObjectHelper } from './helper/objHelper';
 import { ElementWiseOpGenerator, ReductionOpGenerator } from './ops/generator';
 import { EPSILON } from './constant';
+import { IBlaoBackend, ILinearSystemSolverBackend, ILUBackend, IQRBackend,
+         ICholeskyBackend, ISvdBackend, IEigenBackend } from './linalg/backend';
+import { MatrixModifier } from './linalg/modifiers';
 
 export interface JasmalOptions {
     rngEngine?: string | IRandomEngine;
+    linalg?: LinalgOptions;
 }
 
-/**
- * JASMAL is exported as an interface.
- * This means you can replace any of its functions I you want to.
- */
-export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
-    IRandomOpProvider, IArithmeticOpProvider, IMathOpProvider,
-    ILogicComparisonOpProvider, IBinaryOpProvider, IDataOpProvider,
-    IPolynomialOpProvider, ISetOpProvider {
+export interface LinalgOptions {
+    blao?: IBlaoBackend;
+    lu?: ILUBackend;
+    qr?: IQRBackend;
+    chol?: ICholeskyBackend;
+    svd?: ISvdBackend;
+    eigen?: IEigenBackend;
+    linsolve?: ILinearSystemSolverBackend;
+}
 
+export interface IJasmalModuleFactory<M> {
+
+    /**
+     * Creates a module object whose members will be copied to the final Jasmal
+     * instance. These members should not depend on `this`.
+     */
+    create(options: JasmalOptions): M;
+
+}
+
+export interface JasmalBase {
     /**
      * Logic data type.
      */
@@ -121,8 +137,16 @@ export interface Jasmal extends ICoreOpProvider, IMatrixOpProvider,
      * @param im Imaginary part.
      */
     complex(re: Tensor, im: Tensor): Tensor;
-
 }
+
+/**
+ * JASMAL is exported as an interface.
+ * This means you can replace any of its functions you want to.
+ */
+export interface Jasmal extends JasmalBase, ICoreOpProvider, IMatrixOpProvider,
+    IRandomOpProvider, IArithmeticOpProvider, IMathOpProvider,
+    ILogicComparisonOpProvider, IBinaryOpProvider, IDataOpProvider,
+    IPolynomialOpProvider, ISetOpProvider {}
 
 export class JasmalEngine {
 
@@ -153,7 +177,7 @@ export class JasmalEngine {
         let randomOpProvider = RandomOpProviderFactory.create(options.rngEngine);
         let arithmeticOpProvider = ArithmeticOpProviderFactory.create(elementWiseOpGen);
         let mathOpProvider = MathOpProviderFactory.create(elementWiseOpGen);
-        let matrixOpProvider = MatrixOpProviderFactory.create(arithmeticOpProvider, mathOpProvider);
+        let matrixOpProvider = (new MatrixOpProviderFactory(arithmeticOpProvider, mathOpProvider)).create(options);
         let logicCompOpProvider = LogicComparisonOpProviderFactory.create(elementWiseOpGen);
         let binaryOpProvider = BinaryOpProviderFactory.create(elementWiseOpGen);
         let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, arithmeticOpProvider,
@@ -161,7 +185,7 @@ export class JasmalEngine {
         let polyOpProvider = PolynomialOpProviderFactory.create(coreOpProvider, matrixOpProvider);
         let setOpProvider = SetOpProviderFactory.create(coreOpProvider, logicCompOpProvider);
         
-        let jasmalCore =  {
+        let jasmalCore: JasmalBase =  {
             LOGIC: DType.LOGIC,
             INT32: DType.INT32,
             FLOAT64: DType.FLOAT64,
@@ -174,7 +198,7 @@ export class JasmalEngine {
             PI: Math.PI,
             EPSILON: EPSILON,
 
-            complexNumber: (re, im?) => new ComplexNumber(re, im),
+            complexNumber: (re, im?) => new ComplexNumber(re, im || 0),
             isComplexNumber: x => x instanceof ComplexNumber,
             isTensor: x => x instanceof Tensor,
             zeros: Tensor.zeros,

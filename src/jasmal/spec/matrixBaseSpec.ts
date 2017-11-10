@@ -573,6 +573,13 @@ describe('matmul()', () => {
         let expected = T.zeros([0, 4]);
         checkTensor(actual, expected);
     });
+    it('should give an identity matrix if two matrices are both identity matrices', () => {
+        let I = T.eye(20);
+        checkTensor(T.matmul(I, I), I);
+        checkTensor(T.matmul(I, I, T.MM_TRANSPOSED), I);
+        checkTensor(T.matmul(I, I, T.MM_HERMITIAN), I);
+    });
+    
 });
 
 describe('kron()', () => {

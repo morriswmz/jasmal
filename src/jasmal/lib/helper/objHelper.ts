@@ -46,6 +46,9 @@ export class ObjectHelper {
 
     
     public static extend<S, E>(src: S, ext: E): S & E {
+        if (ext == undefined) {
+            return <S & E>src;
+        }
         for (let prop in ext) {
             if (ext.hasOwnProperty(prop)) {
                 (<any>src)[prop] = ext[prop];

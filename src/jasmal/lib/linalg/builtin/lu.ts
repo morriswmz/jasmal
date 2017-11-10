@@ -1,11 +1,12 @@
-import { CMath } from '../../../math/cmath';
-import { DataBlock } from '../../../commonTypes';
-import { DataHelper } from '../../../helper/dataHelper';
+import { CMath } from '../../math/cmath';
+import { DataBlock } from '../../commonTypes';
+import { DataHelper } from '../../helper/dataHelper';
+import { ILUBackend } from '../backend';
 
 /**
  * LUP decomposition.
  */
-export class LU {
+export class BuiltInLU implements ILUBackend {
     
     /**
      * In-place LUP decomposition using Crout's algorithm.
@@ -16,8 +17,8 @@ export class LU {
      *          p = [2, 0, 1], then the 1st row now stores the original 3rd row.
      * @returns Induced sign of the permutation (det(P)).
      */
-    public static lu(m: number, reX: DataBlock, p: DataBlock): number {
-        LU._fillIndexVector(p);    
+    public lu(m: number, reX: DataBlock, p: DataBlock): number {
+        this._fillIndexVector(p);    
         let scales = DataHelper.allocateFloat64Array(m);
         let sign = 1;
         // records scaling factor for each row
@@ -104,8 +105,8 @@ export class LU {
      *          p = [2, 0, 1], then the 1st row now stores the original 3rd row.
      * @returns Induced sign of the permutation (det(P)).
      */
-    public static clu(m: number, reX: DataBlock, imX: DataBlock, p: DataBlock): number {
-        LU._fillIndexVector(p);
+    public clu(m: number, reX: DataBlock, imX: DataBlock, p: DataBlock): number {
+        this._fillIndexVector(p);
         let scales = DataHelper.allocateFloat64Array(m);
         let sign = 1;
         // records scaling factor for each row
@@ -202,17 +203,17 @@ export class LU {
      * @param p (Input) Permutation vector.
      * @param reB (Output) Matrix B.
      */
-    public static luSolve(m: number, n: number, reLU: ArrayLike<number>,
+    public luSolve(m: number, n: number, reLU: ArrayLike<number>,
                           p: ArrayLike<number>, reB: DataBlock): void {
         if (n === 1) {
-            LU._luSolveColumn(n, reLU, reB);
+            this._luSolveColumn(n, reLU, reB);
         } else {
             let columnCache: DataBlock = DataHelper.allocateFloat64Array(m);
             for (let j = 0;j < n;j++) {
                 for (let i = 0;i < m;i++) {
                     columnCache[i] = reB[p[i] * n + j];
                 }
-                LU._luSolveColumn(m, reLU, columnCache);
+                this._luSolveColumn(m, reLU, columnCache);
                 for (let i = 0;i < m;i++) {
                     reB[i * n + j] = columnCache[i];
                 }
@@ -233,11 +234,11 @@ export class LU {
      * @param reB (Output) Real part of B.
      * @param imB (Output) Imaginary part of B.
      */
-    public static cluSolve(m: number, n: number, reLU: ArrayLike<number>,
+    public cluSolve(m: number, n: number, reLU: ArrayLike<number>,
                            imLU: ArrayLike<number>, p: ArrayLike<number>,
                            reB: DataBlock, imB: DataBlock): void {
         if (n === 1) {
-            LU._cluSolveColumn(n, reLU, imLU, reB, imB);
+            this._cluSolveColumn(n, reLU, imLU, reB, imB);
         } else {
             let columnCacheRe: DataBlock = DataHelper.allocateFloat64Array(m);
             let columnCacheIm: DataBlock = DataHelper.allocateFloat64Array(m);
@@ -246,7 +247,7 @@ export class LU {
                     columnCacheRe[i] = reB[p[i] * n + j];
                     columnCacheIm[i] = imB[p[i] * n + j];
                 }
-                LU._cluSolveColumn(m, reLU, imLU, columnCacheRe, columnCacheIm);
+                this._cluSolveColumn(m, reLU, imLU, columnCacheRe, columnCacheIm);
                 for (let i = 0;i < m;i++) {
                     reB[i * n + j] = columnCacheRe[i];
                     imB[i * n + j] = columnCacheIm[i];
@@ -262,7 +263,7 @@ export class LU {
      *             overwritten with the solution.
      * @param reB (Output) Vector b.
      */
-    public static _luSolveColumn(n: number, reLU: ArrayLike<number>, reB: DataBlock): void {
+    public _luSolveColumn(n: number, reLU: ArrayLike<number>, reB: DataBlock): void {
         let idxNz = -1;
         let acc: number;
         // L^-1 P^T b
@@ -301,7 +302,7 @@ export class LU {
      * @param imB (Output) Imaginary part of the vector b. Will be overwritten
      *            with the solution.
      */
-    public static _cluSolveColumn(n: number, reLU: ArrayLike<number>, imLU: ArrayLike<number>,
+    public _cluSolveColumn(n: number, reLU: ArrayLike<number>, imLU: ArrayLike<number>,
                                   reB: DataBlock, imB: DataBlock): void {
         let idxNz = -1;
         let accRe: number, accIm: number;
@@ -344,7 +345,7 @@ export class LU {
      * @param L (Output) Storage of the L matrix.
      * @param U (Output) Storage of the U matrix.
      */
-    public static compactToFull(m: number, isImaginaryPart: boolean, LU: ArrayLike<number>, L: DataBlock, U: DataBlock): void {
+    public compactToFull(m: number, isImaginaryPart: boolean, LU: ArrayLike<number>, L: DataBlock, U: DataBlock): void {
         if (!isImaginaryPart) {
             for (let i = 0; i < m; i++) {
                 L[i * m + i] = 1;
@@ -366,13 +367,13 @@ export class LU {
      * @param p (Input) Permutation vector.
      * @param P (Output) Storage for the permutation matrix P.
      */
-    public static permutationToFull(p: ArrayLike<number>, P: DataBlock): void {
+    public permutationToFull(p: ArrayLike<number>, P: DataBlock): void {
         for (let i = 0, n = p.length; i < n; i++) {
             P[i * n + p[i]] = 1;
         }
     }
 
-    public static _fillIndexVector(p: DataBlock): void {
+    public _fillIndexVector(p: DataBlock): void {
         for (let i = 0;i < p.length; i++) {
             p[i] = i;
         }

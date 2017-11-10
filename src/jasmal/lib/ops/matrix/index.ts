@@ -1,29 +1,64 @@
-import { IMatrixOpProvider, MatrixModifier } from './definition';
+import { IMatrixOpProvider } from './definition';
 import { IArithmeticOpProvider } from '../arithmetic/definition';
 import { OpInput, Scalar, DataBlock } from '../../commonTypes';
 import { Tensor } from '../../tensor';
 import { ComplexNumber } from '../../complexNumber';
 import { DType, OutputDTypeResolver } from '../../dtype';
-import { BuiltInMMB, IMatrixMultiplicationBackend } from './matmul';
-import { IMatrixTransposeBackend, BuiltInMTB } from './transpose';
-import { LU } from './decomp/lu';
-import { SVD } from './decomp/svd';
-import { Eigen } from './decomp/eigen';
-import { Cholesky } from './decomp/chol';
-import { QR } from './decomp/qr';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
 import { DataHelper } from '../../helper/dataHelper';
 import { CMath } from "../../math/cmath";
 import { IMathOpProvider } from '../math/definition';
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
+import { BuiltInBlao } from '../../linalg/builtin/balo';
+import { BuiltInLU } from '../../linalg/builtin/lu';
+import { BuiltInQR } from '../../linalg/builtin/qr';
+import { BuiltInSvd } from '../../linalg/builtin/svd';
+import { BuiltInEigen } from '../../linalg/builtin/eigen';
+import { BuiltInCholesky } from '../../linalg/builtin/chol';
+import { MatrixModifier } from '../../linalg/modifiers';
 
-export class MatrixOpProviderFactory {
+function matMulOutputTypeResolver(t1: DType, _isComplex1: boolean, t2: DType, _isComplex2: boolean): DType | undefined {
+    // integer stays integer, otherwise promote to floats
+    switch (t1) {
+        case DType.LOGIC:
+        case DType.INT32:
+            switch (t2) {
+                case DType.LOGIC:
+                case DType.INT32:
+                    return DType.INT32;
+                case DType.FLOAT64:
+                    return DType.FLOAT64;
+            }
+        case DType.FLOAT64:
+            return DType.FLOAT64;
+    }
+    return undefined;
+}
 
-    // tslint:disable-next-line:max-line-length
-    public static create(arithmOp: IArithmeticOpProvider, mathOp: IMathOpProvider,
-                         mmb: IMatrixMultiplicationBackend = new BuiltInMMB(),
-                         mtb: IMatrixTransposeBackend = new BuiltInMTB()): IMatrixOpProvider
-    {
+export class MatrixOpProviderFactory implements IJasmalModuleFactory<IMatrixOpProvider> {
+
+    private arithmOp: IArithmeticOpProvider;
+    private mathOp: IMathOpProvider;
+
+    constructor(arithmOp: IArithmeticOpProvider, mathOp: IMathOpProvider) {
+        this.arithmOp = arithmOp;
+        this.mathOp = mathOp;
+    }
+
+    public create(options: JasmalOptions): IMatrixOpProvider {
+
+        // check and init backends
+        let linalgOptions = options.linalg;
+        const Blao = linalgOptions && linalgOptions.blao ? linalgOptions.blao : new BuiltInBlao();
+        const LU = linalgOptions && linalgOptions.lu ? linalgOptions.lu : new BuiltInLU();
+        const QR = linalgOptions && linalgOptions.qr ? linalgOptions.qr : new BuiltInQR();
+        const Svd = linalgOptions && linalgOptions.svd ? linalgOptions.svd : new BuiltInSvd();
+        const Eigen = linalgOptions && linalgOptions.eigen ? linalgOptions.eigen : new BuiltInEigen();
+        const Chol = linalgOptions && linalgOptions.chol ? linalgOptions.chol : new BuiltInCholesky();
+        
+        const arithmOp = this.arithmOp;
+        const mathOp = this.mathOp;
 
         const opEye = (m: number, n?: number, dtype: DType = DType.FLOAT64): Tensor => {
             if (n == undefined) n = m;
@@ -276,24 +311,6 @@ export class MatrixOpProviderFactory {
             }
         };
 
-        const matMulOutputTypeResolver = (t1: DType, _isComplex1: boolean, t2: DType, _isComplex2: boolean): DType | undefined => {
-            // integer stays integer, otherwise promote to floats
-            switch (t1) {
-                case DType.LOGIC:
-                case DType.INT32:
-                    switch (t2) {
-                        case DType.LOGIC:
-                        case DType.INT32:
-                            return DType.INT32;
-                        case DType.FLOAT64:
-                            return DType.FLOAT64;
-                    }
-                case DType.FLOAT64:
-                    return DType.FLOAT64;
-            }
-            return undefined;
-        };
-
         const opMatMul = (x: OpInput, y: OpInput, yModifier: MatrixModifier = MatrixModifier.None): Tensor => {
             let vx = Tensor.analyzeOpInput(x);
             let vy = Tensor.analyzeOpInput(y);
@@ -334,28 +351,27 @@ export class MatrixOpProviderFactory {
             if (vx.isComplex) {
                 Z.ensureComplexStorage();
                 if (vy.isComplex) {
-                    mmb.cmulmm(m, n1, p, yModifier, vx.reArr, vx.imArr,
-                        vy.reArr, vy.imArr, Z.realData, Z.imagData);
+                    Blao.cgemm(m, p, n1, 1, 0, vx.reArr, vx.imArr, vy.reArr, vy.imArr, yModifier, 1, 0, Z.realData, Z.imagData);
                 } else {
-                    mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.reArr, Z.realData);
-                    mmb.mulmm(m, n1, p, yModifier, vx.imArr, vy.reArr, Z.imagData);
+                    Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);
+                    Blao.dgemm(m, p, n1, 1, vx.imArr, vy.reArr, yModifier, 1, Z.imagData);
                 }
             } else {
                 if (vy.isComplex) {
                     Z.ensureComplexStorage();
                     if (yModifier === MatrixModifier.Hermitian) {
-                        mmb.mulmm(m, n1, p, MatrixModifier.Transposed, vx.reArr, vy.reArr, Z.realData);
-                        mmb.mulmm(m, n1, p, MatrixModifier.Transposed, vx.reArr, vy.imArr, Z.imagData);
+                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, MatrixModifier.Transposed, 1, Z.realData);
+                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.imArr, MatrixModifier.Transposed, 1, Z.imagData);
                         let reZ = Z.imagData;
                         for (let i = 0;i < reZ.length;i++) {
                             reZ[i] = -reZ[i];
                         }
                     } else {
-                        mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.reArr, Z.realData);
-                        mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.imArr, Z.imagData);  
+                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);
+                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.imArr, yModifier, 1, Z.imagData);  
                     }  
                 } else {
-                    mmb.mulmm(m, n1, p, yModifier, vx.reArr, vy.reArr, Z.realData);   
+                    Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);   
                 }
             }
             return Z;
@@ -386,10 +402,10 @@ export class MatrixOpProviderFactory {
                 return X.getReshapedCopy([-1, 1]);
             } else if (shapeX.length === 2) {
                 let Y = Tensor.zeros([shapeX[1], shapeX[0]], X.dtype);
-                mtb.transpose(<[number, number]>shapeX, X.realData, Y.realData);
+                Blao.transpose(shapeX[0], shapeX[1], X.realData, Y.realData);
                 if (X.hasComplexStorage()) {
                     Y.ensureComplexStorage();
-                    mtb.transpose(<[number, number]>shapeX, X.imagData, Y.imagData);
+                    Blao.transpose(shapeX[0], shapeX[1], X.imagData, Y.imagData);
                 }
                 return Y;
             } else {
@@ -416,9 +432,9 @@ export class MatrixOpProviderFactory {
                 let Y = Tensor.zeros([shapeX[1], shapeX[0]], X.dtype);
                 if (X.hasComplexStorage()) {
                     Y.ensureComplexStorage();
-                    mtb.hermitian(<[number, number]>shapeX, X.realData, X.imagData, Y.realData, Y.imagData);
+                    Blao.hermitian(shapeX[0], shapeX[1], X.realData, X.imagData, Y.realData, Y.imagData);
                 } else {
-                    mtb.transpose(<[number, number]>shapeX, X.realData, Y.realData);
+                    Blao.transpose(shapeX[0], shapeX[1], X.realData, Y.realData);
                 }
                 return Y;
             } else {
@@ -506,9 +522,9 @@ export class MatrixOpProviderFactory {
                                 X = x.asType(DType.FLOAT64, true);
                             }
                             if (X.hasNonZeroComplexStorage()) {
-                                SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
+                                Svd.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
                             } else {
-                                SVD.svd(shape[0], shape[1], false, X.realData, s, []);
+                                Svd.svd(shape[0], shape[1], false, X.realData, s, []);
                             }
                             return s[0];
                         case Infinity:
@@ -526,6 +542,7 @@ export class MatrixOpProviderFactory {
             // make a copy here as X will be overwritten
             let X = x instanceof Tensor ? x.asType(DType.FLOAT64, true) : Tensor.toTensor(x);            
             let shapeX = X.shape;
+            
             if (shapeX.length !== 2 || shapeX[0] !== shapeX[1]) {
                 throw new Error('Square matrix expected.');
             }
@@ -560,7 +577,10 @@ export class MatrixOpProviderFactory {
                     P.ensureComplexStorage();
                     LU.compactToFull(shapeX[0], true, X.imagData, L.imagData, U.imagData);
                 }
-                LU.permutationToFull(p, P.realData);
+                let reP = P.realData;
+                for (let i = 0, n = p.length; i < n; i++) {
+                    reP[i * n + p[i]] = 1;
+                }
                 return [L, U, P];
             }
         }
@@ -614,9 +634,9 @@ export class MatrixOpProviderFactory {
             let P = Tensor.zeros([shapeX[1], shapeX[1]]);
             if (X.hasNonZeroComplexStorage()) {
                 Q.ensureComplexStorage();
-                QR.cqrpf(shapeX[0], shapeX[1], X.realData, X.imagData, Q.realData, Q.imagData, P.realData);
+                QR.cqr(shapeX[0], shapeX[1], X.realData, X.imagData, Q.realData, Q.imagData, P.realData);
             } else {
-                QR.qrpf(shapeX[0], shapeX[1], X.realData, Q.realData, P.realData);
+                QR.qr(shapeX[0], shapeX[1], X.realData, Q.realData, P.realData);
             }
             return [Q, X, P];
         };
@@ -635,9 +655,9 @@ export class MatrixOpProviderFactory {
             let ns = Math.min(shapeX[0], shapeX[1]);
             if (svOnly) {
                 if (X.hasNonZeroComplexStorage()) {
-                    SVD.csvd(shapeX[0], shapeX[1], false, X.realData, X.imagData, s.realData, [], []);
+                    Svd.csvd(shapeX[0], shapeX[1], false, X.realData, X.imagData, s.realData, [], []);
                 } else {
-                    SVD.svd(shapeX[0], shapeX[1], false, X.realData, s.realData, []);
+                    Svd.svd(shapeX[0], shapeX[1], false, X.realData, s.realData, []);
                 }
                 if (ns !== s.size) {
                     s = <Tensor>s.get(`:${ns}`);
@@ -647,9 +667,9 @@ export class MatrixOpProviderFactory {
                 let V = Tensor.zeros([shapeX[1], shapeX[1]]);
                 if (X.hasNonZeroComplexStorage()) {
                     V.ensureComplexStorage();
-                    SVD.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s.realData, V.realData, V.imagData);
+                    Svd.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s.realData, V.realData, V.imagData);
                 } else {
-                    SVD.svd(shapeX[0], shapeX[1], true, X.realData, s.realData, V.realData);
+                    Svd.svd(shapeX[0], shapeX[1], true, X.realData, s.realData, V.realData);
                     X.trimImaginaryPart();
                 }
                 // m <  n : U - m x m, S - m x n, V - n x n
@@ -674,9 +694,9 @@ export class MatrixOpProviderFactory {
             let shape = X.shape;
             let s = DataHelper.allocateFloat64Array(shape[1]);
             if (X.hasNonZeroComplexStorage()) {
-                SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
+                Svd.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
             } else {
-                SVD.svd(shape[0], shape[1], false, X.realData, s, []);
+                Svd.svd(shape[0], shape[1], false, X.realData, s, []);
             }
             // threshold over singular values
             let sMax = s[0];
@@ -700,9 +720,9 @@ export class MatrixOpProviderFactory {
             let shape = X.shape;
             let s = DataHelper.allocateFloat64Array(shape[1]);
             if (X.hasNonZeroComplexStorage()) {
-                SVD.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
+                Svd.csvd(shape[0], shape[1], false, X.realData, X.imagData, s, [], []);
             } else {
-                SVD.svd(shape[0], shape[1], false, X.realData, s, []);
+                Svd.svd(shape[0], shape[1], false, X.realData, s, []);
             }
             return s[0] / s[s.length - 1];
         }
@@ -716,9 +736,9 @@ export class MatrixOpProviderFactory {
             let V = Tensor.zeros([shapeX[1], shapeX[1]]);
             if (X.hasNonZeroComplexStorage()) {
                 V.ensureComplexStorage();
-                SVD.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s, V.realData, V.imagData);
+                Svd.csvd(shapeX[0], shapeX[1], true, X.realData, X.imagData, s, V.realData, V.imagData);
             } else {
-                SVD.svd(shapeX[0], shapeX[1], true, X.realData, s, V.realData);
+                Svd.svd(shapeX[0], shapeX[1], true, X.realData, s, V.realData);
             }
             // zero matrix
             let sMax = s[0];
@@ -830,9 +850,9 @@ export class MatrixOpProviderFactory {
             }
             // X is already a copy, no need to make an extra copy here
             if (X.hasNonZeroComplexStorage()) {
-                p = Cholesky.cchol(shapeX[0], X.realData, X.imagData);
+                p = Chol.cchol(shapeX[0], X.realData, X.imagData);
             } else {
-                p = Cholesky.chol(shapeX[0], X.realData);
+                p = Chol.chol(shapeX[0], X.realData);
             }
             if (p !== 0) {
                 throw new Error('Matrix is not positive definite.');
@@ -875,23 +895,18 @@ export class MatrixOpProviderFactory {
             } else {
                 // use QR with pivoting
                 let X = Tensor.zeros([shapeA[1], shapeB[1]]);
-                let l = Math.min(shapeA[0], shapeA[1]);
-                let d = DataHelper.allocateFloat64Array(l);
-                let ind = DataHelper.allocateInt32Array(shapeA[1]);
                 if (isAComplex) {
                     X.ensureComplexStorage();
-                    let phr = DataHelper.allocateFloat64Array(l);
-                    let phi = DataHelper.allocateFloat64Array(l);
-                    QR.cqrp(shapeA[0], shapeA[1], A.realData, A.imagData, d, phr, phi, ind);
-                    QR.cqrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, A.imagData,
-                        d, ind, phr, phi, B.realData, B.imagData, X.realData, X.imagData);
+                    B.ensureComplexStorage();
+                    QR.cqrSolve(shapeA[0], shapeA[1], shapeB[1], A.realData, A.imagData, 
+                        B.realData, B.imagData, X.realData, X.imagData);
                 } else {
-                    QR.qrp(shapeA[0], shapeA[1], A.realData, d, ind);
-                    QR.qrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, d, ind, B.realData, X.realData);
                     if (isBComplex) {
                         // solve for the complex part
                         X.ensureComplexStorage();
-                        QR.qrpsol(shapeA[0], shapeA[1], shapeB[1], A.realData, d, ind, B.imagData, X.imagData);
+                        QR.qrSolve2(shapeA[0], shapeA[1], shapeB[1], A.realData, B.realData, B.imagData, X.realData, X.imagData);
+                    } else {
+                        QR.qrSolve(shapeA[0], shapeA[1], shapeB[1], A.realData, B.realData, X.realData);
                     }
                 }
                 return X;

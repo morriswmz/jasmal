@@ -9,8 +9,9 @@ import { ReductionOpGenerator } from '../generator';
 import { ComparisonHelper } from '../../helper/comparisonHelper';
 import { FFT } from './fft';
 import { IArithmeticOpProvider } from '../arithmetic/definition';
-import { IMatrixOpProvider, MatrixModifier } from '../matrix/definition';
+import { IMatrixOpProvider } from '../matrix/definition';
 import { IMathOpProvider } from '../math/definition';
+import { MatrixModifier } from '../../linalg/modifiers';
 
 export class DataOpProviderFactory {
 

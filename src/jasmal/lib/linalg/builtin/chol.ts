@@ -1,8 +1,9 @@
-import { DataBlock } from '../../../commonTypes';
+import { DataBlock } from '../../commonTypes';
+import { ICholeskyBackend } from '../backend';
 
-export class Cholesky {
+export class BuiltInCholesky implements ICholeskyBackend {
 
-    public static chol(n: number, a: DataBlock): number {
+    public chol(n: number, a: DataBlock): number {
         let i: number, j: number, k: number;
         let acc: number;
         for (i = 0;i < n;i++) {
@@ -14,7 +15,7 @@ export class Cholesky {
                 if (i === j) {
                     if (acc <= 0.0) {
                         // not positive definite
-                        return n - i - 1;
+                        return i + 1;
                     }
                     a[i * n + i] = Math.sqrt(acc);
                 } else {
@@ -25,7 +26,7 @@ export class Cholesky {
         return 0;
     }
 
-    public static cchol(n: number, reA: DataBlock, imA: DataBlock): number {
+    public cchol(n: number, reA: DataBlock, imA: DataBlock): number {
         let i: number, j: number, k: number;
         let accRe: number, accIm: number;
         for (i = 0;i < n;i++) {

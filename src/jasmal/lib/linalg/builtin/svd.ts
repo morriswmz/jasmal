@@ -1,26 +1,18 @@
-import { DataBlock } from '../../../commonTypes';
-import { CMath } from '../../../math/cmath';
-import { DataHelper } from '../../../helper/dataHelper';
+import { DataBlock } from '../../commonTypes';
+import { CMath } from '../../math/cmath';
+import { DataHelper } from '../../helper/dataHelper';
+import { ISvdBackend } from '../backend';
 
 /**
  * Singular value decomposition.
  */
-export class SVD {
+export class BuiltInSvd implements ISvdBackend {
 
     /**
      * Singular value decomposition for a real matrix A such that A = USV^T.
-     * Adapted from Numerical Recipes.
-     * @param m Number of rows in A.
-     * @param n Number of columns in A.
-     * @param computeUV If set to false, only singular values will be computed.
-     *                  In this case, A will still be overwritten, but V will be
-     *                  untouched.
-     * @param reA (Input/Output) m x n Matrix A. Will be overwritten as U.
-     * @param reS (Output) A n-element vector of singular values sorted in
-     *            descending order.
-     * @param reV (Output) n x n matrix V.
+     * This implementation is adapted from Numerical Recipes.
      */
-    public static svd(m: number, n: number, computeUV: boolean, reA: DataBlock, reS: DataBlock, reV: DataBlock) {
+    public svd(m: number, n: number, computeUV: boolean, reA: DataBlock, reS: DataBlock, reV: DataBlock) {
         let flag: number, i: number, j: number, jj: number, k: number, l: number = 0;
         let its: number, nm: number = 0;
         let f: number, g: number = 0, h: number, c: number;
@@ -356,23 +348,10 @@ export class SVD {
 
     /**
      * Singular value decomposition for a complex matrix A such that A = USV^H.
-     * Based on the above routine and Algorithm 358.
-     * @param m Number of rows in A.
-     * @param n Number of columns in A.
-     * @param computeUV If set to false, only singular values will be computed.
-     *                  In this case, A will still be overwritten, but V will be
-     *                  untouched.
-     * @param reA (Input/Output) Real part of the m x n Matrix A. Will be
-     *            overwritten with the real part of U.
-     * @param imA (Input/Output) Imaginary part of the m x n Matrix A. Will be
-     *            overwritten with the imaginary part of U.
-     * @param reS (Output) A n-element vector of singular values sorted in
-     *            descending order.
-     * @param reV (Output) Real part of the n x n matrix V. 
-     * @param imV (Output) Imaginary part of the n x n matrix V. 
+     * This implementation is based on the above routine and Algorithm 358.
      */
-    public static csvd(m: number, n: number, computeUV: boolean, reA: DataBlock,
-                    imA: DataBlock, reS: DataBlock, reV: DataBlock, imV: DataBlock) {
+    public csvd(m: number, n: number, computeUV: boolean, reA: DataBlock,
+                imA: DataBlock, reS: DataBlock, reV: DataBlock, imV: DataBlock) {
         let flag: number, i: number, j: number, jj: number, k: number, l: number = 0;
         let its: number, nm: number = 0;
         let f: number, g: number = 0, h: number, c: number;

@@ -341,7 +341,7 @@ export class SetOpProviderFactory {
                     return opUniqueInternal(Tensor.analyzeOpInput(Z), false)[0];
                 }
             } else {
-                // ismember() is more efficient when the first input is shorter
+                // isIn() is more efficient when the first input is shorter
                 // in length ((m + n) log n < (m + n) log m if m > n).
                 if (outputIndices) {
                     [M, I] = opIsIn(Y, X, true);

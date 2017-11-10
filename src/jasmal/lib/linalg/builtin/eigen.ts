@@ -4,12 +4,13 @@
  * All rights reserved by the authors of EISPACK.
  * http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg01379.html
  */
-import { DataBlock } from '../../../commonTypes';
-import { CMath } from '../../../math/cmath';
-import { DataHelper } from '../../../helper/dataHelper';
-import { EPSILON } from "../../../constant";
+import { DataBlock } from '../../commonTypes';
+import { CMath } from '../../math/cmath';
+import { DataHelper } from '../../helper/dataHelper';
+import { EPSILON } from '../../constant';
+import { IEigenBackend } from '../backend';
 
-export class Eigen {
+export class BuiltInEigen implements IEigenBackend {
 
     /**
      * See tred1.f in EISPACK.
@@ -19,7 +20,7 @@ export class Eigen {
      * @param e 
      * @param e2 
      */
-    public static tred1(n: number, a: DataBlock, d: DataBlock, e: DataBlock, e2: DataBlock): void {
+    private _tred1(n: number, a: DataBlock, d: DataBlock, e: DataBlock, e2: DataBlock): void {
         let i: number, j: number, k: number, l: number;
         let f: number, g: number, h: number, scale: number;
         for (i = 0;i < n;i++) {
@@ -113,8 +114,7 @@ export class Eigen {
      * @param sub 
      * @param reE 
      */
-    public static tred2(n: number, reA: ArrayLike<number>, diag: DataBlock,
-                        sub: DataBlock, reE: DataBlock): void {
+    private _tred2(n: number, reA: ArrayLike<number>, diag: DataBlock, sub: DataBlock, reE: DataBlock): void {
         let i: number, j: number, k: number, l: number, ii: number, jp1: number;
         let f: number, g: number, h: number, hh: number, scale: number;
         for (i = 0;i < n;i++) {
@@ -235,7 +235,7 @@ export class Eigen {
      * @param e2 (Input/Destroyed) Squares of the subdiagonal elements of the
      *           input matrix.
      */
-    public static tqlrat(n: number, d: DataBlock, e2: DataBlock): void {
+    private _tqlrat(n: number, d: DataBlock, e2: DataBlock): void {
         if (n === 1) {
             return;
         }
@@ -353,7 +353,7 @@ export class Eigen {
      * @param sub 
      * @param reE 
      */
-    public static tql2(n: number, diag: DataBlock, sub: DataBlock, reE: DataBlock): void {
+    private _tql2(n: number, diag: DataBlock, sub: DataBlock, reE: DataBlock): void {
         let i: number, j: number, k: number, l: number, l1: number, l2: number, m: number;
         let ii: number, mml: number;
         let f: number, g: number, h: number, tst1: number, tst2: number;
@@ -469,16 +469,15 @@ export class Eigen {
      * @param lambda (Output) Eigenvalues.
      * @param reE (Output) Eigenvectors.
      */
-    public static rs(n: number, reA: ArrayLike<number>, lambda: DataBlock,
-                     matz: boolean, reE: DataBlock): void {
+    public rs(n: number, reA: ArrayLike<number>, lambda: DataBlock, matz: boolean, reE: DataBlock): void {
         let tmpArr = DataHelper.allocateFloat64Array(n);
         if (matz) {
-            Eigen.tred2(n, reA, lambda, tmpArr, reE);
-            Eigen.tql2(n, lambda, tmpArr, reE);
+            this._tred2(n, reA, lambda, tmpArr, reE);
+            this._tql2(n, lambda, tmpArr, reE);
         } else {
             let tmpArr2 = DataHelper.allocateFloat64Array(n);
-            Eigen.tred1(n, reA, lambda, tmpArr, tmpArr2);
-            Eigen.tqlrat(n, lambda, tmpArr2);
+            this._tred1(n, reA, lambda, tmpArr, tmpArr2);
+            this._tqlrat(n, lambda, tmpArr2);
         }
     }
 
@@ -499,8 +498,8 @@ export class Eigen {
      * @param tau (Output) Contains information about the transformations, used
      *                     to reconstruct the eigenvectors later (2n).
      */
-    public static htridi(n: number, ar: DataBlock, ai: DataBlock, d: DataBlock,
-                         e: DataBlock, e2: DataBlock, tau: DataBlock): void {
+    private _htridi(n: number, ar: DataBlock, ai: DataBlock, d: DataBlock,
+                    e: DataBlock, e2: DataBlock, tau: DataBlock): void {
         let i: number, j: number, k: number, l: number, jp1: number;
         let f: number, fi: number, g: number, gi: number, h: number, hh: number;
         let scale: number, si: number;
@@ -619,8 +618,8 @@ export class Eigen {
      *           eigenvectors.
      * @param zi (Output) Imaginary part of the eigenvectors.
      */
-    public static htribk(n: number, ar: DataBlock, ai: DataBlock, tau: DataBlock,
-                         m: number, zr: DataBlock, zi: DataBlock): void {
+    private _htribk(n: number, ar: DataBlock, ai: DataBlock, tau: DataBlock,
+                    m: number, zr: DataBlock, zi: DataBlock): void {
         let i: number, j: number, k: number, l: number;
         let h: number, s: number, si: number;
         if (m > 0) {
@@ -669,20 +668,19 @@ export class Eigen {
      * @param zr (Output) Real part of the eigenvectors.
      * @param zi (Output) Imaginary part of the eigenvectors.
      */
-    public static ch(n: number, ar: DataBlock, ai: DataBlock,
-                     w: DataBlock, matz: boolean, zr: DataBlock, zi: DataBlock): void {
+    public ch(n: number, ar: DataBlock, ai: DataBlock, w: DataBlock, matz: boolean, zr: DataBlock, zi: DataBlock): void {
         let tmpArr1 = DataHelper.allocateFloat64Array(n);
         let tmpArr2 = DataHelper.allocateFloat64Array(n);
         let tmpArr3 = DataHelper.allocateFloat64Array(2 * n);
-        Eigen.htridi(n, ar, ai, w, tmpArr1, tmpArr2, tmpArr3);
+        this._htridi(n, ar, ai, w, tmpArr1, tmpArr2, tmpArr3);
         if (matz) {
             for (let i = 0;i < n;i++) {
                 zr[i * n + i] = 1.0;
             }
-            Eigen.tql2(n, w, tmpArr1, zr);
-            Eigen.htribk(n, ar, ai, tmpArr3, n, zr, zi);
+            this._tql2(n, w, tmpArr1, zr);
+            this._htribk(n, ar, ai, tmpArr3, n, zr, zi);
         } else {
-            Eigen.tqlrat(n, w, tmpArr2);
+            this._tqlrat(n, w, tmpArr2);
         }
     }
 
@@ -693,7 +691,7 @@ export class Eigen {
      * @param a (Input/Output) Matrix data. Will be overwritten.
      * @param scale (Output) Scale data.
      */
-    public static balanc(n: number, a: DataBlock, scale: DataBlock): [number, number] {
+    private _balanc(n: number, a: DataBlock, scale: DataBlock): [number, number] {
         let radix = 16.0;
         let b2 = radix * radix;
         let k = 0;
@@ -829,7 +827,7 @@ export class Eigen {
      * @param a (Input/Output) Matrix data. Will be overwritten.
      * @param int (Output) Additional information for the transforms.
      */
-    public static elmhes(n: number, low: number, igh: number, a: DataBlock, int: DataBlock): void {
+    private _elmhes(n: number, low: number, igh: number, a: DataBlock, int: DataBlock): void {
         // to upper Hessenberg
         let i: number, j: number, m: number, la: number, kp1: number, mm1: number, mp1: number;
         let x: number, y: number;
@@ -896,8 +894,7 @@ export class Eigen {
      * @param z (Output) Contains the transformation matrix produced in
      *          the reduction by elmhes().
      */
-    public static eltran(n: number, low: number, igh: number, a: ArrayLike<number>,
-                         int: ArrayLike<number>, z: DataBlock): void {
+    private _eltran(n: number, low: number, igh: number, a: ArrayLike<number>, int: ArrayLike<number>, z: DataBlock): void {
         let i: number, j: number, kl: number, mp: number, mp1: number;
         // initialize z to identity matrix
         for (i = 0;i < n;i++) {
@@ -936,8 +933,7 @@ export class Eigen {
      * @param wr (Output) Real part of the eigenvalues.
      * @param wi (Output) Imaginary part of the eigenvalues.
      */
-    public static hqr(n: number, low: number, igh: number, h: DataBlock,
-                      wr: DataBlock, wi: DataBlock): void {
+    private _hqr(n: number, low: number, igh: number, h: DataBlock, wr: DataBlock, wi: DataBlock): void {
         let i: number, j: number, k: number, l: number, m: number, en: number;
         let na: number = 0, itn: number, its: number = 0;
         let mp2: number, enm2: number = 0;
@@ -1149,8 +1145,7 @@ export class Eigen {
      *           columns of z contain the real and imaginary parts of its
      *           eigenvector. The eigenvectors are unnormalized.
      */
-    public static hqr2(n: number, low: number, igh: number, h: DataBlock,
-                       wr: DataBlock, wi: DataBlock, z: DataBlock): void {
+    private _hqr2(n: number, low: number, igh: number, h: DataBlock, wr: DataBlock, wi: DataBlock, z: DataBlock): void {
         let i: number, j: number, k: number, l: number, m: number, en: number;
         let na: number = 0, itn: number, its: number = 0;
         let mp2: number, enm2: number = 0;
@@ -1567,7 +1562,7 @@ export class Eigen {
      * @param m 
      * @param z (Input/Output)
      */
-    public static balbak(n: number, low: number, igh: number, scale: ArrayLike<number>, m: number, z: DataBlock): void {
+    private _balbak(n: number, low: number, igh: number, scale: ArrayLike<number>, m: number, z: DataBlock): void {
         let i: number, j: number, k: number;
         let s: number;
         if (m === 0) {
@@ -1617,17 +1612,17 @@ export class Eigen {
      * @param zr (Output)
      * @param zi (Output)
      */
-    public static rg(n: number, a: DataBlock, wr: DataBlock, wi: DataBlock,
+    public rg(n: number, a: DataBlock, wr: DataBlock, wi: DataBlock,
                      matz: boolean, zr: DataBlock, zi: DataBlock): void {
         let i: number, j: number;
         let tmpArr1 = DataHelper.allocateFloat64Array(n);
-        let [low, igh] = Eigen.balanc(n, a, tmpArr1);
+        let [low, igh] = this._balanc(n, a, tmpArr1);
         let tmpArr2 = DataHelper.allocateInt32Array(igh + 1);
-        Eigen.elmhes(n, low, igh, a, tmpArr2);
+        this._elmhes(n, low, igh, a, tmpArr2);
         if (matz) {
-            Eigen.eltran(n, low, igh, a, tmpArr2, zr);
-            Eigen.hqr2(n, low, igh, a, wr, wi, zr);
-            Eigen.balbak(n, low, igh, tmpArr1, n, zr);
+            this._eltran(n, low, igh, a, tmpArr2, zr);
+            this._hqr2(n, low, igh, a, wr, wi, zr);
+            this._balbak(n, low, igh, tmpArr1, n, zr);
             // fill zi
             for (i = 0;i < n;) {
                 if (wi[i] === 0) {
@@ -1649,11 +1644,14 @@ export class Eigen {
                 }
             }
         } else {
-            Eigen.hqr(n, low, igh, a, wr, wi);
+            this._hqr(n, low, igh, a, wr, wi);
         }
     }
 
-    public static cbal(n: number, ar: DataBlock, ai: DataBlock, scale: DataBlock): [number, number] {
+    /**
+     * See cbal.f in EISPACK.
+     */
+    private _cbal(n: number, ar: DataBlock, ai: DataBlock, scale: DataBlock): [number, number] {
         let i: number, j: number, k: number, l: number, m: number;
         let c: number, f: number, g: number, r: number, s: number, b2: number;
         let flag = true;
@@ -1791,8 +1789,10 @@ export class Eigen {
         return [k, l];
     }
 
-    public static corth(n: number, low: number, igh: number, ar: DataBlock,
-                        ai: DataBlock, ortr: DataBlock, orti: DataBlock): void {
+    /**
+     * See corth.f in EISPACK.
+     */
+    private _corth(n: number, low: number, igh: number, ar: DataBlock, ai: DataBlock, ortr: DataBlock, orti: DataBlock): void {
         let i: number, j: number, m: number, la: number, mp: number, kp1: number;
         let f: number, g: number, h: number, fi: number, fr: number, scale: number;
         la = igh - 1;
@@ -1867,8 +1867,10 @@ export class Eigen {
         }
     }
 
-    public static comqr(n: number, low: number, igh: number, hr: DataBlock,
-                        hi: DataBlock, wr: DataBlock, wi: DataBlock): void {
+    /**
+     * See comqr.f in EISPACK.
+     */
+    private _comqr(n: number, low: number, igh: number, hr: DataBlock, hi: DataBlock, wr: DataBlock, wi: DataBlock): void {
         let i: number, j: number, l: number, ll: number, en: number;
         let itn: number, its: number = 0, lp1: number, enm1: number = 0;
         let si: number, sr: number, ti: number, tr: number, xi: number, xr: number;
@@ -2043,9 +2045,12 @@ export class Eigen {
         }
     }
 
-    public static comqr2(n: number, low: number, igh: number, ortr: DataBlock,
-                         orti: DataBlock, hr: DataBlock, hi: DataBlock,
-                         wr: DataBlock, wi: DataBlock, zr: DataBlock, zi: DataBlock): void {
+    /**
+     * See comqr2.f in EISPACK.
+     */
+    private _comqr2(n: number, low: number, igh: number, ortr: DataBlock, orti: DataBlock,
+                    hr: DataBlock, hi: DataBlock, wr: DataBlock, wi: DataBlock, zr: DataBlock, zi: DataBlock): void
+    {
         let i: number, j: number, k: number, l: number, ll: number, m: number, en: number;
         let ip1: number, itn: number, its: number = 0, lp1: number, enm1: number = 0, iend: number;
         let si: number, sr: number, ti: number, tr: number, xi: number, xr: number;
@@ -2378,7 +2383,10 @@ export class Eigen {
         }
     }
 
-    public static cbabk2(n: number, low: number, igh: number, scale: ArrayLike<number>,
+    /**
+     * See cbabk2.f in EISPACK.
+     */
+    private _cbabk2(n: number, low: number, igh: number, scale: ArrayLike<number>,
                          m: number, zr: DataBlock, zi: DataBlock): void {
         let i: number, j: number, k: number;
         let s: number;
@@ -2435,19 +2443,19 @@ export class Eigen {
      * @param zr (Output)
      * @param zi (Output)
      */
-    public static cg(n: number, ar: DataBlock, ai: DataBlock,
-                     wr: DataBlock, wi: DataBlock, matz: boolean,
-                     zr: DataBlock, zi: DataBlock): void {
+    public cg(n: number, ar: DataBlock, ai: DataBlock, wr: DataBlock, wi: DataBlock,
+              matz: boolean, zr: DataBlock, zi: DataBlock): void
+    {
         let scale = DataHelper.allocateFloat64Array(n);
         let ortr = DataHelper.allocateFloat64Array(n);
         let orti = DataHelper.allocateFloat64Array(n);
-        let [low, igh] = Eigen.cbal(n, ar, ai, scale);
-        Eigen.corth(n, low, igh, ar, ai, ortr, orti);
+        let [low, igh] = this._cbal(n, ar, ai, scale);
+        this._corth(n, low, igh, ar, ai, ortr, orti);
         if (matz) {
-            Eigen.comqr2(n, low, igh, ortr, orti, ar, ai, wr, wi, zr, zi);
-            Eigen.cbabk2(n, low, igh, scale, n, zr, zi);
+            this._comqr2(n, low, igh, ortr, orti, ar, ai, wr, wi, zr, zi);
+            this._cbabk2(n, low, igh, scale, n, zr, zi);
         } else {
-            Eigen.comqr(n, low, igh, ar, ai, wr, wi);
+            this._comqr(n, low, igh, ar, ai, wr, wi);
         }
     }
 

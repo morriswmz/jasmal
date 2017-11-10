@@ -1,12 +1,13 @@
-import { DataBlock } from '../../../commonTypes';
-import { EPSILON } from '../../../constant';
-import { CMath } from '../../../math/cmath';
-import { DataHelper } from '../../../helper/dataHelper';
+import { DataBlock } from '../../commonTypes';
+import { EPSILON } from '../../constant';
+import { CMath } from '../../math/cmath';
+import { DataHelper } from '../../helper/dataHelper';
+import { IQRBackend } from '../backend';
 
-export class QR {
+export class BuiltInQR implements IQRBackend {
 
     /**
-     * QR decomposition with pivoting using Householder reflections.
+     * In-place QR decomposition with pivoting using Householder reflections.
      * See Algorithm 5.4.1 in Matrix Computations (4th edition) for details.
      * @param m 
      * @param n 
@@ -19,7 +20,7 @@ export class QR {
      *            index of the column being swapped with the column being worked
      *            on at the i-th step.
      */
-    public static qrp(m: number, n: number, a: DataBlock, d: DataBlock, ind: DataBlock): void {
+    private _qrInPlace(m: number, n: number, a: DataBlock, d: DataBlock, ind: DataBlock): void {
         let i: number, j: number, k: number, r: number, l: number;
         let s: number, t: number, f: number, g: number, h: number;
         let tau = 0;
@@ -114,7 +115,7 @@ export class QR {
         }
     }
 
-    public static qrtrans(m: number, n: number, a: DataBlock, d: ArrayLike<number>, q: DataBlock): void {
+    private _qrTransform(m: number, n: number, a: DataBlock, d: ArrayLike<number>, q: DataBlock): void {
         let i: number, j: number, k: number;
         let g: number, h: number, s: number;
         // init q: m x m
@@ -150,7 +151,7 @@ export class QR {
         }
     }
 
-    public static ind2p(n: number, ind: ArrayLike<number>, p: DataBlock): void {
+    private _ind2p(n: number, ind: ArrayLike<number>, p: DataBlock): void {
         let i: number, t: number;
         let perm = DataHelper.naturalNumbersAsInt32(n);
         for (i = 0;i < n;i++) {
@@ -176,12 +177,12 @@ export class QR {
      * @param q (Output) Matrix Q. Must be initialized with zeros.
      * @param p (Output) Matrix P. Must be initialized with zeros.
      */
-    public static qrpf(m: number, n: number, a: DataBlock, q: DataBlock, p: DataBlock): void {
+    public qr(m: number, n: number, a: DataBlock, q: DataBlock, p: DataBlock): void {
         let d = DataHelper.allocateFloat64Array(Math.min(m, n));
         let ind = DataHelper.allocateInt32Array(n);
-        QR.qrp(m, n, a, d, ind);
-        QR.qrtrans(m, n, a, d, q);
-        QR.ind2p(n, ind, p);
+        this._qrInPlace(m, n, a, d, ind);
+        this._qrTransform(m, n, a, d, q);
+        this._ind2p(n, ind, p);
     }
 
     /**
@@ -193,16 +194,16 @@ export class QR {
      * @param m 
      * @param n 
      * @param p 
-     * @param a (Input/Destroyed) Output from qrp().
-     * @param d (Input) Output from qrp().
-     * @param ind (Input) Output from qrp().
+     * @param a (Input/Destroyed) Output from _qrInPlace().
+     * @param d (Input) Output from _qrInPlace().
+     * @param ind (Input) Output from _qrInPlace().
      * @param b (Input/Destroyed) m x p matrix B. 
      * @param x (Output) n x p matrix X. Must be initialized to zeros.
      * @returns The estimated rank of A.
      */
-    public static qrpsol(m: number, n: number, p: number, a: DataBlock,
-                         d: ArrayLike<number>, ind: ArrayLike<number>,
-                         b: DataBlock, x: DataBlock): number {
+    private _qrSolveInternal(m: number, n: number, p: number, a: DataBlock,
+                             d: ArrayLike<number>, ind: ArrayLike<number>,
+                             b: DataBlock, x: DataBlock): number {
         let i: number, j: number, k: number, l: number;
         let g: number, h: number, r: number, s: number, t: number;
         let tol: number;
@@ -275,8 +276,26 @@ export class QR {
         return r;
     }
 
+    public qrSolve(m: number, n: number, p: number, a: DataBlock, b: DataBlock, x: DataBlock): number {
+        let d = DataHelper.allocateFloat64Array(Math.min(m, n));
+        let ind = DataHelper.allocateInt32Array(n);
+        this._qrInPlace(m, n, a, d, ind);
+        return this._qrSolveInternal(m, n, p, a, d, ind, b, x);
+    }
+
+    public qrSolve2(m: number, n: number, p: number, a: DataBlock, br: DataBlock, bi: DataBlock,
+                    xr: DataBlock, xi: DataBlock): number
+    {
+        let d = DataHelper.allocateFloat64Array(Math.min(m, n));
+        let ind = DataHelper.allocateInt32Array(n);
+        this._qrInPlace(m, n, a, d, ind);
+        this._qrSolveInternal(m, n, p, a, d, ind, br, xr);
+        return this._qrSolveInternal(m, n, p, a, d, ind, bi, xi);
+    }
+
     /**
-     * Complex QR decomposition with pivoting using Householder reflections.
+     * In-place complex QR decomposition with pivoting using Householder
+     * reflections.
      * See Algorithm 5.4.1 in Matrix Computations (4th edition) for details.
      * @param m 
      * @param n 
@@ -297,7 +316,7 @@ export class QR {
      *            index of the column being swapped with the column being worked
      *            on at the i-th step.
      */
-    public static cqrp(m: number, n: number, ar: DataBlock, ai: DataBlock,
+    private _cqrInPlace(m: number, n: number, ar: DataBlock, ai: DataBlock,
                        d: DataBlock, phr: DataBlock, phi: DataBlock, ind: DataBlock): void {
         let i: number, j: number, k: number, r: number, l: number;
         let s: number, si: number, sr: number, t: number, f: number, g: number, h: number;
@@ -427,9 +446,9 @@ export class QR {
      * @param qr (Output) Real part of Q. Must be initialized with zeros.
      * @param qi (Output) Imaginary part of Q. Must be initialized with zeros.
      */
-    public static cqrtrans(m: number, n: number, ar: DataBlock, ai: DataBlock,
-                           d: ArrayLike<number>, phr: ArrayLike<number>,
-                           phi: ArrayLike<number>, qr: DataBlock, qi: DataBlock): void {
+    private _cqrTransform(m: number, n: number, ar: DataBlock, ai: DataBlock,
+                          d: ArrayLike<number>, phr: ArrayLike<number>,
+                          phi: ArrayLike<number>, qr: DataBlock, qi: DataBlock): void {
         let i: number, j: number, k: number;
         let g: number, h: number, si: number, sr: number;
         // init q: m x m
@@ -485,16 +504,16 @@ export class QR {
      * @param qi (Output) Imaginary part of Q. Must be initialized with zeros.
      * @param p (Output) Matrix P. Must be initialized with zeros.
      */
-    public static cqrpf(m: number, n: number, ar: DataBlock, ai: DataBlock,
-                        qr: DataBlock, qi: DataBlock, p: DataBlock): void {
+    public cqr(m: number, n: number, ar: DataBlock, ai: DataBlock,
+               qr: DataBlock, qi: DataBlock, p: DataBlock): void {
         let l = Math.min(m, n);
         let d = DataHelper.allocateFloat64Array(l);
         let phr = DataHelper.allocateFloat64Array(l);
         let phi = DataHelper.allocateFloat64Array(l);
         let ind = DataHelper.allocateInt32Array(n);
-        QR.cqrp(m, n, ar, ai, d, phr, phi, ind);
-        QR.cqrtrans(m, n, ar, ai, d, phr, phi, qr, qi);
-        QR.ind2p(n, ind, p);
+        this._cqrInPlace(m, n, ar, ai, d, phr, phi, ind);
+        this._cqrTransform(m, n, ar, ai, d, phr, phi, qr, qi);
+        this._ind2p(n, ind, p);
     }
 
     /**
@@ -506,11 +525,11 @@ export class QR {
      * @param m 
      * @param n 
      * @param p 
-     * @param ar (Input/Destroyed) Output from cqrp().
-     * @param ai (Input/Destroyed) Output from cqrp().
-     * @param d (Input) Output from cqrp().
-     * @param phr (Input) Output from cqrp().
-     * @param ind (Input) Output from cqrp().
+     * @param ar (Input/Destroyed) Output from _cqrInPlace().
+     * @param ai (Input/Destroyed) Output from _cqrInPlace().
+     * @param d (Input) Output from _cqrInPlace().
+     * @param phr (Input) Output from _cqrInPlace().
+     * @param ind (Input) Output from _cqrInPlace().
      * @param br (Input/Destroyed) Real part of the m x p matrix B. 
      * @param bi (Input/Destroyed) Imaginary part of the m x p matrix B. 
      * @param xr (Output) Real part of the n x p matrix X. Must be initialized
@@ -519,10 +538,10 @@ export class QR {
      *           initialized to zeros.
      * @returns The estimated rank of A.
      */
-    public static cqrpsol(m: number, n: number, p: number, ar: DataBlock,
-                          ai: DataBlock, d: ArrayLike<number>, ind: ArrayLike<number>,
-                          phr: ArrayLike<number>, phi: ArrayLike<number>,
-                          br: DataBlock, bi: DataBlock, xr: DataBlock, xi: DataBlock): number {
+    private _cqrSolveInternal(m: number, n: number, p: number, ar: DataBlock,
+                              ai: DataBlock, d: ArrayLike<number>, ind: ArrayLike<number>,
+                              phr: ArrayLike<number>, phi: ArrayLike<number>,
+                              br: DataBlock, bi: DataBlock, xr: DataBlock, xi: DataBlock): number {
         let i: number, j: number, k: number, l: number;
         let g: number, h: number, r: number, si: number, sr: number, t: number;
         let tol: number;
@@ -602,6 +621,18 @@ export class QR {
             }
         }
         return r;
+    }
+
+    public cqrSolve(m: number, n: number, p: number, ar: DataBlock, ai: DataBlock,
+                    br: DataBlock, bi: DataBlock, xr: DataBlock, xi: DataBlock): number
+    {
+        let l = Math.min(m, n);
+        let d = DataHelper.allocateFloat64Array(l);
+        let phr = DataHelper.allocateFloat64Array(l);
+        let phi = DataHelper.allocateFloat64Array(l);
+        let ind = DataHelper.allocateInt32Array(n);
+        this._cqrInPlace(m, n, ar, ai, d, phr, phi, ind);
+        return this._cqrSolveInternal(m, n, p, ar, ai, d, ind, phr, phi, br, bi, xr, xi);
     }
 
 }
