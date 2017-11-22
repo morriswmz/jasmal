@@ -1,48 +1,51 @@
 import { IBinaryOpProvider } from './definition';
 import { ElementWiseOpGenerator } from '../generator/index';
 import { OutputDTypeResolver } from '../../dtype';
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
-export class BinaryOpProviderFactory {
+export class BinaryOpProviderFactory implements IJasmalModuleFactory<IBinaryOpProvider> {
 
-    public static create(generator: ElementWiseOpGenerator): IBinaryOpProvider {
+    public constructor(private _generator: ElementWiseOpGenerator) {
+    }
 
-        const opBitwiseAnd = generator.makeRealOutputBinaryOp({
+    public create(_options: JasmalOptions): IBinaryOpProvider {
+        const opBitwiseAnd = this._generator.makeRealOutputBinaryOp({
             opRR: '$reZ = $reX & $reY;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt,
         });
 
-        const opBitwiseOr = generator.makeRealOutputBinaryOp({
+        const opBitwiseOr = this._generator.makeRealOutputBinaryOp({
             opRR: '$reZ = $reX | $reY;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt,
         });
 
-        const opBitwiseXor = generator.makeRealOutputBinaryOp({
+        const opBitwiseXor = this._generator.makeRealOutputBinaryOp({
             opRR: '$reZ = $reX ^ $reY;'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt,
         });
 
-        const opBitwiseNot = generator.makeRealOutputUnaryOp({
+        const opBitwiseNot = this._generator.makeRealOutputUnaryOp({
             opR: '$reY = ~($reX);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.uNoChangeExceptLogicToInt,
         });
 
-        const opLeftShift = generator.makeRealOutputBinaryOp({
+        const opLeftShift = this._generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX) << ($reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
         });
 
-        const opRightShiftSP= generator.makeRealOutputBinaryOp({
+        const opRightShiftSP = this._generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX) >> ($reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
         });
 
-        const opRightShiftZF = generator.makeRealOutputBinaryOp({
+        const opRightShiftZF = this._generator.makeRealOutputBinaryOp({
             opRR: '$reZ = ($reX) >>> ($reY);'
         }, {
             outputDTypeResolver: OutputDTypeResolver.bWiderWithLogicToInt
@@ -57,7 +60,6 @@ export class BinaryOpProviderFactory {
             rightShiftSP: opRightShiftSP,
             rightShiftZF: opRightShiftZF,
         };
-
     }
 
 }

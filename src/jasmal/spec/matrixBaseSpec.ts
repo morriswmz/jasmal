@@ -580,6 +580,7 @@ describe('matmul()', () => {
         checkTensor(T.matmul(I, I, T.MM_HERMITIAN), I);
     });
     
+
 });
 
 describe('kron()', () => {

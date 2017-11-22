@@ -7,6 +7,14 @@ let T = JasmalEngine.createInstance();
 T.seed(192);
 
 describe('Composite problems', () => {
+    it('matrix multiplication is associative', () => {
+        let A = T.randn([20, 18]);
+        let B = T.complex(T.randn([20, 18]), T.randn([20, 18]));
+        let C = T.randn([18, 30]);
+        let X1 = T.add(T.matmul(A, C), T.matmul(B, C));
+        let X2 = T.matmul(T.add(A, B), C);
+        checkTensor(X1, X2, 1e-14);
+    });
     it('broadcasting and tile', () => {
         let x = T.rand([3, 1]), y = T.rand([1, 3]);
         let z1 = T.add(x, y);

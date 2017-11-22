@@ -7,11 +7,17 @@ import { PowerMathOpSetFactory } from './pow';
 import { LogExpMathOpSetFactory } from './logexp';
 import { RoundingMathOpSetFactory } from './rounding';
 import { SpecialFunctionOpSetFactory } from './special';
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
-export class MathOpProviderFactory {
+export class MathOpProviderFactory implements IJasmalModuleFactory<IMathOpProvider> {
+    
+    constructor(private _generator: ElementWiseOpGenerator) {
+    }
 
-    public static create(generator: ElementWiseOpGenerator): IMathOpProvider {
+    public create(_options: JasmalOptions): IMathOpProvider {
         
+        const generator = this._generator;
+
         const basicOps = BasicMathOpSetFactory.create(generator);
         const trigOps = TrigMathOpSetFactory.create(generator);
         const powerOps = PowerMathOpSetFactory.create(generator);

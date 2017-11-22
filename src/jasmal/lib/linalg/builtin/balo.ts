@@ -22,7 +22,7 @@ export class BuiltInBlao implements IBlaoBackend {
         }
     }
 
-    public dscale(alpha: number, A: DataBlock): void {
+    public scale(alpha: number, A: DataBlock): void {
         if (alpha === 1) {
             return;
         }
@@ -85,7 +85,7 @@ export class BuiltInBlao implements IBlaoBackend {
         }
     }
 
-    public dger(alpha: number, x: ArrayLike<number>, y: ArrayLike<number>, A: DataBlock): void {
+    public ger(alpha: number, x: ArrayLike<number>, y: ArrayLike<number>, A: DataBlock): void {
         const m = x.length;
         const n = y.length;
         if (A.length !== m * n) {
@@ -189,7 +189,7 @@ export class BuiltInBlao implements IBlaoBackend {
         }
     }
 
-    public dgemv(m: number, n: number, alpha: number, A: ArrayLike<number>, modA: MatrixModifier,
+    public gemv(m: number, n: number, alpha: number, A: ArrayLike<number>, modA: MatrixModifier,
                  x: ArrayLike<number>, beta: number, y: DataBlock): void
     {
         if (x.length !== n) {
@@ -206,7 +206,7 @@ export class BuiltInBlao implements IBlaoBackend {
             return;
         }
         if (beta !== 1) {
-            this.dscale(beta, y);
+            this.scale(beta, y);
         }
         let i: number, j: number;
         let acc: number;
@@ -297,22 +297,22 @@ export class BuiltInBlao implements IBlaoBackend {
         }
     }
 
-    public dgemm(m: number, n: number, k: number, alpha: number, A: ArrayLike<number>,
+    public gemm(m: number, n: number, k: number, alpha: number, A: ArrayLike<number>,
                  B: ArrayLike<number>, modB: MatrixModifier, beta: number, C: DataBlock): void
     {
         if (k === 1) {
             // row vector - column vector
             if (beta !== 1) {
-                this.dscale(beta, C);
+                this.scale(beta, C);
             }
-            this.dger(alpha, A, B, C);
+            this.ger(alpha, A, B, C);
         } else if (m === 1) {
             // row vector - matrix
             // a M(B) = (M(B)^T a^T)^T
-            this.dgemv(n, k, alpha, B, modB === MatrixModifier.None ? MatrixModifier.Transposed : MatrixModifier.None, A, beta, C);
+            this.gemv(n, k, alpha, B, modB === MatrixModifier.None ? MatrixModifier.Transposed : MatrixModifier.None, A, beta, C);
         } else if (n === 1) {
             // matrix - column vector
-            this.dgemv(m, k, alpha, A, MatrixModifier.None, B, beta, C);
+            this.gemv(m, k, alpha, A, MatrixModifier.None, B, beta, C);
         } else {
             // matrix - matrix
             this._dgemm(m, n, k, alpha, A, B, modB, beta, C);
@@ -336,14 +336,14 @@ export class BuiltInBlao implements IBlaoBackend {
             return;
         }
         if (beta !== 1) {
-            this.dscale(beta, C);
+            this.scale(beta, C);
         }
         // TODO: is it necessary to handle the special case when alpha === 1?
         let i: number, j: number, l: number, acc: number;
         let offsetA: number, offsetB: number;
         if (modB === MatrixModifier.None) {
             // A*B where A: m x k, B: k x n
-            if (m < 3 || (k < 16 && n < 16)) {
+            if (m < 3 || (k < 8 && n < 8)) {
                 // use naive implementation for small matrices
                 for (j = 0;j < n;j++) {
                     for (i = 0;i < m;i++) {
@@ -465,7 +465,7 @@ export class BuiltInBlao implements IBlaoBackend {
         let offsetA: number, offsetB: number;
         if (modB === MatrixModifier.None) {
             // A*B where A: m x k, B: k x n
-            if (m < 3 || (k < 16 && n < 16)) {
+            if (m < 3 || (k < 8 && n < 8)) {
                 // use naive implementation for small matrices
                 for (j = 0;j < n;j++) {
                     // evaluate j-th column of C

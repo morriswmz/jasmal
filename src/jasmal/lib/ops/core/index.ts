@@ -7,10 +7,16 @@ import { OpInput, DataBlock, RealOpInput } from '../../commonTypes';
 import { ElementWiseOpGenerator } from '../generator';
 import { ComplexNumber } from '../../complexNumber';
 import { ObjectHelper } from '../../helper/objHelper';
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
-export class CoreOpProviderFactory {
-    public static create(generator: ElementWiseOpGenerator): ICoreOpProvider {
+export class CoreOpProviderFactory implements IJasmalModuleFactory<ICoreOpProvider> {
+    
+    constructor(private _generator: ElementWiseOpGenerator) {
 
+    }
+    
+    public create(_options: JasmalOptions): ICoreOpProvider {
+        
         const opReshape = (x: OpInput, shape: number[]) => {
             if (x instanceof Tensor) {
                 return x.getReshapedCopy(shape);
@@ -403,7 +409,7 @@ export class CoreOpProviderFactory {
             }
         };
 
-        const opIsNaN = generator.makeUnaryOp({
+        const opIsNaN = this._generator.makeUnaryOp({
             opR: '$reY = isNaN($reX) ? 1 : 0;',
             opC: '$reY = isNaN($reX) || isNaN($imX) ? 1 : 0'
         }, {
@@ -411,7 +417,7 @@ export class CoreOpProviderFactory {
             outputDTypeResolver: OutputDTypeResolver.uToLogic
         });
 
-        const opIsInf = generator.makeUnaryOp({
+        const opIsInf = this._generator.makeUnaryOp({
             opR: '$reY = !isFinite($reX) && !isNaN($reX) ? 1 : 0',
             opC: '$reY = (!isFinite($reX) && !isNaN($reX)) || (!isFinite($imX) && !isNaN($imX)) ? 1 : 0;'
         }, {

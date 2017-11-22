@@ -12,11 +12,23 @@ import { IArithmeticOpProvider } from '../arithmetic/definition';
 import { IMatrixOpProvider } from '../matrix/definition';
 import { IMathOpProvider } from '../math/definition';
 import { MatrixModifier } from '../../linalg/modifiers';
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
-export class DataOpProviderFactory {
+export class DataOpProviderFactory implements IJasmalModuleFactory<IDataOpProvider> {
+    
+    constructor(private _coreOp: ICoreOpProvider, private _arithOp: IArithmeticOpProvider,
+                private _mathOp: IMathOpProvider, private _matOp: IMatrixOpProvider,
+                private _generator: ReductionOpGenerator)
+    {
+    }
 
-    public static create(coreOp: ICoreOpProvider, arithOp: IArithmeticOpProvider, mathOp: IMathOpProvider,
-                         matOp: IMatrixOpProvider, reductionOpGen: ReductionOpGenerator): IDataOpProvider {
+    public create(_options: JasmalOptions): IDataOpProvider {
+        
+        const coreOp = this._coreOp;
+        const arithOp = this._arithOp;
+        const mathOp = this._mathOp;
+        const matOp =  this._matOp;
+        const reductionOpGen = this._generator;
 
         const opMin = reductionOpGen.makeRealOnlyOpWithIndexOutput(
             DataFunction.min, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat });

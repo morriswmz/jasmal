@@ -353,25 +353,25 @@ export class MatrixOpProviderFactory implements IJasmalModuleFactory<IMatrixOpPr
                 if (vy.isComplex) {
                     Blao.cgemm(m, p, n1, 1, 0, vx.reArr, vx.imArr, vy.reArr, vy.imArr, yModifier, 1, 0, Z.realData, Z.imagData);
                 } else {
-                    Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);
-                    Blao.dgemm(m, p, n1, 1, vx.imArr, vy.reArr, yModifier, 1, Z.imagData);
+                    Blao.gemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);
+                    Blao.gemm(m, p, n1, 1, vx.imArr, vy.reArr, yModifier, 1, Z.imagData);
                 }
             } else {
                 if (vy.isComplex) {
                     Z.ensureComplexStorage();
                     if (yModifier === MatrixModifier.Hermitian) {
-                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, MatrixModifier.Transposed, 1, Z.realData);
-                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.imArr, MatrixModifier.Transposed, 1, Z.imagData);
+                        Blao.gemm(m, p, n1, 1, vx.reArr, vy.reArr, MatrixModifier.Transposed, 1, Z.realData);
+                        Blao.gemm(m, p, n1, 1, vx.reArr, vy.imArr, MatrixModifier.Transposed, 1, Z.imagData);
                         let reZ = Z.imagData;
                         for (let i = 0;i < reZ.length;i++) {
                             reZ[i] = -reZ[i];
                         }
                     } else {
-                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);
-                        Blao.dgemm(m, p, n1, 1, vx.reArr, vy.imArr, yModifier, 1, Z.imagData);  
+                        Blao.gemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);
+                        Blao.gemm(m, p, n1, 1, vx.reArr, vy.imArr, yModifier, 1, Z.imagData);  
                     }  
                 } else {
-                    Blao.dgemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);   
+                    Blao.gemm(m, p, n1, 1, vx.reArr, vy.reArr, yModifier, 1, Z.realData);   
                 }
             }
             return Z;

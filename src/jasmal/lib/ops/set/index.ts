@@ -6,10 +6,17 @@ import { ComparisonHelper } from '../../helper/comparisonHelper';
 import { ICoreOpProvider } from '../core/definition';
 import { ILogicComparisonOpProvider } from '../logicComp/definition';
 import { DTypeHelper, DType } from '../../dtype';
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
-export class SetOpProviderFactory {
+export class SetOpProviderFactory implements IJasmalModuleFactory<ISetOpProvider> {
 
-    public static create(coreOp: ICoreOpProvider, logicCompOp: ILogicComparisonOpProvider): ISetOpProvider {
+    constructor(private _coreOp: ICoreOpProvider, private _logicCompOp: ILogicComparisonOpProvider) {
+    }
+
+    public create(_options: JasmalOptions): ISetOpProvider {
+
+        const coreOp = this._coreOp;
+        const logicCompOp = this._logicCompOp;
 
         function opUniqueInternal(infoX: OpInputInfo, outputIndices: false): [Tensor, number[]];
         function opUniqueInternal(infoX: OpInputInfo, outputIndices: true): [Tensor, number[], number[][]];

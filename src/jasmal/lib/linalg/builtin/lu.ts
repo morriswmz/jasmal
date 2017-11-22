@@ -263,7 +263,7 @@ export class BuiltInLU implements ILUBackend {
      *             overwritten with the solution.
      * @param reB (Output) Vector b.
      */
-    public _luSolveColumn(n: number, reLU: ArrayLike<number>, reB: DataBlock): void {
+    private _luSolveColumn(n: number, reLU: ArrayLike<number>, reB: DataBlock): void {
         let idxNz = -1;
         let acc: number;
         // L^-1 P^T b
@@ -302,7 +302,7 @@ export class BuiltInLU implements ILUBackend {
      * @param imB (Output) Imaginary part of the vector b. Will be overwritten
      *            with the solution.
      */
-    public _cluSolveColumn(n: number, reLU: ArrayLike<number>, imLU: ArrayLike<number>,
+    private _cluSolveColumn(n: number, reLU: ArrayLike<number>, imLU: ArrayLike<number>,
                                   reB: DataBlock, imB: DataBlock): void {
         let idxNz = -1;
         let accRe: number, accIm: number;

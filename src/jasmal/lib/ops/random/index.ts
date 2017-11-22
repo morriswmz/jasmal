@@ -2,9 +2,14 @@ import { IRandomOpProvider } from './definition';
 import { Tensor } from '../../tensor';
 import { IRandomEngine, MT19937Engine, NativeEngine } from './engine';
 import { MAX_SAFE_INTEGER } from '../../constant';
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
-export class RandomOpProviderFactory {
-    public static create(rngEngine: IRandomEngine | string = 'twister'): IRandomOpProvider {
+export class RandomOpProviderFactory implements IJasmalModuleFactory<IRandomOpProvider> {
+    
+    public create(options: JasmalOptions): IRandomOpProvider {
+        
+        const rngEngine = options.rngEngine ? options.rngEngine : 'twister';
+
         // init engine
         let engine: IRandomEngine;
         if (Object.prototype.toString.call(rngEngine) === '[object String]') {

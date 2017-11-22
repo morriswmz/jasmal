@@ -26,13 +26,14 @@ import { SetOpProviderFactory } from './ops/set/index';
 import { ObjectHelper } from './helper/objHelper';
 import { ElementWiseOpGenerator, ReductionOpGenerator } from './ops/generator';
 import { EPSILON } from './constant';
-import { IBlaoBackend, ILinearSystemSolverBackend, ILUBackend, IQRBackend,
+import { IBlaoBackend, ISpecialLinearSystemSolverBackend, ILUBackend, IQRBackend,
          ICholeskyBackend, ISvdBackend, IEigenBackend } from './linalg/backend';
 import { MatrixModifier } from './linalg/modifiers';
 
 export interface JasmalOptions {
     rngEngine?: string | IRandomEngine;
     linalg?: LinalgOptions;
+    providers?: ProviderOptions;
 }
 
 export interface LinalgOptions {
@@ -42,7 +43,20 @@ export interface LinalgOptions {
     chol?: ICholeskyBackend;
     svd?: ISvdBackend;
     eigen?: IEigenBackend;
-    linsolve?: ILinearSystemSolverBackend;
+    linsolve?: ISpecialLinearSystemSolverBackend;
+}
+
+export interface ProviderOptions {
+    core?: ICoreOpProvider;
+    random?: IRandomOpProvider;
+    arithmetic?: IArithmeticOpProvider;
+    math?: IMathOpProvider;
+    matrix?: IMatrixOpProvider;
+    logic?: ILogicComparisonOpProvider;
+    binary?: IBinaryOpProvider;
+    data?: IDataOpProvider;
+    polynomial?: IPolynomialOpProvider;
+    set?: ISetOpProvider;
 }
 
 export interface IJasmalModuleFactory<M> {
@@ -170,20 +184,42 @@ export class JasmalEngine {
             options = defaultOptions;
         }
 
-        let elementWiseOpGen = ElementWiseOpGenerator.getInstance();
-        let reductionOpGen = ReductionOpGenerator.getInstance();
+        const elementWiseOpGen = ElementWiseOpGenerator.getInstance();
+        const reductionOpGen = ReductionOpGenerator.getInstance();
 
-        let coreOpProvider = CoreOpProviderFactory.create(elementWiseOpGen);
-        let randomOpProvider = RandomOpProviderFactory.create(options.rngEngine);
-        let arithmeticOpProvider = ArithmeticOpProviderFactory.create(elementWiseOpGen);
-        let mathOpProvider = MathOpProviderFactory.create(elementWiseOpGen);
-        let matrixOpProvider = (new MatrixOpProviderFactory(arithmeticOpProvider, mathOpProvider)).create(options);
-        let logicCompOpProvider = LogicComparisonOpProviderFactory.create(elementWiseOpGen);
-        let binaryOpProvider = BinaryOpProviderFactory.create(elementWiseOpGen);
-        let dataOpProvider = DataOpProviderFactory.create(coreOpProvider, arithmeticOpProvider,
-                                mathOpProvider, matrixOpProvider, reductionOpGen);
-        let polyOpProvider = PolynomialOpProviderFactory.create(coreOpProvider, matrixOpProvider);
-        let setOpProvider = SetOpProviderFactory.create(coreOpProvider, logicCompOpProvider);
+        const customProviders = options.providers;
+
+        const coreOpProvider = customProviders && customProviders.core
+            ? customProviders.core
+            : (new CoreOpProviderFactory(elementWiseOpGen)).create(options);
+        const randomOpProvider = customProviders && customProviders.random
+            ? customProviders.random
+            : (new RandomOpProviderFactory()).create(options);
+        const arithmeticOpProvider = customProviders && customProviders.arithmetic
+            ? customProviders.arithmetic
+            : (new ArithmeticOpProviderFactory(elementWiseOpGen)).create(options);
+        const mathOpProvider = customProviders && customProviders.math
+            ? customProviders.math
+            : (new MathOpProviderFactory(elementWiseOpGen)).create(options);
+        const matrixOpProvider = customProviders && customProviders.matrix
+            ? customProviders.matrix
+            : (new MatrixOpProviderFactory(arithmeticOpProvider, mathOpProvider)).create(options);
+        const logicCompOpProvider = customProviders && customProviders.logic
+            ? customProviders.logic
+            : (new LogicComparisonOpProviderFactory(elementWiseOpGen)).create(options);
+        const binaryOpProvider = customProviders && customProviders.binary
+            ? customProviders.binary
+            : (new BinaryOpProviderFactory(elementWiseOpGen)).create(options);
+        const dataOpProvider = customProviders && customProviders.data
+            ? customProviders.data
+            : (new DataOpProviderFactory(coreOpProvider, arithmeticOpProvider,
+                mathOpProvider, matrixOpProvider, reductionOpGen)).create(options);
+        const polyOpProvider = customProviders && customProviders.polynomial
+            ? customProviders.polynomial
+            : (new PolynomialOpProviderFactory(coreOpProvider, matrixOpProvider)).create(options);
+        const setOpProvider = customProviders && customProviders.set
+            ? customProviders.set
+            : (new SetOpProviderFactory(coreOpProvider, logicCompOpProvider)).create(options);
         
         let jasmalCore: JasmalBase =  {
             LOGIC: DType.LOGIC,

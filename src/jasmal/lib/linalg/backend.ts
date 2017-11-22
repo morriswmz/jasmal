@@ -16,7 +16,7 @@ export interface IBlaoBackend {
      * Scales the elements in A:
      *  A <- alpha * A.
      */
-    dscale(alpha: number, A: DataBlock): void;
+    scale(alpha: number, A: DataBlock): void;
     
     /**
      * Scales the elements in A (complex version):
@@ -41,7 +41,7 @@ export interface IBlaoBackend {
      * Performs rank-one update on A:
      *  A <- alpha * x * y^T + A.
      */
-    dger(alpha: number, x: ArrayLike<number>, y: ArrayLike<number>, A: DataBlock): void;
+    ger(alpha: number, x: ArrayLike<number>, y: ArrayLike<number>, A: DataBlock): void;
 
     /**
      * Performs rank-one update on A (complex version without conjugate):
@@ -62,7 +62,7 @@ export interface IBlaoBackend {
      *  y <- alpha * M(A) * x + beta * y,
      * where M(A) = A, A^T, or A^H.
      */
-    dgemv(m: number, n: number, alpha: number, A: ArrayLike<number>, modA: MatrixModifier,
+    gemv(m: number, n: number, alpha: number, A: ArrayLike<number>, modA: MatrixModifier,
           x: ArrayLike<number>, beta: number, y: DataBlock): void;
     
     /**
@@ -79,7 +79,7 @@ export interface IBlaoBackend {
      *  C <- alpha * A * M(B) + beta * C,
      * where M(B) = B, B^T, or B^H.
      */
-    dgemm(m: number, n: number, k: number, alpha: number, A: ArrayLike<number>,
+    gemm(m: number, n: number, k: number, alpha: number, A: ArrayLike<number>,
           B: ArrayLike<number>, modB: MatrixModifier, beta: number, C: DataBlock): void;
 
     /**
@@ -386,10 +386,49 @@ export interface ICholeskyBackend {
 }
 
 /**
- * Backend for solving linear systems.
+ * Backend for solving special linear systems.
  */
-export interface ILinearSystemSolverBackend {
+export interface ISpecialLinearSystemSolverBackend {
 
+      /**
+       * Solves a general real upper triangular system AX = B, where A is not
+       * necessary a square matrix.
+       * If m > n, the m - n extra rows will be ignored.
+       * If m < n, the free variables will be set to zeros.
+       * @param m
+       * @param n
+       * @param p
+       * @param a (Input) The m x n matrix A.
+       * @param b (Input) The m x p matrix B.
+       * @param x (Output) The n x p matrix X.
+       */
+      solveGUTReal(m: number, n: number, p: number, a: ArrayLike<number>, b: ArrayLike<number>, x: DataBlock): void;
 
+      /**
+       * Solves a real upper triangular system AX = B, where A is a square
+       * matrix.
+       * @param m
+       * @param p
+       * @param a (Input) The m x m matrix A.
+       * @param b (Input/Output) The m x p matrix B. Will be overwritten with X.
+       */
+      solveUTReal(m: number, p: number, a: ArrayLike<number>, b: DataBlock): void;
+  
+      /**
+       * Solves a general complex upper triangular system.
+       */
+      solveGUTComplex(m: number, n: number, p: number, reA: ArrayLike<number>, imA: ArrayLike<number>,
+                     reB: ArrayLike<number>, imB: ArrayLike<number>, reX: DataBlock, imX: DataBlock): void;
+
+      /**
+       * Solves a general real lower triangular system.
+       */
+      solveGLTReal(m: number, n: number, p: number, a: ArrayLike<number>, b: ArrayLike<number>, x: DataBlock): void;
+      
+      /**
+       * Solves a general complex lower triangular system.
+       */
+      solveGLTComplex(m: number, n: number, p: number, reA: ArrayLike<number>, imA: ArrayLike<number>,
+                     reB: ArrayLike<number>, imB: ArrayLike<number>, reX: DataBlock, imX: DataBlock): void;
 
 }

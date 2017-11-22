@@ -582,7 +582,6 @@ export class Tensor {
     
     private _setSubTensor(iterInfo: IndexIteratorInfo, value: number | ComplexNumber | any[] | Tensor): void {
         let iterDefs = iterInfo.definitions;
-        let ndim: number;
         let strides: number[];
         let trailingOffset: number = 0;
         let finalStride: number = 1;
@@ -594,10 +593,8 @@ export class Tensor {
         }
         let maxLevel = iterDefs.length - 1;
         if (iterDefs.length === 1) {
-            ndim = 1;
             strides = [this.size];
         } else {
-            ndim = this.ndim;
             strides = this._strides;
             // Determine trailingOffset
             // If the sub tensor has many trailing singleton dimensions, we can

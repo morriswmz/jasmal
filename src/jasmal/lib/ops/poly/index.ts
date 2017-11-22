@@ -8,11 +8,18 @@ import { IMatrixOpProvider } from '../matrix/definition';
 import { ICoreOpProvider } from '../core/definition';
 import { CMath } from '../../math/cmath';
 import { DataHelper } from "../../helper/dataHelper";
+import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
-export class PolynomialOpProviderFactory {
+export class PolynomialOpProviderFactory implements IJasmalModuleFactory<IPolynomialOpProvider> {
+    
+    constructor(private _coreOp: ICoreOpProvider, private _matOp: IMatrixOpProvider) {
+    }
+    
+    public create(_options: JasmalOptions): IPolynomialOpProvider {
 
-    public static create(coreOp: ICoreOpProvider, matOp: IMatrixOpProvider): IPolynomialOpProvider {
-
+        const coreOp = this._coreOp;
+        const matOp = this._matOp;
+        
         const opPolyval = (p: OpInput, x: OpInput, inPlace: boolean = false): OpOutput => {
             let infoP = Tensor.analyzeOpInput(p);
             if (infoP.originalShape.length !== 1) {
