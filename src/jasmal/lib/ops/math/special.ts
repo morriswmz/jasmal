@@ -60,42 +60,42 @@ export class SpecialFunctionOpSetFactory {
         const opGammaLn = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.gammaln($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
         const opGamma = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.gamma($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
         const opFactorial = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.factorial($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
         const opErf = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.erf($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
         const opErfc = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.erfc($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 
         const opErfcx = generator.makeRealOutputUnaryOp({
             opR: '$reY = SpecialFunction.erfcx($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'SpecialFunction': SpecialFunction }
         });
 

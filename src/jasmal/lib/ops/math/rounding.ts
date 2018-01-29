@@ -43,21 +43,21 @@ export class RoundingMathOpSetFactory {
             opR: '$reY = Math.floor($reX);',
             opC: '$reY = Math.floor($reX); $imY = Math.floor($imX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64
         });
 
         const opCeil = generator.makeUnaryOp({
             opR: '$reY = Math.ceil($reX);',
             opC: '$reY = Math.ceil($reX); $imY = Math.ceil($imX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64
         });
 
         const opRound = generator.makeUnaryOp({
             opR: '$reY = Math.round($reX);',
             opC: '$reY = Math.round($reX); $imY = Math.round($imX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64
         });
 
         const opFix = generator.makeUnaryOp({
@@ -65,7 +65,7 @@ export class RoundingMathOpSetFactory {
             opC: '$reY = ($reX >= 0) ? Math.floor($reX) : Math.ceil($reX);\n' +
                  '$reX = ($imX >= 0) ? Math.floor($imX) : Math.ceil($imX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64
         });
 
         return {

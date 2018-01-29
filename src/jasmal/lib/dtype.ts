@@ -75,7 +75,7 @@ export class OutputDTypeResolver {
     /**
      * Returns FLOAT64.
      */
-    public static uToFloat(): DType {
+    public static uToFloat64(): DType {
         return DType.FLOAT64;
     }
 
@@ -95,7 +95,7 @@ export class OutputDTypeResolver {
      * @param t 
      * @param _isComplex 
      */
-    public static uOnlyLogicToFloat(t: DType, _isComplex: boolean): DType {
+    public static uOnlyLogicToFloat64(t: DType, _isComplex: boolean): DType {
         return t === DType.LOGIC ? DType.FLOAT64 : t;
     }
 
@@ -142,7 +142,7 @@ export class OutputDTypeResolver {
     /**
      * Returns FLOAT64.
      */
-    public static bToFloat(): DType {
+    public static bToFloat64(): DType {
         return DType.FLOAT64;
     }
 

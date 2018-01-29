@@ -32,7 +32,7 @@ export class ArithmeticOpProviderFactory implements IJasmalModuleFactory<IArithm
             opR: '$reY = -$reX;',
             opC: '$reY = -$reX; $imY = -$imX;'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64
         });
 
         const opMul = this._generator.makeBinaryOp({
@@ -53,14 +53,14 @@ export class ArithmeticOpProviderFactory implements IJasmalModuleFactory<IArithm
             opCR: '$reZ = $reX / $reY; $imZ = $imX / $reY;',
             opCC: '$tmp1 = CMath.cdivCC($reX, $imX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.bToFloat
+            outputDTypeResolver: OutputDTypeResolver.bToFloat64
         });
 
         const opReciprocal = this._generator.makeUnaryOp({
             opR: '$reY = 1 / $reX;',
             opC: '$tmp1 = CMath.cReciprocal($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64
         });
         
         const opRem =  this._generator.makeRealOutputBinaryOp({

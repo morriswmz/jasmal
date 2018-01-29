@@ -178,41 +178,41 @@ export class TrigMathOpSetFactory {
             opR: '$reY = Math.sin($reX);',
             opC: '$tmp1 = CMath.csin($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opCos = generator.makeUnaryOp({
             opR: '$reY = Math.cos($reX);',
             opC: '$tmp1 = CMath.ccos($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opTan = generator.makeUnaryOp({
             opR: '$reY = Math.tan($reX);',
             opC: '$tmp1 = CMath.ctan($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opCot = generator.makeUnaryOp({
             opR: '$tmp1 = Math.tan($reX); $reY = $tmp1 === 0.0 ? NaN : 1.0 / $tmp1;',
             opC: '$tmp2 = CMath.ccot($reX, $imX); $reY = $tmp2[0]; $imY = $tmp2[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAsinR = generator.makeUnaryOp({
             opR: '$reY = Math.asin($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
         
         const opAsinC = generator.makeUnaryOp({
             opR: '$tmp1 = CMath.casin($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
             opC: '$tmp1 = CMath.casin($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAsin = (x: OpInput, inPlace: boolean = false): OpOutput => {
@@ -235,14 +235,14 @@ export class TrigMathOpSetFactory {
         const opAcosR = generator.makeUnaryOp({
             opR: '$reY = Math.acos($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAcosC = generator.makeUnaryOp({
             opR: '$tmp1 = CMath.cacos($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
             opC: '$tmp1 = CMath.cacos($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAcos = (x: OpInput, inPlace: boolean = false): OpOutput => {
@@ -266,14 +266,14 @@ export class TrigMathOpSetFactory {
             opR: '$reY = Math.atan($reX);',
             opC: '$tmp1 = CMath.catan($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAcot = generator.makeUnaryOp({
             opR: '$tmp1 = Math.atan($reX); $reY = ($tmp1 >= 0 ? M_PI_2 : -M_PI_2) - $tmp1; ',
             opC: '$tmp1 = CMath.cacot($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'M_PI_2': M_PI_2 }
         });
 
@@ -281,7 +281,7 @@ export class TrigMathOpSetFactory {
             opR: '$reY = HyperbolicTrigonometry.sinh($reX);',
             opC: '$tmp1 = CMath.csinh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }
         });
 
@@ -289,7 +289,7 @@ export class TrigMathOpSetFactory {
             opR: '$reY = HyperbolicTrigonometry.cosh($reX);',
             opC: '$tmp1 = CMath.ccosh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }            
         });
 
@@ -297,7 +297,7 @@ export class TrigMathOpSetFactory {
             opR: '$reY = HyperbolicTrigonometry.tanh($reX);',
             opC: '$tmp3 = CMath.ctanh($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }
         });
 
@@ -305,7 +305,7 @@ export class TrigMathOpSetFactory {
             opR: '$reY = HyperbolicTrigonometry.coth($reX);',
             opC: '$tmp3 = CMath.ccoth($reX, $imX); $reY = $tmp3[0]; $imY = $tmp3[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }
         });
 
@@ -313,14 +313,14 @@ export class TrigMathOpSetFactory {
             opR: '$reY = HyperbolicTrigonometry.asinh($reX);',
             opC: '$tmp1 = CMath.casinh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }
         });
 
         const opAcoshR = generator.makeUnaryOp({
             opR: '$reY = HyperbolicTrigonometry.acosh($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }
         });
 
@@ -328,7 +328,7 @@ export class TrigMathOpSetFactory {
             opR: '$tmp1 = CMath.cacosh($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
             opC: '$tmp1 = CMath.cacosh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAcosh = (x: OpInput, inPlace: boolean = false): OpOutput => {
@@ -351,7 +351,7 @@ export class TrigMathOpSetFactory {
         const opAtanhR = generator.makeUnaryOp({
             opR: '$reY = HyperbolicTrigonometry.atanh($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }
         });
 
@@ -359,7 +359,7 @@ export class TrigMathOpSetFactory {
             opR: '$tmp1 = CMath.catanh($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
             opC: '$tmp1 = CMath.catanh($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAtanh = (x: OpInput, inPlace: boolean = false): OpOutput => {
@@ -382,7 +382,7 @@ export class TrigMathOpSetFactory {
         const opAcothR = generator.makeUnaryOp({
             opR: '$reY = HyperbolicTrigonometry.acoth($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat,
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64,
             extraDependencies: { 'HyperbolicTrigonometry': HyperbolicTrigonometry }
         });
 
@@ -390,7 +390,7 @@ export class TrigMathOpSetFactory {
             opR: '$tmp1 = CMath.cacoth($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
             opC: '$tmp1 = CMath.cacoth($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opAcoth = (x: OpInput, inPlace: boolean = false): OpOutput => {

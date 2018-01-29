@@ -30,7 +30,7 @@ export class LogExpMathOpSetFactory {
             opR: '$reY = Math.exp($reX);',
             opC: '$tmp1 = CMath.cexp($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opLog = (x: OpInput, inPlace: boolean = false): OpOutput => {
@@ -45,14 +45,14 @@ export class LogExpMathOpSetFactory {
         const opLogP = generator.makeUnaryOp({
             opR: '$reY = Math.log($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opLogA = generator.makeUnaryOp({
             opR: '$tmp1 = CMath.clog($reX, 0); $reY = $tmp1[0]; $imY = $tmp1[1];',
             opC: '$tmp1 = CMath.clog($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         return {

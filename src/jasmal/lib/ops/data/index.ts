@@ -31,20 +31,20 @@ export class DataOpProviderFactory implements IJasmalModuleFactory<IDataOpProvid
         const reductionOpGen = this._generator;
 
         const opMin = reductionOpGen.makeRealOnlyOpWithIndexOutput(
-            DataFunction.min, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat });
+            DataFunction.min, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64 });
 
         const opMax = reductionOpGen.makeRealOnlyOpWithIndexOutput(
-            DataFunction.max, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat });
+            DataFunction.max, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64 });
 
         const opSum = reductionOpGen.makeOp(
             DataFunction.sum, (reX, imX, offset, stride, n) => {
                 return [DataFunction.sum(reX, offset, stride, n),
                         DataFunction.sum(imX, offset, stride, n)]
-            }, true, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat });
+            }, true, { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64 });
 
         const opProd = reductionOpGen.makeOp(
             DataFunction.prod, DataFunction.cprod, true,
-            { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat });
+            { outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64 });
 
         const opMean = reductionOpGen.makeOp(
             (reX, offset, stride, n) => {
@@ -52,24 +52,24 @@ export class DataOpProviderFactory implements IJasmalModuleFactory<IDataOpProvid
             }, (reX, imX, offset, stride, n) => {
                 return [DataFunction.sum(reX, offset, stride, n) / n,
                         DataFunction.sum(imX, offset, stride, n) / n];
-            }, true, { outputDTypeResolver: OutputDTypeResolver.uToFloat });
+            }, true, { outputDTypeResolver: OutputDTypeResolver.uToFloat64 });
 
         const opMedian = reductionOpGen.makeRealOnlyOp(
-            DataFunction.median, { outputDTypeResolver: OutputDTypeResolver.uToFloat });
+            DataFunction.median, { outputDTypeResolver: OutputDTypeResolver.uToFloat64 });
         
         const opMode = reductionOpGen.makeRealOnlyOp(
             DataFunction.mode, { outputDTypeResolver: OutputDTypeResolver.uNoChange });
 
         const opVar = reductionOpGen.makeOp(
             DataFunction.var, DataFunction.cvar, false,
-            { outputDTypeResolver: OutputDTypeResolver.uToFloat });
+            { outputDTypeResolver: OutputDTypeResolver.uToFloat64 });
 
         const opStd = reductionOpGen.makeOp(
             (reX, offset, stride, n) => {
                 return Math.sqrt(DataFunction.var(reX, offset, stride, n));
             }, (reX, imX, offset, stride, n) => {
                 return Math.sqrt(DataFunction.cvar(reX, imX, offset, stride, n));
-            }, false, {outputDTypeResolver: OutputDTypeResolver.uToFloat });
+            }, false, {outputDTypeResolver: OutputDTypeResolver.uToFloat64 });
 
         const opCumsum = (x: OpInput, axis: number = -1): Tensor => {
             let X = x instanceof Tensor ? x.copy(true) : Tensor.toTensor(x);

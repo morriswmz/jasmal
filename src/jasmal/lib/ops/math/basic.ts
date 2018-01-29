@@ -85,19 +85,19 @@ export class BasicMathOpSetFactory {
             opR: '$reY = 0;',
             opC: '$reY = Math.atan2($imX, $reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opRad2Deg = generator.makeRealOutputUnaryOp({
             opR: '$reY = 180 / Math.PI * $reX;'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opDeg2Rad = generator.makeRealOutputUnaryOp({
             opR: '$reY = Math.PI / 180 * $reX;'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         return {

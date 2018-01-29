@@ -18,24 +18,6 @@ import { BuiltInEigen } from '../../linalg/builtin/eigen';
 import { BuiltInCholesky } from '../../linalg/builtin/chol';
 import { MatrixModifier } from '../../linalg/modifiers';
 
-function matMulOutputTypeResolver(t1: DType, _isComplex1: boolean, t2: DType, _isComplex2: boolean): DType | undefined {
-    // integer stays integer, otherwise promote to floats
-    switch (t1) {
-        case DType.LOGIC:
-        case DType.INT32:
-            switch (t2) {
-                case DType.LOGIC:
-                case DType.INT32:
-                    return DType.INT32;
-                case DType.FLOAT64:
-                    return DType.FLOAT64;
-            }
-        case DType.FLOAT64:
-            return DType.FLOAT64;
-    }
-    return undefined;
-}
-
 export class MatrixOpProviderFactory implements IJasmalModuleFactory<IMatrixOpProvider> {
 
     private arithmOp: IArithmeticOpProvider;
@@ -155,7 +137,7 @@ export class MatrixOpProviderFactory implements IJasmalModuleFactory<IMatrixOpPr
                 }
             }
             let m = info.originalShape[0];
-            let Y = Tensor.zeros([m, n], OutputDTypeResolver.uOnlyLogicToFloat(info.originalDType, info.isComplex));
+            let Y = Tensor.zeros([m, n], OutputDTypeResolver.uOnlyLogicToFloat64(info.originalDType, info.isComplex));
             let reX = info.isInputScalar ? [info.re] : info.reArr;
             let reY = Y.realData;
             if (info.isComplex) {
@@ -343,7 +325,7 @@ export class MatrixOpProviderFactory implements IJasmalModuleFactory<IMatrixOpPr
                 throw new Error(`Matrix dimensions (${m}, ${n1}) and (${n2}, ${p}) are not compatible.`);
             }
             let Z = Tensor.zeros([m, p],
-                matMulOutputTypeResolver(vx.originalDType, vx.isComplex, vy.originalDType, vy.isComplex));
+                OutputDTypeResolver.bWiderWithLogicToInt(vx.originalDType, vx.isComplex, vy.originalDType, vy.isComplex));
             if (vx.reArr.length === 0 || vy.reArr.length === 0) {
                 // empty input handling
                 return Z;

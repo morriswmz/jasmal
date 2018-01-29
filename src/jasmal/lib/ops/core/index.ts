@@ -375,7 +375,7 @@ export class CoreOpProviderFactory implements IJasmalModuleFactory<ICoreOpProvid
                 // in Tensor.toTensor().
                 let shape = ShapeHelper.inferShapeFromArray(x);
                 ShapeHelper.validateArrayShape(x, shape);
-                // TODO: DType inference?
+                // TODO: DType inference for typed arrays?
                 return Tensor.zeros(shape);
             }
         };

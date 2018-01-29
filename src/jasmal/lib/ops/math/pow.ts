@@ -39,14 +39,14 @@ export class PowerMathOpSetFactory {
         const opSqrtP = generator.makeUnaryOp({
             opR: '$reY = Math.sqrt($reX);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64
         });
 
         const opSqrtA = generator.makeUnaryOp({
             opR: 'if ($reX >= 0) { $reY = Math.sqrt($reX); } else { $imY = Math.sqrt(-$reX); $reY = 0; }',
             opC: '$tmp1 = CMath.csqrt($reX, $imX); $reY = $tmp1[0]; $imY = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uToFloat            
+            outputDTypeResolver: OutputDTypeResolver.uToFloat64            
         });
 
         const opSqrt = (x: OpInput, inPlace: boolean = false): OpOutput => {
@@ -62,13 +62,13 @@ export class PowerMathOpSetFactory {
             opR: '$reY = $reX * $reX;',
             opC: '$tmp1 = $reX * $reX - $imX * $imX; $tmp2 = $reX * $imX; $reY = $tmp1; $imY = $tmp2 + $tmp2;'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat
+            outputDTypeResolver: OutputDTypeResolver.uOnlyLogicToFloat64
         });
 
         const opPowR = generator.makeRealOutputBinaryOp({
             opRR: '$reZ = Math.pow($reX, $reY);'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.bToFloat
+            outputDTypeResolver: OutputDTypeResolver.bToFloat64
         });
 
         const opPowCC = generator.makeBinaryOp({
@@ -77,7 +77,7 @@ export class PowerMathOpSetFactory {
             opCR: '$tmp1 = CMath.cpow($reX, $imX, $reY, 0); $reZ = $tmp1[0]; $imZ = $tmp1[1];',
             opCC: '$tmp1 = CMath.cpow($reX, $imX, $reY, $imY); $reZ = $tmp1[0]; $imZ = $tmp1[1];'
         }, {
-            outputDTypeResolver: OutputDTypeResolver.bToFloat
+            outputDTypeResolver: OutputDTypeResolver.bToFloat64
         });
 
         const opPow = (x: OpInput, y: OpInput, inPlace: boolean = false): OpOutput => {
