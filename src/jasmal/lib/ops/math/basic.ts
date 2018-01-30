@@ -1,5 +1,5 @@
 import { ElementWiseOpGenerator } from '../generator';
-import { DType, OutputDTypeResolver } from '../../dtype';
+import { DType, OutputDTypeResolver } from '../../core/dtype';
 import { OpInput, OpOutput, RealOpOutput, RealOpInput } from '../../commonTypes';
 
 export interface IBasicMathOpSet {

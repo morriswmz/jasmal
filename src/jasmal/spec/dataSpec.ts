@@ -1,7 +1,7 @@
 import { JasmalEngine } from '../index';
-import { Tensor } from '../lib/tensor';
+import { Tensor } from '../lib/core/tensor';
 import { checkTensor, checkComplex } from './testHelper';
-import { ComplexNumber } from '../lib/complexNumber';
+import { ComplexNumber } from '../lib/core/complexNumber';
 const T = JasmalEngine.createInstance();
 
 

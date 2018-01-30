@@ -1,4 +1,4 @@
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 
 export interface IRandomOpProvider {
 

@@ -1,7 +1,7 @@
 import { ElementWiseOpGenerator } from '../generator';
 import { OpOutput, OpInput, RealOpInput, RealOpOutput } from '../../commonTypes';
-import { OutputDTypeResolver, DType } from '../../dtype';
-import { Tensor } from '../../tensor';
+import { OutputDTypeResolver, DType } from '../../core/dtype';
+import { Tensor } from '../../core/tensor';
 import { DataHelper } from '../../helper/dataHelper';
 
 export interface IPowerMathOpSet {

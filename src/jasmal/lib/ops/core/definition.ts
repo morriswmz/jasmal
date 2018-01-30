@@ -1,5 +1,5 @@
 import { OpInput, OpOutput, RealOpInput } from '../../commonTypes';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 
 /**
  * Provides essential tensor operations.

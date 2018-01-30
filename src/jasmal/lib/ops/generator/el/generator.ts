@@ -1,9 +1,9 @@
 import { OpGeneratorBase } from '../generatorBase';
 import { OpInputInternal, OpOutput, RealOpOutput } from '../../../commonTypes';
-import { DType, OutputDTypeResolver, DTypeHelper } from '../../../dtype';
+import { DType, OutputDTypeResolver, DTypeHelper } from '../../../core/dtype';
 import { ShapeHelper } from '../../../helper/shapeHelper';
-import { Tensor } from '../../../tensor';
-import { ComplexNumber } from '../../../complexNumber';
+import { Tensor } from '../../../core/tensor';
+import { ComplexNumber } from '../../../core/complexNumber';
 import { CMath } from '../../../math/cmath';
 import { UNARY_OP_TEMPLATE, S_BLOCK_TEMPLATE, T_BLOCK_TEMPLATE } from './unaryOpTemplates';
 import { BIN_EL_OP_TEMPLATE, SS_BLOCK_TEMPLATE, ST_BLOCK_TEMPLATE,

@@ -1,8 +1,8 @@
 import { ElementWiseOpGenerator } from '../generator';
 import { RealOpInput, RealOpOutput } from '../../commonTypes';
-import { OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../core/dtype';
 import { SpecialFunction } from '../../math/special';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 import { Factorization } from '../../math/factor';
 
 /**

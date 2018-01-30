@@ -1,5 +1,5 @@
 import { DataHelper } from '../helper/dataHelper';
-import { Tensor } from '../tensor';
+import { Tensor } from '../core/tensor';
 
 export class ArgumentChecker {
 

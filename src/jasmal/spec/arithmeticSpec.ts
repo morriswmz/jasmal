@@ -1,6 +1,6 @@
 import { JasmalEngine } from '../index';
 import { checkTensor, checkComplex } from './testHelper';
-import { ComplexNumber } from '../lib/complexNumber';
+import { ComplexNumber } from '../lib/core/complexNumber';
 import { EPSILON } from '../lib/constant';
 const T = JasmalEngine.createInstance();
 

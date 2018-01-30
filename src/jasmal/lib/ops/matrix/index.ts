@@ -1,9 +1,9 @@
 import { IMatrixOpProvider } from './definition';
 import { IArithmeticOpProvider } from '../arithmetic/definition';
 import { OpInput, Scalar, DataBlock } from '../../commonTypes';
-import { Tensor } from '../../tensor';
-import { ComplexNumber } from '../../complexNumber';
-import { DType, OutputDTypeResolver } from '../../dtype';
+import { Tensor } from '../../core/tensor';
+import { ComplexNumber } from '../../core/complexNumber';
+import { DType, OutputDTypeResolver } from '../../core/dtype';
 import { NormFunction } from './norm';
 import { EPSILON } from '../../constant';
 import { DataHelper } from '../../helper/dataHelper';

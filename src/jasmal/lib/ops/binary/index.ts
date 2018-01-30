@@ -1,6 +1,6 @@
 import { IBinaryOpProvider } from './definition';
 import { ElementWiseOpGenerator } from '../generator/index';
-import { OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../core/dtype';
 import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
 export class BinaryOpProviderFactory implements IJasmalModuleFactory<IBinaryOpProvider> {

@@ -1,6 +1,6 @@
 import { OpInput, Scalar } from '../../commonTypes';
-import { DType } from '../../dtype';
-import { Tensor } from '../../tensor';
+import { DType } from '../../core/dtype';
+import { Tensor } from '../../core/tensor';
 import { MatrixModifier } from '../../linalg/modifiers';
 
 export interface IMatrixOpProvider {

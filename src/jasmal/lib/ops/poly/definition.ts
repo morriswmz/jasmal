@@ -1,5 +1,5 @@
 import { OpInput, OpOutput } from '../../commonTypes';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 
 export interface IPolynomialOpProvider {
 

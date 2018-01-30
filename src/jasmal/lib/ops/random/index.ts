@@ -1,5 +1,5 @@
 import { IRandomOpProvider } from './definition';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 import { IRandomEngine, MT19937Engine, NativeEngine } from './engine';
 import { MAX_SAFE_INTEGER } from '../../constant';
 import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';

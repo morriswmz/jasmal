@@ -1,7 +1,7 @@
-import { ComplexNumber } from '../lib/complexNumber';
-import { Tensor } from '../lib/tensor';
+import { ComplexNumber } from '../lib/core/complexNumber';
+import { Tensor } from '../lib/core/tensor';
 import { ShapeHelper } from '../lib/helper/shapeHelper';
-import { DTypeHelper } from '../lib/dtype';
+import { DTypeHelper } from '../lib/core/dtype';
 import { OpInput, OpOutput, Scalar } from '../lib/commonTypes';
 
 function areCloseByAbsoluteValue(actual: number, expected: number, tol: number): boolean {

@@ -1,11 +1,11 @@
 import { ISetOpProvider } from './definition';
 import { OpInput, Scalar, NonScalarOpInput, DataBlock, OpInputInfo } from '../../commonTypes';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 import { DataHelper } from '../../helper/dataHelper';
 import { ComparisonHelper } from '../../helper/comparisonHelper';
 import { ICoreOpProvider } from '../core/definition';
 import { ILogicComparisonOpProvider } from '../logicComp/definition';
-import { DTypeHelper, DType } from '../../dtype';
+import { DTypeHelper, DType } from '../../core/dtype';
 import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
 export class SetOpProviderFactory implements IJasmalModuleFactory<ISetOpProvider> {

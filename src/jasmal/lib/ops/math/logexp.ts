@@ -1,7 +1,7 @@
 import { ElementWiseOpGenerator } from '../generator';
 import { OpInput, OpOutput } from '../../commonTypes';
-import { OutputDTypeResolver } from '../../dtype';
-import { Tensor } from '../../tensor';
+import { OutputDTypeResolver } from '../../core/dtype';
+import { Tensor } from '../../core/tensor';
 import { DataHelper } from '../../helper/dataHelper';
 
 export interface ILogExpMathOpSet {

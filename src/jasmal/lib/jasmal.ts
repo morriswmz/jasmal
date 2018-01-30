@@ -1,5 +1,5 @@
-import { DType } from './dtype';
-import { Tensor } from './tensor';
+import { DType } from './core/dtype';
+import { Tensor } from './core/tensor';
 import { TypedArray } from './commonTypes';
 import { IRandomEngine } from './ops/random/engine';
 import { ICoreOpProvider } from './ops/core/definition';
@@ -15,7 +15,7 @@ import { ISetOpProvider } from './ops/set/definition';
 import { RandomOpProviderFactory } from './ops/random';
 import { ArithmeticOpProviderFactory } from './ops/arithmetic';
 import { MathOpProviderFactory } from './ops/math';
-import { ComplexNumber } from './complexNumber';
+import { ComplexNumber } from './core/complexNumber';
 import { CoreOpProviderFactory } from './ops/core';
 import { LogicComparisonOpProviderFactory } from './ops/logicComp';
 import { BinaryOpProviderFactory } from './ops/binary/index';

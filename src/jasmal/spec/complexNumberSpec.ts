@@ -1,5 +1,5 @@
 import { CMath } from '../lib/math/cmath';
-import { ComplexNumber } from '../lib/complexNumber';
+import { ComplexNumber } from '../lib/core/complexNumber';
 import { checkComplex } from './testHelper';
 
 describe('complex arithmetic', () => {

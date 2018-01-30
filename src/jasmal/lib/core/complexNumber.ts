@@ -1,4 +1,4 @@
-import { CMath } from './math/cmath';
+import { CMath } from '../math/cmath';
 
 export class ComplexNumber {
 

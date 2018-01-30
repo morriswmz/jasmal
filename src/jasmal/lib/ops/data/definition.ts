@@ -1,5 +1,5 @@
 import { OpInput, OpOutput, RealOpInput, RealOpOutputWithIndex, RealOpOutput } from '../../commonTypes';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 
 export interface IDataOpProvider {
 

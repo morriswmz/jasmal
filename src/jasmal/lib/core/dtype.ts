@@ -1,4 +1,4 @@
-import { ObjectHelper } from './helper/objHelper';
+import { ObjectHelper } from '../helper/objHelper';
 
 /**
  * Data type.

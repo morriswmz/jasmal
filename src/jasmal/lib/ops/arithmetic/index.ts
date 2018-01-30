@@ -1,6 +1,6 @@
 import { IArithmeticOpProvider } from './definition';
 import { ElementWiseOpGenerator } from '../generator';
-import { OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../core/dtype';
 import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 
 export class ArithmeticOpProviderFactory implements IJasmalModuleFactory<IArithmeticOpProvider> {

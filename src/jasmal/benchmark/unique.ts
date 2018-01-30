@@ -1,6 +1,6 @@
 import BenchMark = require('benchmark');
 import { JasmalEngine } from '../';
-import { Tensor } from '../lib/tensor';
+import { Tensor } from '../lib/core/tensor';
 const T = JasmalEngine.createInstance();
 const suite = new BenchMark.Suite();
 

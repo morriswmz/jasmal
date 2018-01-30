@@ -1,6 +1,6 @@
 import { JasmalEngine } from '../index';
-import { ComplexNumber } from '../lib/complexNumber';
-import { Tensor } from '../lib/tensor';
+import { ComplexNumber } from '../lib/core/complexNumber';
+import { Tensor } from '../lib/core/tensor';
 import { checkTensor } from './testHelper';
 const T = JasmalEngine.createInstance();
 
@@ -23,22 +23,27 @@ describe('Advanced indexing', () => {
             checkTensor(X, T.fromArray([[7, 7, 3], [4, 7, 7]]));
             checkTensor(A, ACopy); // should not change A
         });
-        it('should set the first 4 elements to 4 when indices are stored in an array', () => {
+        it('should set the (1,1)-th element to 10 using list indexing', () => {
+            let X = T.zeros([2, 2]);
+            X.set([1], [1], T.fromArray([10]));
+            checkTensor(X, T.fromArray([[0, 0], [0, 10]]));
+        });
+        it('should set the first 4 elements to 4 using list indexing', () => {
             let X = T.zeros([3, 3]);
             X.set([0, 1, 2, 3], 4);
             checkTensor(X, T.fromArray([[4, 4, 4], [4, 0, 0], [0, 0, 0]]));
         });
-        it('should set the last 4 elements to 4 when indices are stored in an array', () => {
+        it('should set the last 4 elements to 4 using list indexing', () => {
             let X = T.zeros([3, 3]);
             X.set([-1, -2, -3, -4], 4);
             checkTensor(X, T.fromArray([[0, 0, 0], [0, 0, 4], [4, 4, 4]]));
         });
-        it('should set the first 4 elements to 4 when indices are stored in a nested array', () => {
+        it('should set the first 4 elements to 4 using list indexing', () => {
             let X = T.zeros([3, 3]);
             X.set([[0, 1], [2, 3]], 4);
             checkTensor(X, T.fromArray([[4, 4, 4], [4, 0, 0], [0, 0, 0]]));
         });
-        it('should set the last 4 elements to 4 when indices are stored in a nested array', () => {
+        it('should set the last 4 elements to 4 using list indexing', () => {
             let X = T.zeros([3, 3]);
             X.set([[-1], [-2], [-3], [-4]], 4);
             checkTensor(X, T.fromArray([[0, 0, 0], [0, 0, 4], [4, 4, 4]]));
@@ -69,6 +74,16 @@ describe('Advanced indexing', () => {
             ));
             // should not change I
             checkTensor(I, ICopy);
+        });
+        it('should set the (1,1)-th element to 10 using number strings', () => {
+            let X = T.zeros([2, 2]);
+            X.set('1', '1', T.fromArray([10]));
+            checkTensor(X, T.fromArray([[0, 0], [0, 10]]));
+        });
+        it('should set the (1,1)-th element to 10 using sliced indexing', () => {
+            let X = T.zeros([2, 2]);
+            X.set('1:', '1:', T.fromArray([10]));
+            checkTensor(X, T.fromArray([[0, 0], [0, 10]]));
         });
         it('should set all elements at even indices to 1', () => {
             let X = T.zeros([3, 3]);
@@ -237,6 +252,11 @@ describe('Advanced indexing', () => {
         it('should return all negative elements', () => {
             let actual = B.get(x => x < 0);
             let expected = T.fromArray([-1, -2, -3, -4]);
+            checkTensor(actual, expected);
+        });
+        it('should return the first column as a row vector of a complex matrix', () => {
+            let actual = C.get(':', 0);
+            let expected = T.fromArray([1, 4], [-1, -4]);
             checkTensor(actual, expected);
         });
         it('should sample columns', () => {

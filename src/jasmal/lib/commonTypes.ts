@@ -1,6 +1,6 @@
-import { ComplexNumber } from './complexNumber';
-import { Tensor } from './tensor';
-import { DType } from './dtype';
+import { ComplexNumber } from './core/complexNumber';
+import { Tensor } from './core/tensor';
+import { DType } from './core/dtype';
 
 /**
  * Represents a chunk of memory (supported by typed arrays).

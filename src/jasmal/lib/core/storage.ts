@@ -1,8 +1,8 @@
-import { ShapeHelper } from './helper/shapeHelper';
+import { ShapeHelper } from '../helper/shapeHelper';
 import { DType } from './dtype';
-import { TypedArray, DataBlock } from './commonTypes';
-import { ObjectHelper } from './helper/objHelper';
-import { DataHelper } from './helper/dataHelper';
+import { TypedArray, DataBlock } from '../commonTypes';
+import { ObjectHelper } from '../helper/objHelper';
+import { DataHelper } from '../helper/dataHelper';
 
 export class TensorStorage {
 

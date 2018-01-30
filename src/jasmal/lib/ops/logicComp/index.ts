@@ -1,8 +1,8 @@
 import { ILogicComparisonOpProvider } from './definition';
 import { ElementWiseOpGenerator } from '../generator';
-import { OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../core/dtype';
 import { OpInput } from '../../commonTypes';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 import { DataHelper } from '../../helper/dataHelper';
 import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 

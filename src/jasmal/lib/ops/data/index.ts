@@ -1,8 +1,8 @@
 import { IDataOpProvider } from './definition';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 import { OpInput, DataBlock, RealOpInput } from '../../commonTypes';
 import { DataFunction } from './datafun';
-import { OutputDTypeResolver, DType } from '../../dtype';
+import { OutputDTypeResolver, DType } from '../../core/dtype';
 import { DataHelper } from '../../helper/dataHelper';
 import { ICoreOpProvider } from '../core/definition';
 import { ReductionOpGenerator } from '../generator';

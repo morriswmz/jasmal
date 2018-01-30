@@ -1,11 +1,11 @@
 import { ICoreOpProvider } from './definition';
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 import { ShapeHelper } from '../../helper/shapeHelper';
 import { DataHelper } from '../../helper/dataHelper';
-import { OutputDTypeResolver, DTypeHelper } from '../../dtype';
+import { OutputDTypeResolver, DTypeHelper } from '../../core/dtype';
 import { OpInput, DataBlock, RealOpInput } from '../../commonTypes';
 import { ElementWiseOpGenerator } from '../generator';
-import { ComplexNumber } from '../../complexNumber';
+import { ComplexNumber } from '../../core/complexNumber';
 import { ObjectHelper } from '../../helper/objHelper';
 import { IJasmalModuleFactory, JasmalOptions } from '../../jasmal';
 

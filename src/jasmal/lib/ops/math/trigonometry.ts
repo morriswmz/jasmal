@@ -1,9 +1,9 @@
 import { ElementWiseOpGenerator } from '../generator';
 import { OpOutput, OpInput } from '../../commonTypes';
-import { OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../core/dtype';
 import { HyperbolicTrigonometry } from '../../math/hyptrig';
-import { Tensor } from '../../tensor';
-import { ComplexNumber } from "../../complexNumber";
+import { Tensor } from '../../core/tensor';
+import { ComplexNumber } from "../../core/complexNumber";
 import { CMath } from '../../math/cmath';
 import { M_PI_2 } from '../../constant';
 

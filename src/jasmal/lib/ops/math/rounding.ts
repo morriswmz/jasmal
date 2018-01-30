@@ -1,5 +1,5 @@
 import { ElementWiseOpGenerator } from '../generator';
-import { OutputDTypeResolver } from '../../dtype';
+import { OutputDTypeResolver } from '../../core/dtype';
 import { OpInput, OpOutput } from '../../commonTypes';
 
 export interface IRoundingMathOpSet {

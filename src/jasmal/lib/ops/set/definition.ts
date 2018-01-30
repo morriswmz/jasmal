@@ -1,4 +1,4 @@
-import { Tensor } from '../../tensor';
+import { Tensor } from '../../core/tensor';
 import { OpInput, Scalar, NonScalarOpInput } from '../../commonTypes';
 
 export interface ISetOpProvider {

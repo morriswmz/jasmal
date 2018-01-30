@@ -1,5 +1,5 @@
 import { JasmalEngine } from '../index';
-import { Tensor } from '../lib/tensor';
+import { Tensor } from '../lib/core/tensor';
 import { checkTensor, checkComplex, testUnaryOpInBatch, checkNumber } from './testHelper';
 import { EPSILON } from '../lib/constant';
 const T = JasmalEngine.createInstance();

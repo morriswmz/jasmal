@@ -1,8 +1,8 @@
 import { IPolynomialOpProvider } from './definition';
-import { Tensor } from "../../tensor";
-import { OutputDTypeResolver, DTypeHelper } from '../../dtype';
+import { Tensor } from "../../core/tensor";
+import { OutputDTypeResolver, DTypeHelper } from '../../core/dtype';
 import { PolynomialEvaluator } from './polyfun';
-import { ComplexNumber } from '../../complexNumber';
+import { ComplexNumber } from '../../core/complexNumber';
 import { OpInput, OpOutput, OpInputType, DataBlock } from '../../commonTypes';
 import { IMatrixOpProvider } from '../matrix/definition';
 import { ICoreOpProvider } from '../core/definition';

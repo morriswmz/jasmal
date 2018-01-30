@@ -1,9 +1,9 @@
 import { JasmalEngine } from '../index';
-import { ComplexNumber } from '../lib/complexNumber';
-import { Tensor } from '../lib/tensor';
+import { ComplexNumber } from '../lib/core/complexNumber';
+import { Tensor } from '../lib/core/tensor';
 import { checkArrayLike, checkTensor } from './testHelper';
-import { DType } from '../lib/dtype';
-import { TensorStorage } from '../lib/storage';
+import { DType } from '../lib/core/dtype';
+import { TensorStorage } from '../lib/core/storage';
 const T = JasmalEngine.createInstance();
 
 describe('DType constants', () => {
